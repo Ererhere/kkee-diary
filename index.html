@@ -542,6 +542,39 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+
+  .eternal-quote {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9.5px;
+    color: var(--text-light);
+    opacity: 0.45;
+    letter-spacing: 0.2px;
+    pointer-events: none;
+    z-index: 200;
+    font-style: italic;
+    padding: 0 16px;
+  }
+
+  .detail-actions {
+    display: flex;
+    gap: 10px;
+    padding: 0 20px 16px;
+  }
+  .action-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .action-btn.edit { background: var(--primary-light); color: var(--primary); }
+  .action-btn.delete { background: #fde8e8; color: #c0504a; }
 </style>
 </head>
 <body>
@@ -553,12 +586,12 @@
 <div class="page active" id="page-home">
   <div class="nav">
     <div class="nav-title">而而与钶钶</div>
-    <div class="nav-sub">我们的日记本</div>
+    <div class="nav-sub">生命的波澜</div>
   </div>
   <div class="greeting">
     <div class="date-label" id="home-date"></div>
-    <div class="title-main">今天，想写些什么？</div>
-    <div class="subtitle">每一个瞬间都值得被记住 ♡</div>
+    <div class="title-main">但愿我和你是一首唱不完的歌</div>
+    <div class="subtitle">Every time Everywhere miss you everyday..</div>
   </div>
   <div class="user-cards">
     <div class="user-card erere" onclick="openDiaryList('erere')">
@@ -724,6 +757,18 @@ async function githubPut(path, content, message, sha) {
   return res.json();
 }
 
+
+async function githubDeleteFile(path, sha) {
+  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: { Authorization: `token ${TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: `delete: ${path}`, sha, branch: BRANCH }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 async function listDiaries(user) {
   const data = await githubGet(`${DIARY_PATH}/${user}`);
   if (!data || !Array.isArray(data)) return [];
@@ -818,7 +863,7 @@ async function openDetail(date) {
 
   try {
     const diary = await loadDiary(currentUser, date);
-    currentDiary = { ...diary, date, user: currentUser };
+    currentDiary = { ...diary, date: diary.date, fileName: date, user: currentUser };
 
     const comments = diary.comments || [];
     const commentHtml = comments.map(c => `
@@ -835,7 +880,11 @@ async function openDetail(date) {
         <div class="detail-title">${diary.title || '无题'}</div>
         <div class="detail-content">${diary.content || ''}</div>
         <hr class="detail-divider">
-        <div class="comments-section">
+        <div class="detail-actions">
+          <button class="action-btn edit" onclick="editDiary()">✏️ 编辑</button>
+          <button class="action-btn delete" onclick="deleteDiary()">🗑️ 删除</button>
+        </div>
+      <div class="comments-section">
           <h3>留言 ${comments.length > 0 ? `(${comments.length})` : ''}</h3>
           ${commentHtml || '<p style="color:var(--text-light);font-size:13px">还没有留言，来说点什么吧</p>'}
           <div class="comment-input-area">
@@ -854,6 +903,31 @@ async function openDetail(date) {
 }
 
 let commentAs = 'erere';
+let editingFileName = null;
+
+function editDiary() {
+  editingFileName = currentDiary.fileName;
+  showPage('page-write');
+  document.getElementById('write-date').value = currentDiary.date;
+  document.getElementById('write-title').value = currentDiary.title || '';
+  document.getElementById('write-content').value = currentDiary.content || '';
+  setWriteAs(currentDiary.user);
+  document.querySelectorAll('.mood-option').forEach(el => {
+    el.classList.toggle('selected', el.textContent === currentDiary.mood);
+  });
+  document.querySelector('.who-write-btn.' + currentDiary.user).click();
+}
+
+async function deleteDiary() {
+  if (!confirm('确定要删除这篇日记吗？')) return;
+  try {
+    await githubDeleteFile(`${DIARY_PATH}/${currentDiary.user}/${currentDiary.fileName}.json`, currentDiary.sha);
+    showToast('删除成功 ♡');
+    setTimeout(() => goList(), 800);
+  } catch(e) {
+    showToast('删除失败，请重试');
+  }
+}
 function setCommentAs(who) {
   commentAs = who;
   document.querySelectorAll('.who-btn').forEach(b => b.classList.remove('active'));
@@ -869,11 +943,11 @@ async function submitComment() {
   btn.textContent = '发送中…';
 
   try {
-    const diary = await loadDiary(currentDiary.user, currentDiary.date);
+    const diary = await loadDiary(currentDiary.user, currentDiary.fileName);
     const comments = diary.comments || [];
     comments.push({ author: commentAs, content: text, time: new Date().toISOString() });
     diary.comments = comments;
-    await saveDiaryData(currentDiary.user, currentDiary.date, diary, diary.sha);
+    await saveDiaryData(currentDiary.user, currentDiary.fileName, diary, diary.sha);
     showToast('留言发送成功 ♡');
     await openDetail(currentDiary.date);
   } catch(e) {
@@ -913,15 +987,23 @@ async function saveDiary() {
   btn.textContent = '保存中…';
 
   try {
-    const now = new Date();
-    const hhmm = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
-    const fileName = `${date}_${hhmm}`;
-    const existing = await loadDiary(writeAs, fileName);
-    const sha = existing?.sha;
-    const existingComments = existing?.comments || [];
+    let fileName, fileSha, existingComments;
+    if (editingFileName) {
+      fileName = editingFileName;
+      const existing = await loadDiary(writeAs, fileName);
+      fileSha = existing?.sha;
+      existingComments = existing?.comments || [];
+      editingFileName = null;
+    } else {
+      const now = new Date();
+      const hhmm = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
+      fileName = `${date}_${hhmm}`;
+      fileSha = undefined;
+      existingComments = [];
+    }
 
     const diaryObj = { date, author: writeAs, mood, title: title || '无题', content, comments: existingComments };
-    await saveDiaryData(writeAs, fileName, diaryObj, sha);
+    await saveDiaryData(writeAs, fileName, diaryObj, fileSha);
     showToast('日记保存成功 ♡');
     currentUser = writeAs;
     setTimeout(() => openDiaryList(writeAs), 800);
@@ -952,5 +1034,7 @@ function showToast(msg) {
 
 init();
 </script>
+
+<div class="eternal-quote">Even if Everything resets — I will find my way back to you.</div>
 </body>
 </html>
