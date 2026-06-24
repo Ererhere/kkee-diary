@@ -20,7 +20,7 @@
     --primary-light: #f5e6df;
     --text: #3a2e2a;
     --text-light: #9a8580;
-    --erere: #e8a598;
+    --erere: #7dc49a;
     --keke: #8faec4;
     --border: #ede5e0;
     --shadow: 0 2px 16px rgba(100,60,40,0.08);
@@ -112,7 +112,7 @@
 
   .user-card {
     border-radius: 20px;
-    padding: 24px;
+    padding: 32px 24px;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
     box-shadow: var(--shadow);
@@ -123,8 +123,8 @@
   .user-card:active { transform: scale(0.97); }
 
   .user-card.erere {
-    background: linear-gradient(135deg, #fce8e4 0%, #f5d5d0 100%);
-    border: 1px solid #f0c8c2;
+    background: linear-gradient(135deg, #e4f5ea 0%, #d0e9d8 100%);
+    border: 1px solid #c2deca;
   }
 
   .user-card.keke {
@@ -147,7 +147,7 @@
     margin-bottom: 4px;
   }
 
-  .user-card.erere .card-name { color: #c0584a; }
+  .user-card.erere .card-name { color: #4a9b6a; }
   .user-card.keke .card-name { color: #4a7a9b; }
 
   .card-desc {
@@ -164,7 +164,7 @@
     gap: 6px;
   }
 
-  .user-card.erere .card-count { color: #c0584a; }
+  .user-card.erere .card-count { color: #4a9b6a; }
   .user-card.keke .card-count { color: #4a7a9b; }
 
   /* 日记列表页 */
@@ -517,7 +517,7 @@
     border-top-color: var(--primary);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-    margin-bottom: 10px;
+    margin-bottom: 24px;
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -545,7 +545,7 @@
 
   .eternal-quote {
     position: fixed;
-    bottom: 10px;
+    bottom: 24px;
     left: 0;
     right: 0;
     text-align: center;
@@ -596,7 +596,7 @@
   </div>
   <div class="user-cards">
     <div class="user-card erere" onclick="openDiaryList('erere')">
-      <div class="card-deco">🌸</div>
+      <div class="card-deco">☁️</div>
       <div class="card-name">而而</div>
       <div class="card-desc">老婆的日记本</div>
       <div class="card-count" id="erere-count">
@@ -629,6 +629,7 @@
   <div class="nav">
     <button class="back-btn" onclick="goList()">‹</button>
     <div class="nav-title" id="detail-nav-title">日记</div>
+    <button onclick="location.reload(true)" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:20px;cursor:pointer;color:var(--primary);padding:4px 8px;line-height:1;">↻</button>
   </div>
   <div id="diary-detail-content"></div>
 </div>
@@ -638,6 +639,7 @@
   <div class="nav">
     <button class="back-btn" onclick="goList()">✕</button>
     <div class="nav-title">写日记</div>
+    <button onclick="location.reload(true)" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:20px;cursor:pointer;color:var(--primary);padding:4px 8px;line-height:1;">↻</button>
   </div>
   <div class="write-form">
     <div class="who-write-select">
@@ -882,8 +884,8 @@ async function openDetail(date) {
         <div class="detail-content">${diary.content || ''}</div>
         <hr class="detail-divider">
         <div class="detail-actions">
-          <button class="action-btn edit" onclick="editDiary()">✏️ 编辑</button>
-          <button class="action-btn delete" onclick="deleteDiary()">🗑️ 删除</button>
+          <button class="action-btn edit" onclick="editDiary()">编辑</button>
+          <button class="action-btn delete" onclick="deleteDiary()">删除</button>
         </div>
       <div class="comments-section">
           <h3>留言 ${comments.length > 0 ? `(${comments.length})` : ''}</h3>
@@ -913,9 +915,8 @@ function editDiary() {
   document.getElementById('write-title').value = currentDiary.title || '';
   document.getElementById('write-content').value = currentDiary.content || '';
   setWriteAs(currentDiary.user);
-  document.querySelectorAll('.mood-option').forEach(el => {
-    el.classList.toggle('selected', el.textContent === currentDiary.mood);
-  });
+  const moodInput = document.getElementById('mood-input');
+  if (moodInput) moodInput.value = currentDiary.mood || '';
   document.querySelector('.who-write-btn.' + currentDiary.user).click();
 }
 
@@ -964,7 +965,7 @@ function openWrite() {
   document.getElementById('write-date').value = formatDate(new Date(), 'input');
   document.getElementById('write-title').value = '';
   document.getElementById('write-content').value = '';
-  document.querySelectorAll('.mood-option').forEach((e,i) => e.classList.toggle('selected', i===0));
+  const mi = document.getElementById('mood-input'); if(mi) mi.value = '';
   setWriteAs(currentUser);
 }
 
@@ -978,7 +979,7 @@ async function saveDiary() {
   const date = document.getElementById('write-date').value;
   const title = document.getElementById('write-title').value.trim();
   const content = document.getElementById('write-content').value.trim();
-  const mood = document.querySelector('.mood-option.selected')?.textContent || '';
+  const mood = document.getElementById('mood-input')?.value.trim() || '';
 
   if (!date) { showToast('请选择日期'); return; }
   if (!content) { showToast('日记内容不能为空哦'); return; }
