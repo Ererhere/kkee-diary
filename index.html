@@ -671,6 +671,15 @@ function formatTime(isoStr) {
   return `${formatDate(d,'short')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
+function formatFileName(name) {
+  const parts = name.split('_');
+  const datePart = parts[0].replace(/-/g,'.');
+  if (parts[1]) {
+    return `${datePart} ${parts[1].slice(0,2)}:${parts[1].slice(2,4)}`;
+  }
+  return datePart;
+}
+
 function initMoodPicker() {
   const picker = document.getElementById('mood-picker');
   MOODS.forEach(mood => {
@@ -782,7 +791,7 @@ async function openDiaryList(user) {
       const commentCount = (diary.comments || []).length;
       html += `
         <div class="diary-item" onclick="openDetail('${dates[i]}')">
-          <div class="diary-item-date">${dates[i].replace(/-/g,'.')}</div>
+          <div class="diary-item-date">${formatFileName(dates[i])}</div>
           ${diary.mood ? `<div class="mood-tag">${diary.mood}</div>` : ''}
           <div class="diary-item-title">${diary.title || '无题'}</div>
           <div class="diary-item-preview">${preview || '（无内容）'}</div>
@@ -821,7 +830,7 @@ async function openDetail(date) {
 
     content.innerHTML = `
       <div class="diary-detail">
-        <div class="detail-date">${date.replace(/-/g,'.')}</div>
+        <div class="detail-date">${formatFileName(date)}</div>
         ${diary.mood ? `<div class="detail-mood">${diary.mood}</div>` : ''}
         <div class="detail-title">${diary.title || '无题'}</div>
         <div class="detail-content">${diary.content || ''}</div>
@@ -904,12 +913,15 @@ async function saveDiary() {
   btn.textContent = '保存中…';
 
   try {
-    const existing = await loadDiary(writeAs, date);
+    const now = new Date();
+    const hhmm = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
+    const fileName = `${date}_${hhmm}`;
+    const existing = await loadDiary(writeAs, fileName);
     const sha = existing?.sha;
     const existingComments = existing?.comments || [];
 
     const diaryObj = { date, author: writeAs, mood, title: title || '无题', content, comments: existingComments };
-    await saveDiaryData(writeAs, date, diaryObj, sha);
+    await saveDiaryData(writeAs, fileName, diaryObj, sha);
     showToast('日记保存成功 ♡');
     currentUser = writeAs;
     setTimeout(() => openDiaryList(writeAs), 800);
