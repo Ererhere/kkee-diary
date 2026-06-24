@@ -841,7 +841,7 @@ async function openDiaryList(user) {
       const commentCount = (diary.comments || []).length;
       html += `
         <div class="diary-item" onclick="openDetail('${dates[i]}')">
-          <div class="diary-item-date">${formatFileName(dates[i])}</div>
+          <div class="diary-item-date">${diary.createdAt ? formatTime(diary.createdAt) : formatFileName(dates[i])}</div>
           ${diary.mood ? `<div class="mood-tag">${diary.mood}</div>` : ''}
           <div class="diary-item-title">${diary.title || '无题'}</div>
           <div class="diary-item-preview">${preview || '（无内容）'}</div>
