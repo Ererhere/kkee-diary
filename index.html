@@ -880,7 +880,7 @@ async function openDetail(date) {
 
     content.innerHTML = `
       <div class="diary-detail">
-        <div class="detail-date">${formatFileName(date)}</div>
+        <div class="detail-date">${diary.createdAt ? formatTime(diary.createdAt) : formatFileName(date)}</div>
         ${diary.mood ? `<div class="detail-mood">${diary.mood}</div>` : ''}
         <div class="detail-title">${diary.title || '无题'}</div>
         <div class="detail-content">${diary.content || ''}</div>
@@ -991,12 +991,13 @@ async function saveDiary() {
   btn.textContent = '保存中…';
 
   try {
-    let fileName, fileSha, existingComments;
+    let fileName, fileSha, existingComments, existingCreatedAt;
     if (editingFileName) {
       fileName = editingFileName;
       const existing = await loadDiary(writeAs, fileName);
       fileSha = existing?.sha;
       existingComments = existing?.comments || [];
+      existingCreatedAt = existing?.createdAt;
       editingFileName = null;
     } else {
       const now = new Date();
@@ -1004,9 +1005,11 @@ async function saveDiary() {
       fileName = `${date}_${hhmm}`;
       fileSha = undefined;
       existingComments = [];
+      existingCreatedAt = null;
     }
 
-    const diaryObj = { date, author: writeAs, mood, title: title || '无题', content, comments: existingComments };
+    const createdAt = existingCreatedAt || new Date().toISOString();
+    const diaryObj = { date, author: writeAs, mood, title: title || '无题', content, comments: existingComments, createdAt };
     await saveDiaryData(writeAs, fileName, diaryObj, fileSha);
     showToast('日记保存成功 ♡');
     currentUser = writeAs;
