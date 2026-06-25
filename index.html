@@ -265,6 +265,20 @@
 
   .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
   .empty-state p { font-size: 14px; line-height: 1.6; }
+  .retry-tip { font-size: 15px; color: var(--text-light); margin-bottom: 20px; }
+  .retry-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-light);
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .retry-btn:hover { background: var(--bg-card); color: var(--text-main); }
 
   /* 日记详情页 */
   .diary-detail {
@@ -853,7 +867,7 @@ async function openDiaryList(user) {
     html += '</div>';
     content.innerHTML = html;
   } catch(e) {
-    content.innerHTML = `<div class="empty-state"><div class="empty-icon">😓</div><p>加载失败，请检查网络</p></div>`;
+    content.innerHTML = `<div class="empty-state"><p class="retry-tip">老婆再等一等</p><button class="retry-btn" onclick="openDiaryList(currentUser)">再试一次</button></div>`;
   }
 }
 
@@ -903,7 +917,7 @@ async function openDetail(date) {
         </div>
       </div>`;
   } catch(e) {
-    content.innerHTML = `<div class="empty-state"><div class="empty-icon">😓</div><p>加载失败</p></div>`;
+    content.innerHTML = `<div class="empty-state"><p class="retry-tip">老婆再等一等</p><button class="retry-btn" onclick="openDetail('${date}')">再试一次</button></div>`;
   }
 }
 
@@ -1045,3 +1059,4 @@ init();
 <div class="eternal-quote">Even if Everything resets — I will find my way back to you.</div>
 </body>
 </html>
+
