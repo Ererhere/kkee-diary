@@ -847,7 +847,10 @@ async function openDiaryList(user) {
       return;
     }
 
-    const diaries = await Promise.all(dates.map(d => loadDiary(user, d)));
+    const diaries = await Promise.all(dates.map(async d => {
+      try { return await loadDiary(user, d); }
+      catch(e) { return null; }
+    }));
 
     let html = '<div class="diary-list">';
     diaries.forEach((diary, i) => {
