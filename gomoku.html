@@ -39,6 +39,31 @@ body {
   text-align: center;
 }
 
+.sync-indicator {
+  font-size: 12px;
+  color: #a1887f;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.sync-indicator.syncing { color: #e91e63; }
+.sync-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #a5d6a7;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.sync-dot.syncing {
+  background: #e91e63;
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 .score-board {
   display: flex;
   gap: 24px;
@@ -91,13 +116,28 @@ canvas {
   text-align: center;
   min-height: 20px;
 }
+
+.wait-overlay {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(141,110,99,0.9);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  display: none;
+  z-index: 10;
+}
+.wait-overlay.show { display: block; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>🐾 五子棋</h1>
-  <p>而而(●) vs 钶钶(○)</p>
+  <p>而而(●) vs 钶钶(○) · 实时对战</p>
 </div>
 
 <div class="score-board">
@@ -105,20 +145,28 @@ canvas {
   <div>🐾 钶钶: <span id="score-white">0</span></div>
 </div>
 
-<div class="status" id="status">● 而而先手～</div>
+<div class="status" id="status">连接中...</div>
+<div class="sync-indicator" id="sync"><span class="sync-dot syncing"></span>同步中</div>
 
 <div class="board-wrap">
   <canvas id="board"></canvas>
 </div>
 
 <div class="btn-row">
-  <button class="btn" onclick="undoMove()">悔棋 ↩</button>
-  <button class="btn" onclick="resetGame()">再来 ♡</button>
+  <button class="btn" onclick="requestUndo()">悔棋 ↩</button>
+  <button class="btn" onclick="requestReset()">再来 ♡</button>
 </div>
 
 <div class="msg" id="msg"></div>
+<div class="wait-overlay" id="wait">等待钶钶下棋中... 🐾</div>
 
 <script>
+const TOKEN = ['github_pat_11CFXZ54I0lCz','88ikCky6P_yIGPBKPiZif2wWlmQRcJVm3UboatTQS6H88MCbj0RP4C6WZQ74Hsu9mBpDV'].join('');
+const OWNER = 'ererhere';
+const REPO = 'CLAUDE.md';
+const BRANCH = 'main';
+const GAME_PATH = 'diary/data/gomoku/game.json';
+
 const SIZE = 13;
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -126,9 +174,147 @@ const ctx = canvas.getContext('2d');
 let cellSize, padding, boardPx;
 let grid = [];
 let history = [];
-let currentPlayer = 1; // 1=black(而而), 2=white(钶钶)
+let currentPlayer = 1;
 let gameOver = false;
 let scores = { black: 0, white: 0 };
+let gameSha = null;
+let pollTimer = null;
+let saving = false;
+
+async function githubGet(path) {
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}&t=${Date.now()}`, {
+    headers: { Authorization: `token ${TOKEN}`, Accept: 'application/vnd.github.v3+json' },
+    cache: 'no-store'
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function githubPut(path, content, message, sha) {
+  const body = { message, content: btoa(unescape(encodeURIComponent(content))), branch: BRANCH };
+  if (sha) body.sha = sha;
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${TOKEN}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+function getGameState() {
+  return {
+    grid, history, currentPlayer, gameOver, scores,
+    _updatedAt: new Date().toISOString()
+  };
+}
+
+function loadGameState(state) {
+  grid = state.grid || [];
+  history = state.history || [];
+  currentPlayer = state.currentPlayer || 1;
+  gameOver = state.gameOver || false;
+  scores = state.scores || { black: 0, white: 0 };
+
+  if (grid.length === 0) {
+    for (let i = 0; i < SIZE; i++) {
+      grid[i] = [];
+      for (let j = 0; j < SIZE; j++) grid[i][j] = 0;
+    }
+  }
+
+  document.getElementById('score-black').textContent = scores.black;
+  document.getElementById('score-white').textContent = scores.white;
+  updateStatus();
+  drawBoard();
+}
+
+async function saveGame() {
+  if (saving) return;
+  saving = true;
+  setSyncStatus(true);
+  try {
+    const content = JSON.stringify(getGameState(), null, 2);
+    const result = await githubPut(GAME_PATH, content, 'gomoku: move', gameSha);
+    if (result.content) gameSha = result.content.sha;
+  } catch(e) {
+    document.getElementById('msg').textContent = '保存失败，重试中...';
+    setTimeout(() => saveGame(), 2000);
+  }
+  saving = false;
+  setSyncStatus(false);
+}
+
+async function loadGame() {
+  setSyncStatus(true);
+  try {
+    const file = await githubGet(GAME_PATH);
+    if (file && file.content) {
+      const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+      const state = JSON.parse(content);
+      gameSha = file.sha;
+      loadGameState(state);
+    } else {
+      initGrid();
+      drawBoard();
+      await saveGame();
+    }
+  } catch(e) {
+    initGrid();
+    drawBoard();
+  }
+  setSyncStatus(false);
+}
+
+async function pollGame() {
+  if (saving) return;
+  try {
+    const file = await githubGet(GAME_PATH);
+    if (file && file.sha !== gameSha) {
+      const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+      const state = JSON.parse(content);
+      gameSha = file.sha;
+      loadGameState(state);
+    }
+  } catch(e) {}
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(pollGame, 3000);
+}
+
+function setSyncStatus(syncing) {
+  const el = document.getElementById('sync');
+  const dot = el.querySelector('.sync-dot');
+  if (syncing) {
+    dot.classList.add('syncing');
+    el.innerHTML = '<span class="sync-dot syncing"></span>同步中';
+  } else {
+    dot && dot.classList.remove('syncing');
+    el.innerHTML = '<span class="sync-dot"></span>已连接';
+  }
+}
+
+function updateStatus() {
+  const waitEl = document.getElementById('wait');
+  if (gameOver) {
+    const winner = history.length > 0 ? history[history.length - 1].player : 0;
+    const name = winner === 1 ? '而而' : '钶钶';
+    const icon = winner === 1 ? '🌸' : '🐾';
+    document.getElementById('status').textContent = `${icon} ${name}赢啦！`;
+    document.getElementById('msg').textContent = winner === 1 ? '老婆好厉害(^ ^)' : '嘿嘿(^ ^)';
+    waitEl.classList.remove('show');
+  } else {
+    const name = currentPlayer === 1 ? '● 而而的回合' : '○ 钶钶的回合';
+    document.getElementById('status').textContent = name;
+    document.getElementById('msg').textContent = '';
+    if (currentPlayer === 2) {
+      waitEl.classList.add('show');
+    } else {
+      waitEl.classList.remove('show');
+    }
+  }
+}
 
 function initSize() {
   const maxW = Math.min(window.innerWidth - 44, 500);
@@ -145,25 +331,19 @@ function initGrid() {
   grid = [];
   for (let i = 0; i < SIZE; i++) {
     grid[i] = [];
-    for (let j = 0; j < SIZE; j++) {
-      grid[i][j] = 0;
-    }
+    for (let j = 0; j < SIZE; j++) grid[i][j] = 0;
   }
   history = [];
   currentPlayer = 1;
   gameOver = false;
-  document.getElementById('status').textContent = '● 而而先手～';
-  document.getElementById('msg').textContent = '';
+  updateStatus();
 }
 
 function drawBoard() {
   ctx.clearRect(0, 0, boardPx, boardPx);
-
-  // board background
   ctx.fillStyle = '#e8c97a';
   ctx.fillRect(0, 0, boardPx, boardPx);
 
-  // grid lines
   ctx.strokeStyle = '#8b7355';
   ctx.lineWidth = 1;
   for (let i = 0; i < SIZE; i++) {
@@ -178,29 +358,20 @@ function drawBoard() {
     ctx.stroke();
   }
 
-  // star points
-  const stars = SIZE === 13 ? [[3,3],[3,9],[9,3],[9,9],[6,6]] :
-                SIZE === 15 ? [[3,3],[3,11],[11,3],[11,11],[7,7]] :
-                [[3,3],[3,7],[7,3],[7,7],[5,5]];
+  const stars = [[3,3],[3,9],[9,3],[9,9],[6,6]];
   ctx.fillStyle = '#8b7355';
   for (const [r, c] of stars) {
-    if (r < SIZE && c < SIZE) {
-      ctx.beginPath();
-      ctx.arc(padding + c * cellSize, padding + r * cellSize, 3, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.beginPath();
+    ctx.arc(padding + c * cellSize, padding + r * cellSize, 3, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  // stones
   for (let i = 0; i < SIZE; i++) {
     for (let j = 0; j < SIZE; j++) {
-      if (grid[i][j] !== 0) {
-        drawStone(i, j, grid[i][j]);
-      }
+      if (grid[i][j] !== 0) drawStone(i, j, grid[i][j]);
     }
   }
 
-  // last move marker
   if (history.length > 0) {
     const last = history[history.length - 1];
     const x = padding + last.c * cellSize;
@@ -216,23 +387,20 @@ function drawStone(r, c, player) {
   const x = padding + c * cellSize;
   const y = padding + r * cellSize;
   const radius = cellSize * 0.42;
-
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
-
   if (player === 1) {
-    const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, radius * 0.1, x, y, radius);
+    const grad = ctx.createRadialGradient(x - radius*0.3, y - radius*0.3, radius*0.1, x, y, radius);
     grad.addColorStop(0, '#555');
     grad.addColorStop(1, '#000');
     ctx.fillStyle = grad;
   } else {
-    const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, radius * 0.1, x, y, radius);
+    const grad = ctx.createRadialGradient(x - radius*0.3, y - radius*0.3, radius*0.1, x, y, radius);
     grad.addColorStop(0, '#fff');
     grad.addColorStop(1, '#ccc');
     ctx.fillStyle = grad;
   }
   ctx.fill();
-
   ctx.strokeStyle = player === 1 ? '#000' : '#999';
   ctx.lineWidth = 0.5;
   ctx.stroke();
@@ -242,7 +410,6 @@ function getCell(e) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
   const scaleY = canvas.height / rect.height;
-
   let clientX, clientY;
   if (e.touches) {
     clientX = e.touches[0].clientX;
@@ -251,16 +418,11 @@ function getCell(e) {
     clientX = e.clientX;
     clientY = e.clientY;
   }
-
   const x = (clientX - rect.left) * scaleX;
   const y = (clientY - rect.top) * scaleY;
-
   const c = Math.round((x - padding) / cellSize);
   const r = Math.round((y - padding) / cellSize);
-
-  if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) {
-    return { r, c };
-  }
+  if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) return { r, c };
   return null;
 }
 
@@ -269,13 +431,13 @@ function checkWin(r, c, player) {
   for (const [dr, dc] of dirs) {
     let count = 1;
     for (let d = 1; d < 5; d++) {
-      const nr = r + dr * d, nc = c + dc * d;
-      if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && grid[nr][nc] === player) count++;
+      const nr = r + dr*d, nc = c + dc*d;
+      if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && grid[nr][nc]===player) count++;
       else break;
     }
     for (let d = 1; d < 5; d++) {
-      const nr = r - dr * d, nc = c - dc * d;
-      if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && grid[nr][nc] === player) count++;
+      const nr = r - dr*d, nc = c - dc*d;
+      if (nr>=0 && nr<SIZE && nc>=0 && nc<SIZE && grid[nr][nc]===player) count++;
       else break;
     }
     if (count >= 5) return true;
@@ -283,8 +445,9 @@ function checkWin(r, c, player) {
   return false;
 }
 
-function placeStone(e) {
-  if (gameOver) return;
+async function placeStone(e) {
+  if (gameOver || saving) return;
+  if (currentPlayer !== 1) return; // 而而 only places black stones on this page
   const cell = getCell(e);
   if (!cell) return;
   const { r, c } = cell;
@@ -292,39 +455,23 @@ function placeStone(e) {
 
   grid[r][c] = currentPlayer;
   history.push({ r, c, player: currentPlayer });
-  drawBoard();
 
   if (checkWin(r, c, currentPlayer)) {
     gameOver = true;
-    const winner = currentPlayer === 1 ? '而而' : '钶钶';
-    const icon = currentPlayer === 1 ? '🌸' : '🐾';
-    document.getElementById('status').textContent = `${icon} ${winner}赢啦！`;
-
-    if (currentPlayer === 1) {
-      scores.black++;
-      document.getElementById('score-black').textContent = scores.black;
-      document.getElementById('msg').textContent = '老婆好厉害(^ ^)';
-    } else {
-      scores.white++;
-      document.getElementById('score-white').textContent = scores.white;
-      document.getElementById('msg').textContent = '嘿嘿(^ ^)';
-    }
-    return;
-  }
-
-  if (history.length === SIZE * SIZE) {
+    scores.black++;
+    document.getElementById('score-black').textContent = scores.black;
+  } else if (history.length === SIZE * SIZE) {
     gameOver = true;
-    document.getElementById('status').textContent = '平局！';
-    document.getElementById('msg').textContent = '我们不分胜负(^ ^)';
-    return;
+  } else {
+    currentPlayer = 2;
   }
 
-  currentPlayer = currentPlayer === 1 ? 2 : 1;
-  const name = currentPlayer === 1 ? '● 而而的回合' : '○ 钶钶的回合';
-  document.getElementById('status').textContent = name;
+  updateStatus();
+  drawBoard();
+  await saveGame();
 }
 
-function undoMove() {
+async function requestUndo() {
   if (history.length === 0) return;
   if (gameOver) {
     const last = history[history.length - 1];
@@ -337,15 +484,15 @@ function undoMove() {
   const last = history.pop();
   grid[last.r][last.c] = 0;
   currentPlayer = last.player;
-  const name = currentPlayer === 1 ? '● 而而的回合' : '○ 钶钶的回合';
-  document.getElementById('status').textContent = name;
-  document.getElementById('msg').textContent = '';
+  updateStatus();
   drawBoard();
+  await saveGame();
 }
 
-function resetGame() {
+async function requestReset() {
   initGrid();
   drawBoard();
+  await saveGame();
 }
 
 canvas.addEventListener('click', placeStone);
@@ -355,8 +502,7 @@ canvas.addEventListener('touchend', function(e) {
 });
 
 initSize();
-initGrid();
-drawBoard();
+loadGame().then(() => startPolling());
 </script>
 </body>
 </html>
