@@ -706,15 +706,110 @@ textarea.text-input { min-height: 80px; resize: vertical; }
 </div>
 
 <script>
+const TOKEN = ['github_pat_11CFXZ54I0lCz','88ikCky6P_yIGPBKPiZif2wWlmQRcJVm3UboatTQS6H88MCbj0RP4C6WZQ74Hsu9mBpDV'].join('');
+const OWNER = 'ererhere';
+const REPO = 'CLAUDE.md';
+const BRANCH = 'main';
+const XP_PATH = 'diary/data/xp-survey';
+
 let currentUser = null;
 const data = {};
+const shas = {};
+
+async function githubGet(path) {
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}?ref=${BRANCH}`, {
+    headers: { Authorization: `token ${TOKEN}`, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function githubPut(path, content, message, sha) {
+  const body = { message, content: btoa(unescape(encodeURIComponent(content))), branch: BRANCH };
+  if (sha) body.sha = sha;
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${TOKEN}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function loadSavedData() {
+  for (const user of ['erere', 'keke']) {
+    try {
+      const file = await githubGet(`${XP_PATH}/${user}.json`);
+      if (file && file.content) {
+        const content = decodeURIComponent(escape(atob(file.content.replace(/\n/g, ''))));
+        data[user] = JSON.parse(content);
+        shas[user] = file.sha;
+      }
+    } catch(e) {}
+  }
+  updateHomeStatus();
+}
+
+function updateHomeStatus() {
+  const names = { erere: '而而', keke: '钶钶' };
+  for (const user of ['erere', 'keke']) {
+    const btn = document.querySelector(`.user-btn[onclick="selectUser('${user}')"]`);
+    if (data[user]) {
+      btn.innerHTML = `${user === 'erere' ? '🌸' : '🐾'} ${names[user]} ✅`;
+    }
+  }
+  if (data.erere && data.keke) {
+    let viewBtn = document.getElementById('view-compare-btn');
+    if (!viewBtn) {
+      viewBtn = document.createElement('button');
+      viewBtn.id = 'view-compare-btn';
+      viewBtn.className = 'submit-btn';
+      viewBtn.style.marginTop = '12px';
+      viewBtn.textContent = '查看匹配报告 💕';
+      viewBtn.onclick = showCompare;
+      document.querySelector('.user-select').after(viewBtn);
+    }
+  }
+}
 
 function selectUser(user) {
   currentUser = user;
   document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('active'));
   event.target.classList.add('active');
+  if (data[user]) {
+    restoreAnswers(data[user]);
+  }
   document.getElementById('survey-form').classList.remove('hidden');
   document.getElementById('survey-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function restoreAnswers(answers) {
+  document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.toggle').forEach(t => t.classList.remove('on'));
+
+  document.querySelectorAll('.options').forEach(group => {
+    const q = group.dataset.q;
+    if (answers[q]) {
+      const vals = answers[q];
+      group.querySelectorAll('.opt-btn').forEach(b => {
+        if (vals.includes(b.textContent)) b.classList.add('selected');
+      });
+    }
+  });
+
+  document.querySelectorAll('input[type=range]').forEach(slider => {
+    if (answers[slider.dataset.q]) {
+      slider.value = answers[slider.dataset.q];
+      slider.parentElement.querySelector('.slider-label').textContent = answers[slider.dataset.q];
+    }
+  });
+
+  document.querySelectorAll('.toggle').forEach(toggle => {
+    if (answers[toggle.dataset.q]) toggle.classList.add('on');
+  });
+
+  document.querySelectorAll('.text-input').forEach(input => {
+    if (answers[input.dataset.q]) input.value = answers[input.dataset.q];
+  });
 }
 
 function toggleOpt(el) {
@@ -760,14 +855,37 @@ function collectAnswers() {
   return answers;
 }
 
-function submitSurvey() {
+async function submitSurvey() {
   if (!currentUser) return alert('请先选择你是谁！');
+
+  const btn = document.querySelector('.submit-btn');
+  btn.textContent = '保存中...';
+  btn.disabled = true;
+
   const answers = collectAnswers();
+  answers._updatedAt = new Date().toISOString();
   data[currentUser] = answers;
 
   try {
-    localStorage.setItem('xp-survey-' + currentUser, JSON.stringify(answers));
-  } catch(e) {}
+    const content = JSON.stringify(answers, null, 2);
+    const result = await githubPut(
+      `${XP_PATH}/${currentUser}.json`,
+      content,
+      `xp-survey: update ${currentUser}`,
+      shas[currentUser]
+    );
+    if (result.content) shas[currentUser] = result.content.sha;
+  } catch(e) {
+    alert('保存失败，请重试');
+    btn.textContent = '提交我的回答 💕';
+    btn.disabled = false;
+    return;
+  }
+
+  btn.textContent = '已保存 ✅';
+  setTimeout(() => { btn.textContent = '提交我的回答 💕'; btn.disabled = false; }, 2000);
+
+  updateHomeStatus();
 
   if (data.erere && data.keke) {
     showCompare();
@@ -991,15 +1109,7 @@ function showHome() {
   window.scrollTo(0, 0);
 }
 
-// 加载已有数据
-try {
-  const eData = localStorage.getItem('xp-survey-erere');
-  const kData = localStorage.getItem('xp-survey-keke');
-  if (eData) data.erere = JSON.parse(eData);
-  if (kData) data.keke = JSON.parse(kData);
-} catch(e) {}
-
-init();
+loadSavedData();
 </script>
 </body>
 </html>
