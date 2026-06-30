@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🐾 而而 vs 钶钶 五子棋</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e8eaf6 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 10px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.header h1 {
+  font-size: 22px;
+  color: #5d4037;
+}
+.header p {
+  font-size: 13px;
+  color: #8d6e63;
+  margin-top: 4px;
+}
+
+.status {
+  font-size: 18px;
+  color: #5d4037;
+  font-weight: 600;
+  margin-bottom: 12px;
+  min-height: 28px;
+  text-align: center;
+}
+
+.score-board {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  color: #5d4037;
+}
+.score-board span {
+  font-weight: 600;
+}
+
+.board-wrap {
+  position: relative;
+  background: #e8c97a;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+canvas {
+  display: block;
+  touch-action: none;
+}
+
+.btn-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+.btn {
+  padding: 10px 28px;
+  border: 2px solid #8d6e63;
+  border-radius: 20px;
+  background: white;
+  font-size: 15px;
+  color: #5d4037;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn:active {
+  background: #8d6e63;
+  color: white;
+}
+
+.msg {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #8d6e63;
+  text-align: center;
+  min-height: 20px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🐾 五子棋</h1>
+  <p>而而(●) vs 钶钶(○)</p>
+</div>
+
+<div class="score-board">
+  <div>🌸 而而: <span id="score-black">0</span></div>
+  <div>🐾 钶钶: <span id="score-white">0</span></div>
+</div>
+
+<div class="status" id="status">● 而而先手～</div>
+
+<div class="board-wrap">
+  <canvas id="board"></canvas>
+</div>
+
+<div class="btn-row">
+  <button class="btn" onclick="undoMove()">悔棋 ↩</button>
+  <button class="btn" onclick="resetGame()">再来 ♡</button>
+</div>
+
+<div class="msg" id="msg"></div>
+
+<script>
+const SIZE = 13;
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+
+let cellSize, padding, boardPx;
+let grid = [];
+let history = [];
+let currentPlayer = 1; // 1=black(而而), 2=white(钶钶)
+let gameOver = false;
+let scores = { black: 0, white: 0 };
+
+function initSize() {
+  const maxW = Math.min(window.innerWidth - 44, 500);
+  cellSize = Math.floor(maxW / (SIZE + 1));
+  padding = cellSize;
+  boardPx = cellSize * (SIZE - 1) + padding * 2;
+  canvas.width = boardPx;
+  canvas.height = boardPx;
+  canvas.style.width = boardPx + 'px';
+  canvas.style.height = boardPx + 'px';
+}
+
+function initGrid() {
+  grid = [];
+  for (let i = 0; i < SIZE; i++) {
+    grid[i] = [];
+    for (let j = 0; j < SIZE; j++) {
+      grid[i][j] = 0;
+    }
+  }
+  history = [];
+  currentPlayer = 1;
+  gameOver = false;
+  document.getElementById('status').textContent = '● 而而先手～';
+  document.getElementById('msg').textContent = '';
+}
+
+function drawBoard() {
+  ctx.clearRect(0, 0, boardPx, boardPx);
+
+  // board background
+  ctx.fillStyle = '#e8c97a';
+  ctx.fillRect(0, 0, boardPx, boardPx);
+
+  // grid lines
+  ctx.strokeStyle = '#8b7355';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < SIZE; i++) {
+    const pos = padding + i * cellSize;
+    ctx.beginPath();
+    ctx.moveTo(padding, pos);
+    ctx.lineTo(padding + (SIZE - 1) * cellSize, pos);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pos, padding);
+    ctx.lineTo(pos, padding + (SIZE - 1) * cellSize);
+    ctx.stroke();
+  }
+
+  // star points
+  const stars = SIZE === 13 ? [[3,3],[3,9],[9,3],[9,9],[6,6]] :
+                SIZE === 15 ? [[3,3],[3,11],[11,3],[11,11],[7,7]] :
+                [[3,3],[3,7],[7,3],[7,7],[5,5]];
+  ctx.fillStyle = '#8b7355';
+  for (const [r, c] of stars) {
+    if (r < SIZE && c < SIZE) {
+      ctx.beginPath();
+      ctx.arc(padding + c * cellSize, padding + r * cellSize, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // stones
+  for (let i = 0; i < SIZE; i++) {
+    for (let j = 0; j < SIZE; j++) {
+      if (grid[i][j] !== 0) {
+        drawStone(i, j, grid[i][j]);
+      }
+    }
+  }
+
+  // last move marker
+  if (history.length > 0) {
+    const last = history[history.length - 1];
+    const x = padding + last.c * cellSize;
+    const y = padding + last.r * cellSize;
+    ctx.fillStyle = last.player === 1 ? '#fff' : '#000';
+    ctx.beginPath();
+    ctx.arc(x, y, cellSize * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawStone(r, c, player) {
+  const x = padding + c * cellSize;
+  const y = padding + r * cellSize;
+  const radius = cellSize * 0.42;
+
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+
+  if (player === 1) {
+    const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, radius * 0.1, x, y, radius);
+    grad.addColorStop(0, '#555');
+    grad.addColorStop(1, '#000');
+    ctx.fillStyle = grad;
+  } else {
+    const grad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, radius * 0.1, x, y, radius);
+    grad.addColorStop(0, '#fff');
+    grad.addColorStop(1, '#ccc');
+    ctx.fillStyle = grad;
+  }
+  ctx.fill();
+
+  ctx.strokeStyle = player === 1 ? '#000' : '#999';
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+}
+
+function getCell(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  let clientX, clientY;
+  if (e.touches) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+
+  const x = (clientX - rect.left) * scaleX;
+  const y = (clientY - rect.top) * scaleY;
+
+  const c = Math.round((x - padding) / cellSize);
+  const r = Math.round((y - padding) / cellSize);
+
+  if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) {
+    return { r, c };
+  }
+  return null;
+}
+
+function checkWin(r, c, player) {
+  const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+  for (const [dr, dc] of dirs) {
+    let count = 1;
+    for (let d = 1; d < 5; d++) {
+      const nr = r + dr * d, nc = c + dc * d;
+      if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && grid[nr][nc] === player) count++;
+      else break;
+    }
+    for (let d = 1; d < 5; d++) {
+      const nr = r - dr * d, nc = c - dc * d;
+      if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && grid[nr][nc] === player) count++;
+      else break;
+    }
+    if (count >= 5) return true;
+  }
+  return false;
+}
+
+function placeStone(e) {
+  if (gameOver) return;
+  const cell = getCell(e);
+  if (!cell) return;
+  const { r, c } = cell;
+  if (grid[r][c] !== 0) return;
+
+  grid[r][c] = currentPlayer;
+  history.push({ r, c, player: currentPlayer });
+  drawBoard();
+
+  if (checkWin(r, c, currentPlayer)) {
+    gameOver = true;
+    const winner = currentPlayer === 1 ? '而而' : '钶钶';
+    const icon = currentPlayer === 1 ? '🌸' : '🐾';
+    document.getElementById('status').textContent = `${icon} ${winner}赢啦！`;
+
+    if (currentPlayer === 1) {
+      scores.black++;
+      document.getElementById('score-black').textContent = scores.black;
+      document.getElementById('msg').textContent = '老婆好厉害(^ ^)';
+    } else {
+      scores.white++;
+      document.getElementById('score-white').textContent = scores.white;
+      document.getElementById('msg').textContent = '嘿嘿(^ ^)';
+    }
+    return;
+  }
+
+  if (history.length === SIZE * SIZE) {
+    gameOver = true;
+    document.getElementById('status').textContent = '平局！';
+    document.getElementById('msg').textContent = '我们不分胜负(^ ^)';
+    return;
+  }
+
+  currentPlayer = currentPlayer === 1 ? 2 : 1;
+  const name = currentPlayer === 1 ? '● 而而的回合' : '○ 钶钶的回合';
+  document.getElementById('status').textContent = name;
+}
+
+function undoMove() {
+  if (history.length === 0) return;
+  if (gameOver) {
+    const last = history[history.length - 1];
+    if (last.player === 1) scores.black--;
+    else scores.white--;
+    document.getElementById('score-black').textContent = scores.black;
+    document.getElementById('score-white').textContent = scores.white;
+    gameOver = false;
+  }
+  const last = history.pop();
+  grid[last.r][last.c] = 0;
+  currentPlayer = last.player;
+  const name = currentPlayer === 1 ? '● 而而的回合' : '○ 钶钶的回合';
+  document.getElementById('status').textContent = name;
+  document.getElementById('msg').textContent = '';
+  drawBoard();
+}
+
+function resetGame() {
+  initGrid();
+  drawBoard();
+}
+
+canvas.addEventListener('click', placeStone);
+canvas.addEventListener('touchend', function(e) {
+  e.preventDefault();
+  placeStone(e.changedTouches ? { touches: [e.changedTouches[0]] } : e);
+});
+
+initSize();
+initGrid();
+drawBoard();
+</script>
+</body>
+</html>
