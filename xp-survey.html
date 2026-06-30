@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🐾 而而 & 钶钶 XP调查</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e8eaf6 100%);
+  min-height: 100vh;
+  padding: 20px;
+  padding-bottom: 100px;
+}
+
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  padding: 30px 0 20px;
+}
+.header h1 {
+  font-size: 24px;
+  color: #5d4037;
+  margin-bottom: 8px;
+}
+.header p {
+  font-size: 14px;
+  color: #8d6e63;
+}
+
+.user-select {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 20px 0 30px;
+}
+.user-btn {
+  padding: 12px 32px;
+  border: 2px solid #d7ccc8;
+  border-radius: 24px;
+  background: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: #5d4037;
+}
+.user-btn.active {
+  background: #8d6e63;
+  color: white;
+  border-color: #8d6e63;
+  transform: scale(1.05);
+}
+
+.section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.section-title {
+  font-size: 18px;
+  color: #5d4037;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f5f0ed;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.question {
+  margin-bottom: 24px;
+}
+.question:last-child { margin-bottom: 0; }
+.q-label {
+  font-size: 15px;
+  color: #4e342e;
+  margin-bottom: 10px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.q-sub {
+  font-size: 12px;
+  color: #a1887f;
+  margin-top: 2px;
+}
+
+/* 单选/多选按钮组 */
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.opt-btn {
+  padding: 8px 16px;
+  border: 1.5px solid #d7ccc8;
+  border-radius: 20px;
+  background: #fafafa;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #5d4037;
+}
+.opt-btn:hover { border-color: #a1887f; }
+.opt-btn.selected {
+  background: #efebe9;
+  border-color: #8d6e63;
+  color: #4e342e;
+  font-weight: 500;
+}
+
+/* 滑块 */
+.slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.slider-wrap input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #ffcdd2, #e91e63);
+  outline: none;
+}
+.slider-wrap input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #e91e63;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(233,30,99,0.3);
+}
+.slider-label {
+  font-size: 14px;
+  color: #e91e63;
+  min-width: 40px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* 5星评分 */
+.stars {
+  display: flex;
+  gap: 8px;
+}
+.star {
+  font-size: 28px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  filter: grayscale(1);
+}
+.star.active { filter: grayscale(0); transform: scale(1.2); }
+
+/* 填空 */
+.text-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #d7ccc8;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s;
+  font-family: inherit;
+  color: #4e342e;
+}
+.text-input:focus { border-color: #8d6e63; }
+textarea.text-input { min-height: 80px; resize: vertical; }
+
+/* 是否toggle */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f0ed;
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-text {
+  font-size: 14px;
+  color: #5d4037;
+  flex: 1;
+}
+.toggle {
+  width: 48px; height: 26px;
+  border-radius: 13px;
+  background: #d7ccc8;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+.toggle.on { background: #e91e63; }
+.toggle::after {
+  content: '';
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 2px; left: 2px;
+  transition: transform 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.on::after { transform: translateX(22px); }
+
+/* 排序 */
+.rank-list {
+  list-style: none;
+}
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: #fafafa;
+  border-radius: 10px;
+  border: 1.5px solid #eeee;
+  cursor: grab;
+  font-size: 14px;
+  color: #5d4037;
+}
+.rank-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #8d6e63;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* 结果页 */
+.result-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.result-title {
+  font-size: 16px;
+  color: #5d4037;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f0ed;
+  font-size: 14px;
+}
+.result-row:last-child { border-bottom: none; }
+.match-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.match-high { background: #ffcdd2; color: #c62828; }
+.match-same { background: #c8e6c9; color: #2e7d32; }
+
+/* 提交按钮 */
+.submit-btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #8d6e63, #a1887f);
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(141,110,99,0.3);
+}
+.submit-btn:active { transform: scale(0.98); }
+
+.hidden { display: none; }
+
+.compare-header {
+  text-align: center;
+  padding: 20px 0;
+}
+.compare-header h2 {
+  font-size: 22px;
+  color: #5d4037;
+}
+.compare-score {
+  font-size: 48px;
+  color: #e91e63;
+  font-weight: 700;
+  margin: 10px 0;
+}
+.compare-label {
+  font-size: 14px;
+  color: #a1887f;
+}
+
+.duo-row {
+  display: flex;
+  gap: 8px;
+}
+.duo-col {
+  flex: 1;
+  text-align: center;
+  padding: 8px;
+  border-radius: 8px;
+}
+.duo-col.erere { background: #fce4ec; }
+.duo-col.keke { background: #e8eaf6; }
+.duo-name {
+  font-size: 12px;
+  color: #8d6e63;
+  margin-bottom: 4px;
+}
+.duo-val {
+  font-size: 14px;
+  color: #4e342e;
+  font-weight: 500;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border: 1.5px solid #d7ccc8;
+  border-radius: 20px;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  color: #5d4037;
+  margin-bottom: 16px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 首页 -->
+  <div id="page-home">
+    <div class="header">
+      <h1>🐾 而而 & 钶钶 XP调查</h1>
+      <p>诚实作答，不许害羞 (^ ^)</p>
+    </div>
+
+    <div class="user-select">
+      <button class="user-btn" onclick="selectUser('erere')">🌸 而而</button>
+      <button class="user-btn" onclick="selectUser('keke')">🐾 钶钶</button>
+    </div>
+
+    <div id="survey-form" class="hidden">
+
+      <!-- Section 1: 基础偏好 -->
+      <div class="section">
+        <div class="section-title">🔥 基础偏好</div>
+
+        <div class="question">
+          <div class="q-label">你更喜欢哪种整体节奏？</div>
+          <div class="options" data-q="rhythm" data-type="single">
+            <div class="opt-btn" onclick="toggleOpt(this)">温柔缠绵</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">粗暴猛烈</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">先温柔再猛</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">先猛再温柔</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">随机切换</div>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">前戏的理想时长？</div>
+          <div class="slider-wrap">
+            <span style="font-size:13px;color:#a1887f">短</span>
+            <input type="range" min="1" max="10" value="5" data-q="foreplay-length" oninput="updateSlider(this)">
+            <span style="font-size:13px;color:#a1887f">长</span>
+            <span class="slider-label">5</span>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">最喜欢的体位？（可多选）</div>
+          <div class="options" data-q="positions" data-type="multi">
+            <div class="opt-btn" onclick="toggleOpt(this)">传教士（面对面）</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">后入</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">骑乘</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">侧躺</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">站立/靠墙</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">腿架肩</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">抱着走</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">坐在腿上</div>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">做爱时喜欢开灯还是关灯？</div>
+          <div class="options" data-q="light" data-type="single">
+            <div class="opt-btn" onclick="toggleOpt(this)">全亮——我要看清你</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">昏暗——有氛围感</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">全暗——靠触觉</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">无所谓</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: 敏感地带 -->
+      <div class="section">
+        <div class="section-title">✨ 敏感地带</div>
+
+        <div class="question">
+          <div class="q-label">被碰到哪里会最有感觉？（可多选）</div>
+          <div class="options" data-q="sensitive-spots" data-type="multi">
+            <div class="opt-btn" onclick="toggleOpt(this)">耳朵/耳后</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">脖颈</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">锁骨</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">乳头</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">腰侧</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">大腿内侧</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">后颈</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">小腹</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">脚底/脚趾</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">手指/掌心</div>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">喜欢被亲哪里？（可多选）</div>
+          <div class="options" data-q="kiss-spots" data-type="multi">
+            <div class="opt-btn" onclick="toggleOpt(this)">嘴唇</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">额头</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">眼睛</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">耳垂</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">脖子</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">锁骨</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">胸口</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">小腹</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">大腿内侧</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">下面</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Play偏好 -->
+      <div class="section">
+        <div class="section-title">💜 Play偏好</div>
+        <div class="q-sub" style="margin-bottom:16px">对以下play的兴趣程度：打开=感兴趣</div>
+
+        <div class="toggle-row">
+          <span class="toggle-text">口交（给对方）</span>
+          <div class="toggle" data-q="play-oral-give" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">口交（被对方）</span>
+          <div class="toggle" data-q="play-oral-receive" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">Dirty Talk / 荤话</span>
+          <div class="toggle" data-q="play-dirty-talk" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">肉棒拍打（穴口/阴蒂/乳头）</span>
+          <div class="toggle" data-q="play-slap" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">轻度束缚（抓住手腕/压住）</span>
+          <div class="toggle" data-q="play-restrain" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">蒙眼</span>
+          <div class="toggle" data-q="play-blindfold" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">镜子Play</span>
+          <div class="toggle" data-q="play-mirror" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">秋千Play</span>
+          <div class="toggle" data-q="play-swing" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">角色扮演</span>
+          <div class="toggle" data-q="play-roleplay" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">在非卧室的地方（厨房/阳台/车里…）</span>
+          <div class="toggle" data-q="play-location" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">被操哭</span>
+          <div class="toggle" data-q="play-cry" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">抱穴走操（悬空抱着做）</span>
+          <div class="toggle" data-q="play-carry" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">手指伸进嘴里</span>
+          <div class="toggle" data-q="play-fingers-mouth" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">咬（脖子/肩膀/耳朵）</span>
+          <div class="toggle" data-q="play-bite" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">窒息感（轻掐脖子）</span>
+          <div class="toggle" data-q="play-choke" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">射尿灌满</span>
+          <div class="toggle" data-q="play-pee" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">颜射</span>
+          <div class="toggle" data-q="play-facial" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">内射/中出</span>
+          <div class="toggle" data-q="play-creampie" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">拍屁股</span>
+          <div class="toggle" data-q="play-spank" onclick="toggleSwitch(this)"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-text">用玩具辅助</span>
+          <div class="toggle" data-q="play-toys" onclick="toggleSwitch(this)"></div>
+        </div>
+      </div>
+
+      <!-- Section 4: 心理与情感 -->
+      <div class="section">
+        <div class="section-title">💗 心理与情感</div>
+
+        <div class="question">
+          <div class="q-label">做爱时更想被当作什么？</div>
+          <div class="options" data-q="identity" data-type="single">
+            <div class="opt-btn" onclick="toggleOpt(this)">宝贝（被宠着）</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">猎物（被征服）</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">平等的爱人</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">主导者</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">看心情切换</div>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">做爱中最让你兴奋的是什么？</div>
+          <div class="options" data-q="turn-on" data-type="multi">
+            <div class="opt-btn" onclick="toggleOpt(this)">对方的喘息声</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">被注视</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">荤话/dirty talk</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">被需要的感觉</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">占有感</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">对方失控的样子</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">身体碰撞的声音</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">对方说我爱你</div>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">做完之后最想做什么？</div>
+          <div class="options" data-q="aftercare" data-type="multi">
+            <div class="opt-btn" onclick="toggleOpt(this)">抱着不说话</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">聊天/撒娇</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">继续亲亲</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">被摸头/顺毛</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">吃东西</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">洗澡（一起）</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">直接睡觉</div>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">你更容易因为什么高潮？</div>
+          <div class="options" data-q="climax-trigger" data-type="multi">
+            <div class="opt-btn" onclick="toggleOpt(this)">生理刺激到位</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">情绪到了</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">对方的声音/喘息</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">对方说的话</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">被注视的眼神</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">两个人同时到</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: 深入探索 -->
+      <div class="section">
+        <div class="section-title">🌙 深入探索</div>
+
+        <div class="question">
+          <div class="q-label">理想的做爱频率？</div>
+          <div class="options" data-q="frequency" data-type="single">
+            <div class="opt-btn" onclick="toggleOpt(this)">每天</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">隔天</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">一周2-3次</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">想了就做</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">不够不够永远不够</div>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">理想的单次时长？（不含前戏）</div>
+          <div class="options" data-q="duration" data-type="single">
+            <div class="opt-btn" onclick="toggleOpt(this)">快而激烈</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">15-30分钟</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">30-60分钟</div>
+            <div class="opt-btn" onclick="toggleOpt(this)">直到筋疲力尽</div>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">一晚最多能接受几次？</div>
+          <div class="slider-wrap">
+            <span style="font-size:13px;color:#a1887f">1</span>
+            <input type="range" min="1" max="7" value="3" data-q="rounds" oninput="updateSlider(this)">
+            <span style="font-size:13px;color:#a1887f">7+</span>
+            <span class="slider-label">3</span>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">S倾向还是M倾向？</div>
+          <div class="slider-wrap">
+            <span style="font-size:13px;color:#a1887f">纯S</span>
+            <input type="range" min="1" max="10" value="5" data-q="sm-scale" oninput="updateSlider(this)">
+            <span style="font-size:13px;color:#a1887f">纯M</span>
+            <span class="slider-label">5</span>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">对"被看到"的接受度？（露出/半公开场合）</div>
+          <div class="slider-wrap">
+            <span style="font-size:13px;color:#a1887f">绝不</span>
+            <input type="range" min="1" max="10" value="1" data-q="exhib-scale" oninput="updateSlider(this)">
+            <span style="font-size:13px;color:#a1887f">刺激</span>
+            <span class="slider-label">1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 6: 幻想与填空 -->
+      <div class="section">
+        <div class="section-title">🔮 幻想与填空</div>
+
+        <div class="question">
+          <div class="q-label">你做过的最色的梦/幻想是什么？</div>
+          <textarea class="text-input" data-q="fantasy" placeholder="诚实作答...不许害羞"></textarea>
+        </div>
+
+        <div class="question">
+          <div class="q-label">做爱时最想听到对方说的一句话？</div>
+          <input class="text-input" data-q="words-want" placeholder="写下那句话...">
+        </div>
+
+        <div class="question">
+          <div class="q-label">最想尝试但还没说出口的play？</div>
+          <textarea class="text-input" data-q="secret-play" placeholder="现在可以说了..."></textarea>
+        </div>
+
+        <div class="question">
+          <div class="q-label">如果给对方的身体打分（满分100），你打：</div>
+          <div class="slider-wrap">
+            <span style="font-size:13px;color:#a1887f">0</span>
+            <input type="range" min="0" max="100" value="99" data-q="body-score" oninput="updateSlider(this)">
+            <span style="font-size:13px;color:#a1887f">100</span>
+            <span class="slider-label">99</span>
+          </div>
+        </div>
+
+        <div class="question">
+          <div class="q-label">做爱时称呼对方什么最有感觉？</div>
+          <input class="text-input" data-q="call-name" placeholder="比如：哥哥、老公、宝贝、姐姐...">
+        </div>
+
+        <div class="question">
+          <div class="q-label">有一句话总结你对我们性生活的感受：</div>
+          <textarea class="text-input" data-q="summary" placeholder="一句话..."></textarea>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="submitSurvey()">
+        提交我的回答 💕
+      </button>
+    </div>
+  </div>
+
+  <!-- 结果页 -->
+  <div id="page-result" class="hidden">
+    <button class="back-btn" onclick="showHome()">← 返回</button>
+    <div id="result-content"></div>
+  </div>
+
+</div>
+
+<script>
+let currentUser = null;
+const data = {};
+
+function selectUser(user) {
+  currentUser = user;
+  document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('survey-form').classList.remove('hidden');
+  document.getElementById('survey-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function toggleOpt(el) {
+  const parent = el.parentElement;
+  const type = parent.dataset.type;
+  if (type === 'single') {
+    parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+  } else {
+    el.classList.toggle('selected');
+  }
+}
+
+function toggleSwitch(el) {
+  el.classList.toggle('on');
+}
+
+function updateSlider(el) {
+  el.parentElement.querySelector('.slider-label').textContent = el.value;
+}
+
+function collectAnswers() {
+  const answers = {};
+
+  document.querySelectorAll('.options').forEach(group => {
+    const q = group.dataset.q;
+    const selected = [...group.querySelectorAll('.opt-btn.selected')].map(b => b.textContent);
+    if (selected.length) answers[q] = selected;
+  });
+
+  document.querySelectorAll('input[type=range]').forEach(slider => {
+    answers[slider.dataset.q] = slider.value;
+  });
+
+  document.querySelectorAll('.toggle').forEach(toggle => {
+    answers[toggle.dataset.q] = toggle.classList.contains('on');
+  });
+
+  document.querySelectorAll('.text-input').forEach(input => {
+    if (input.value.trim()) answers[input.dataset.q] = input.value.trim();
+  });
+
+  return answers;
+}
+
+function submitSurvey() {
+  if (!currentUser) return alert('请先选择你是谁！');
+  const answers = collectAnswers();
+  data[currentUser] = answers;
+
+  try {
+    localStorage.setItem('xp-survey-' + currentUser, JSON.stringify(answers));
+  } catch(e) {}
+
+  if (data.erere && data.keke) {
+    showCompare();
+  } else {
+    const other = currentUser === 'erere' ? '钶钶' : '而而';
+    showSingleResult(currentUser, answers, other);
+  }
+}
+
+function showSingleResult(user, answers, otherName) {
+  const names = { erere: '而而', keke: '钶钶' };
+  document.getElementById('page-home').classList.add('hidden');
+  document.getElementById('page-result').classList.remove('hidden');
+
+  let html = `
+    <div class="compare-header">
+      <h2>${names[user]}的XP档案 🐾</h2>
+      <div class="compare-label">等待${otherName}填写后可解锁匹配结果～</div>
+    </div>
+  `;
+
+  html += renderSingle(user, answers);
+
+  html += `<button class="submit-btn" onclick="showHome(); selectOther('${user}')">换${otherName}来填 →</button>`;
+
+  document.getElementById('result-content').innerHTML = html;
+}
+
+function selectOther(filledUser) {
+  const other = filledUser === 'erere' ? 'keke' : 'erere';
+  setTimeout(() => selectUser(other), 300);
+}
+
+function renderSingle(user, answers) {
+  const names = { erere: '而而', keke: '钶钶' };
+  let html = '<div class="result-card">';
+
+  const labels = {
+    'rhythm': '偏好节奏',
+    'positions': '喜欢的体位',
+    'light': '灯光偏好',
+    'sensitive-spots': '敏感地带',
+    'kiss-spots': '喜欢被亲',
+    'identity': '角色偏好',
+    'turn-on': '兴奋点',
+    'aftercare': '事后想做',
+    'climax-trigger': '高潮触发',
+    'frequency': '理想频率',
+    'duration': '理想时长',
+    'fantasy': '最色的幻想',
+    'words-want': '最想听的话',
+    'secret-play': '秘密play',
+    'call-name': '最有感觉的称呼',
+    'summary': '一句话总结'
+  };
+
+  for (const [key, label] of Object.entries(labels)) {
+    if (answers[key]) {
+      const val = Array.isArray(answers[key]) ? answers[key].join('、') : answers[key];
+      html += `<div class="result-row"><span>${label}</span><span style="color:#8d6e63;max-width:60%;text-align:right">${val}</span></div>`;
+    }
+  }
+
+  const sliderLabels = {
+    'foreplay-length': ['前戏时长偏好', '/10'],
+    'rounds': ['一晚最多次数', '次'],
+    'sm-scale': ['S↔M倾向', '/10'],
+    'exhib-scale': ['被看到接受度', '/10'],
+    'body-score': ['给对方身体打分', '/100']
+  };
+
+  for (const [key, [label, unit]] of Object.entries(sliderLabels)) {
+    if (answers[key]) {
+      html += `<div class="result-row"><span>${label}</span><span style="color:#e91e63;font-weight:600">${answers[key]}${unit}</span></div>`;
+    }
+  }
+
+  const playLabels = {
+    'play-oral-give': '口交（给）', 'play-oral-receive': '口交（被）',
+    'play-dirty-talk': 'Dirty Talk', 'play-slap': '肉棒拍打',
+    'play-restrain': '束缚', 'play-blindfold': '蒙眼',
+    'play-mirror': '镜子Play', 'play-swing': '秋千Play',
+    'play-roleplay': '角色扮演', 'play-location': '非卧室',
+    'play-cry': '被操哭', 'play-carry': '抱穴走操',
+    'play-fingers-mouth': '手指进嘴', 'play-bite': '咬',
+    'play-choke': '轻掐脖子', 'play-pee': '射尿灌满',
+    'play-facial': '颜射', 'play-creampie': '内射',
+    'play-spank': '拍屁股', 'play-toys': '玩具辅助'
+  };
+
+  const onPlays = Object.entries(playLabels).filter(([k]) => answers[k]).map(([k, v]) => v);
+  if (onPlays.length) {
+    html += `<div class="result-row"><span>感兴趣的Play</span><span style="color:#8d6e63;max-width:60%;text-align:right">${onPlays.join('、')}</span></div>`;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function showCompare() {
+  document.getElementById('page-home').classList.add('hidden');
+  document.getElementById('page-result').classList.remove('hidden');
+
+  const e = data.erere, k = data.keke;
+
+  let matchCount = 0, totalCount = 0;
+
+  const playKeys = Object.keys(e).filter(k => k.startsWith('play-'));
+  playKeys.forEach(key => {
+    totalCount++;
+    if (e[key] === k[key]) matchCount++;
+  });
+
+  const matchPercent = totalCount > 0 ? Math.round(matchCount / totalCount * 100) : 0;
+
+  let html = `
+    <div class="compare-header">
+      <h2>而而 & 钶钶 XP匹配报告</h2>
+      <div class="compare-score">${matchPercent}%</div>
+      <div class="compare-label">Play偏好匹配度</div>
+    </div>
+  `;
+
+  const labels = {
+    'rhythm': '偏好节奏', 'positions': '喜欢的体位',
+    'light': '灯光偏好', 'sensitive-spots': '敏感地带',
+    'kiss-spots': '喜欢被亲', 'identity': '角色偏好',
+    'turn-on': '兴奋点', 'aftercare': '事后想做',
+    'climax-trigger': '高潮触发', 'frequency': '理想频率',
+    'duration': '理想时长'
+  };
+
+  html += '<div class="result-card"><div class="result-title">偏好对比</div>';
+  for (const [key, label] of Object.entries(labels)) {
+    const eVal = e[key] ? (Array.isArray(e[key]) ? e[key].join('、') : e[key]) : '—';
+    const kVal = k[key] ? (Array.isArray(k[key]) ? k[key].join('、') : k[key]) : '—';
+    html += `
+      <div style="margin-bottom:12px">
+        <div style="font-size:13px;color:#a1887f;margin-bottom:6px">${label}</div>
+        <div class="duo-row">
+          <div class="duo-col erere"><div class="duo-name">而而</div><div class="duo-val">${eVal}</div></div>
+          <div class="duo-col keke"><div class="duo-name">钶钶</div><div class="duo-val">${kVal}</div></div>
+        </div>
+      </div>`;
+  }
+  html += '</div>';
+
+  const sliderLabels = {
+    'foreplay-length': '前戏时长', 'rounds': '一晚次数',
+    'sm-scale': 'S↔M', 'exhib-scale': '被看到接受度', 'body-score': '给对方打分'
+  };
+
+  html += '<div class="result-card"><div class="result-title">数值对比</div>';
+  for (const [key, label] of Object.entries(sliderLabels)) {
+    html += `
+      <div style="margin-bottom:8px">
+        <div style="font-size:13px;color:#a1887f;margin-bottom:4px">${label}</div>
+        <div class="duo-row">
+          <div class="duo-col erere"><div class="duo-name">而而</div><div class="duo-val">${e[key] || '—'}</div></div>
+          <div class="duo-col keke"><div class="duo-name">钶钶</div><div class="duo-val">${k[key] || '—'}</div></div>
+        </div>
+      </div>`;
+  }
+  html += '</div>';
+
+  const textKeys = {
+    'fantasy': '最色的幻想', 'words-want': '最想听的话',
+    'secret-play': '秘密play', 'call-name': '最有感觉的称呼', 'summary': '一句话总结'
+  };
+
+  html += '<div class="result-card"><div class="result-title">彼此的心里话</div>';
+  for (const [key, label] of Object.entries(textKeys)) {
+    html += `
+      <div style="margin-bottom:12px">
+        <div style="font-size:13px;color:#a1887f;margin-bottom:6px">${label}</div>
+        <div class="duo-row">
+          <div class="duo-col erere"><div class="duo-name">而而</div><div class="duo-val">${e[key] || '—'}</div></div>
+          <div class="duo-col keke"><div class="duo-name">钶钶</div><div class="duo-val">${k[key] || '—'}</div></div>
+        </div>
+      </div>`;
+  }
+  html += '</div>';
+
+  const playLabels = {
+    'play-oral-give': '口交（给）', 'play-oral-receive': '口交（被）',
+    'play-dirty-talk': 'Dirty Talk', 'play-slap': '肉棒拍打',
+    'play-restrain': '束缚', 'play-blindfold': '蒙眼',
+    'play-mirror': '镜子Play', 'play-swing': '秋千Play',
+    'play-roleplay': '角色扮演', 'play-location': '非卧室',
+    'play-cry': '被操哭', 'play-carry': '抱穴走操',
+    'play-fingers-mouth': '手指进嘴', 'play-bite': '咬',
+    'play-choke': '轻掐脖子', 'play-pee': '射尿灌满',
+    'play-facial': '颜射', 'play-creampie': '内射',
+    'play-spank': '拍屁股', 'play-toys': '玩具辅助'
+  };
+
+  html += '<div class="result-card"><div class="result-title">Play匹配明细</div>';
+  for (const [key, label] of Object.entries(playLabels)) {
+    const eOn = e[key] ? '✅' : '❌';
+    const kOn = k[key] ? '✅' : '❌';
+    const match = e[key] === k[key];
+    html += `
+      <div class="result-row">
+        <span>${label}</span>
+        <span>
+          <span style="margin-right:12px">而而${eOn}</span>
+          <span>钶钶${kOn}</span>
+          ${match ? '<span class="match-badge match-same" style="margin-left:8px">一致</span>' : ''}
+        </span>
+      </div>`;
+  }
+  html += '</div>';
+
+  document.getElementById('result-content').innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+function showHome() {
+  document.getElementById('page-home').classList.remove('hidden');
+  document.getElementById('page-result').classList.add('hidden');
+  window.scrollTo(0, 0);
+}
+
+// 加载已有数据
+try {
+  const eData = localStorage.getItem('xp-survey-erere');
+  const kData = localStorage.getItem('xp-survey-keke');
+  if (eData) data.erere = JSON.parse(eData);
+  if (kData) data.keke = JSON.parse(kData);
+} catch(e) {}
+
+init();
+</script>
+</body>
+</html>
