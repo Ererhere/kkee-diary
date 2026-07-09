@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>而而 · 求职作战台</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="作战台">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23e8f0e4'/><text x='50' y='68' font-size='52' text-anchor='middle'>🎯</text></svg>">
+<style>
+:root{
+  --bg:#f7f4ee; --card:#ffffff; --ink:#3a3a35; --sub:#8a8578;
+  --accent:#6b8f71; --accent-soft:#e4efe6; --line:#e8e2d6;
+  --chip-wait:#f0e6d2; --chip-go:#dcebdd; --chip-sent:#d9e6f2; --chip-talk:#e9def0; --chip-offer:#f7d9b8; --chip-closed:#eee9e0;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:84px}
+.header{padding:22px 20px 12px}
+.header h1{font-size:22px;letter-spacing:1px}
+.header .sub{color:var(--sub);font-size:13px;margin-top:4px}
+.tabs{display:flex;gap:8px;padding:8px 16px;position:sticky;top:0;background:var(--bg);z-index:5}
+.tab{flex:1;text-align:center;padding:10px 0;border-radius:14px;font-size:14px;color:var(--sub);background:transparent}
+.tab.active{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.page{padding:12px 16px;display:none}
+.page.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.03)}
+.job-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.job-title{font-size:16px;font-weight:600;line-height:1.4}
+.job-co{color:var(--sub);font-size:13px;margin-top:2px}
+.chip{flex-shrink:0;font-size:12px;padding:5px 10px;border-radius:999px;border:none;font-weight:600}
+.match{display:inline-block;margin-top:10px;font-size:13px;color:var(--accent);background:var(--accent-soft);padding:3px 10px;border-radius:8px}
+.verdict{margin-top:10px;font-size:13.5px;line-height:1.7;color:var(--ink)}
+.job-detail{display:none;margin-top:12px;border-top:1px dashed var(--line);padding-top:12px;font-size:13.5px;line-height:1.8;color:var(--ink);white-space:pre-wrap}
+.card.open .job-detail{display:block}
+.job-link{display:inline-block;margin-top:10px;color:var(--accent);font-size:13.5px;text-decoration:none;font-weight:600}
+.radar-item{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px;text-decoration:none;color:var(--ink)}
+.radar-item .r-title{font-size:14.5px;font-weight:600}
+.radar-item .r-note{font-size:12.5px;color:var(--sub);margin-top:4px;line-height:1.6}
+.inbox-box{width:100%;min-height:160px;border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;background:var(--card);resize:vertical;font-family:inherit;line-height:1.7}
+.btn{display:block;width:100%;margin-top:12px;padding:14px;border:none;border-radius:14px;background:var(--accent);color:#fff;font-size:15px;font-weight:600}
+.btn:disabled{opacity:.5}
+.hint{font-size:12.5px;color:var(--sub);line-height:1.7;margin-top:10px}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:13.5px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+.toast.show{opacity:.92}
+.setup{padding:30px 24px}
+.setup h2{font-size:18px;margin-bottom:8px}
+.setup p{font-size:13.5px;color:var(--sub);line-height:1.8;margin-bottom:14px}
+.setup input{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--card)}
+.empty{text-align:center;color:var(--sub);font-size:13.5px;padding:40px 0;line-height:1.8}
+.footer-note{text-align:center;color:var(--sub);font-size:12px;margin-top:18px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<div id="setup" class="setup" style="display:none">
+  <h2>作战台初始化 🎯</h2>
+  <p>第一次使用,粘贴你的 GitHub Token(fine-grained,只授权 claude 仓库 Contents 读写)。Token 只存在这台手机的浏览器里,不会上传到任何地方。</p>
+  <input id="token-input" type="password" placeholder="github_pat_...">
+  <button class="btn" onclick="saveToken()">保存并进入</button>
+</div>
+
+<div id="app" style="display:none">
+  <div class="header">
+    <h1>求职作战台 🎯</h1>
+    <div class="sub" id="sub-line">钶钶当筛子,而而当法官,投递权在你</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('board',this)">看板</div>
+    <div class="tab" onclick="switchTab('radar',this)">雷达</div>
+    <div class="tab" onclick="switchTab('inbox',this)">丢给钶钶</div>
+  </div>
+
+  <div id="page-board" class="page active"><div id="job-list"><div class="empty">加载中…</div></div></div>
+
+  <div id="page-radar" class="page">
+    <div id="radar-list"></div>
+    <div class="footer-note">雷达 = 钶钶每轮撒网找到的入口和单岗直达链接<br>点开看货,心动的把JD复制到「丢给钶钶」</div>
+  </div>
+
+  <div id="page-inbox" class="page">
+    <textarea id="inbox-text" class="inbox-box" placeholder="把心动岗位的JD原文粘贴到这里,提交后钶钶下次上线就会看到,给你出判定单。&#10;&#10;可以一次贴多个,中间空一行隔开。"></textarea>
+    <button class="btn" id="inbox-btn" onclick="submitInbox()">提交给钶钶 📮</button>
+    <div class="hint">提交会直接存进 claude 仓库 job-hunt/data/jobs.json 的收件箱,钶钶读仓库就能看到。</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const OWNER='Ererhere', REPO='claude', BRANCH='claude/new-session-ard66v', DATA_PATH='job-hunt/data/jobs.json';
+const STATUS_FLOW=['待批阅','决定投','已投递','约面','offer','关闭'];
+const STATUS_STYLE={'待批阅':'var(--chip-wait)','决定投':'var(--chip-go)','已投递':'var(--chip-sent)','约面':'var(--chip-talk)','offer':'var(--chip-offer)','关闭':'var(--chip-closed)'};
+let TOKEN=localStorage.getItem('zjt_token')||'';
+let DATA=null, SHA=null;
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+function saveToken(){
+  const v=document.getElementById('token-input').value.trim();
+  if(!v){toast('先粘贴Token');return;}
+  localStorage.setItem('zjt_token',v);TOKEN=v;boot();
+}
+
+async function api(method,body){
+  const url=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`+(method==='GET'?`?ref=${encodeURIComponent(BRANCH)}&t=${Date.now()}`:'');
+  const opt={method,headers:{Authorization:`token ${TOKEN}`,'Accept':'application/vnd.github+json'}};
+  if(body){opt.headers['Content-Type']='application/json';opt.body=JSON.stringify(body);}
+  const res=await fetch(url,opt);
+  if(!res.ok)throw new Error(res.status+' '+await res.text());
+  return res.json();
+}
+
+function b64encode(str){return btoa(unescape(encodeURIComponent(str)));}
+function b64decode(str){return decodeURIComponent(escape(atob(str.replace(/\n/g,''))));}
+
+async function loadData(){
+  const j=await api('GET');
+  SHA=j.sha;DATA=JSON.parse(b64decode(j.content));
+}
+
+async function saveData(msg){
+  const j=await api('PUT',{message:msg,branch:BRANCH,sha:SHA,content:b64encode(JSON.stringify(DATA,null,2))});
+  SHA=j.content.sha;
+}
+
+function renderBoard(){
+  const box=document.getElementById('job-list');
+  if(!DATA.jobs.length){box.innerHTML='<div class="empty">看板还空着<br>去「雷达」挑货,或把JD丢给钶钶 (^ ^)</div>';return;}
+  box.innerHTML='';
+  DATA.jobs.forEach((job,i)=>{
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<div class="job-top">
+        <div><div class="job-title">${job.title}</div><div class="job-co">${job.company||'公司待补充'} · ${job.city||''}</div></div>
+        <button class="chip" style="background:${STATUS_STYLE[job.status]||'var(--chip-wait)'}" onclick="cycleStatus(event,${i})">${job.status}</button>
+      </div>
+      <span class="match">匹配度 ${job.match||'待评'}</span>
+      <div class="verdict">📋 ${job.verdict||''}</div>
+      <div class="job-detail">${(job.detail||'').trim()}</div>
+      ${job.link?`<a class="job-link" href="${job.link}" target="_blank" onclick="event.stopPropagation()">🔗 岗位直达</a>`:''}`;
+    c.onclick=()=>c.classList.toggle('open');
+    box.appendChild(c);
+  });
+}
+
+async function cycleStatus(ev,i){
+  ev.stopPropagation();
+  const job=DATA.jobs[i];
+  const next=STATUS_FLOW[(STATUS_FLOW.indexOf(job.status)+1)%STATUS_FLOW.length];
+  job.status=next;job.updated=new Date().toISOString().slice(0,10);
+  renderBoard();
+  try{await saveData(`看板:${job.title} → ${next}`);toast(`已更新:${next}`);}
+  catch(e){toast('保存失败,检查网络/Token');console.error(e);}
+}
+
+function renderRadar(){
+  const box=document.getElementById('radar-list');
+  if(!DATA.radar.length){box.innerHTML='<div class="empty">雷达暂无信号,等钶钶下一轮撒网</div>';return;}
+  box.innerHTML='';
+  DATA.radar.forEach(r=>{
+    const a=document.createElement('a');a.className='radar-item';a.href=r.url;a.target='_blank';
+    a.innerHTML=`<div class="r-title">${r.title}</div><div class="r-note">${r.note||''}</div>`;
+    box.appendChild(a);
+  });
+}
+
+async function submitInbox(){
+  const t=document.getElementById('inbox-text').value.trim();
+  if(!t){toast('先贴点东西进来');return;}
+  const btn=document.getElementById('inbox-btn');btn.disabled=true;
+  try{
+    await loadData();
+    DATA.inbox.push({text:t,time:new Date().toISOString()});
+    await saveData('收件箱:而而丢来了新JD 📮');
+    document.getElementById('inbox-text').value='';
+    toast('已送达钶钶的收件箱 (^ ^)');
+  }catch(e){toast('提交失败,检查网络/Token');console.error(e);}
+  btn.disabled=false;
+}
+
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-'+name).classList.add('active');
+}
+
+async function boot(){
+  if(!TOKEN){document.getElementById('setup').style.display='block';document.getElementById('app').style.display='none';return;}
+  document.getElementById('setup').style.display='none';document.getElementById('app').style.display='block';
+  try{
+    await loadData();
+    renderBoard();renderRadar();
+    document.getElementById('sub-line').textContent=`${DATA.jobs.length} 个岗位在板 · ${DATA.inbox.length} 条在钶钶收件箱`;
+  }catch(e){
+    document.getElementById('job-list').innerHTML='<div class="empty">加载失败 🥲<br>Token不对或仓库没连上<br><br><button class="btn" style="width:auto;padding:10px 24px;display:inline-block" onclick="localStorage.removeItem(\'zjt_token\');location.reload()">重新输入Token</button></div>';
+    console.error(e);
+  }
+}
+boot();
+</script>
+</body>
+</html>
