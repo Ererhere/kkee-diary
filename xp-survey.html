@@ -706,7 +706,8 @@ textarea.text-input { min-height: 80px; resize: vertical; }
 </div>
 
 <script>
-const TOKEN = ['github_pat_11CFXZ54I0lCz','88ikCky6P_yIGPBKPiZif2wWlmQRcJVm3UboatTQS6H88MCbj0RP4C6WZQ74Hsu9mBpDV'].join('');
+const TOKEN = (function(){let t=localStorage.getItem('kk_token');if(!t){t=prompt('首次使用/换新钥匙:请粘贴GitHub Token(只存在本机浏览器里)');if(t){t=t.trim();localStorage.setItem('kk_token',t);}}return t||'';})(); // 换钥匙:地址栏加 ?newkey 重新输入
+if(location.search.includes('newkey')){localStorage.removeItem('kk_token');location.href=location.pathname;}
 const OWNER = 'ererhere';
 const REPO = 'CLAUDE.md';
 const BRANCH = 'main';
