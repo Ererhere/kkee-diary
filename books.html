@@ -1163,10 +1163,11 @@ let noteTab = 'all';
 function openNotes() {
   const all = state.anno.annotations.filter(a => a.type === 'note');
   const list = noteTab === 'all' ? all : all.filter(a => a.author === (noteTab === 'e' ? ME : KEKE));
-  const byPara = [...list].sort((a, b) => a.para - b.para || (a.at < b.at ? -1 : 1));
+  // 只把"不是回复"的当顶层排；回复挂在各自主贴下面，免得露两次面
+  const byPara = list.filter(a => !a.reply)
+                     .sort((a, b) => a.para - b.para || (a.at < b.at ? -1 : 1));
 
   const html = byPara.length ? byPara.map(a => {
-    const isMe = a.author === ME;
     const replies = state.anno.annotations.filter(r => r.type === 'note' && r.reply === a.id);
     const one = (n, cls) => `
       <div class="note ${cls}">
