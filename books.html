@@ -1254,16 +1254,25 @@ function buildCall(kind) {
   return `钶钶，《${title}》我留了 ${lines.length} 处：\n\n${lines.join('\n')}\n\n（我读到第 ${state.page} 页）`;
 }
 
+const GO_KEKE = '<a class="btn wide" href="https://claude.ai" target="_blank" rel="noopener"' +
+  ' style="display:block;text-align:center;text-decoration:none;margin-top:12px">去找钶钶 →</a>';
+
 async function handOver(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    closeSheet();
-    toast('复制好了，粘给钶钶', 2600);
-  } catch (e) {
+  let copied = true;
+  try { await navigator.clipboard.writeText(text); } catch (e) { copied = false; }
+  if (copied) {
+    openSheet(`
+      <div class="sheet-h"><b>复制好了</b><button class="iconbtn" data-close>✕</button></div>
+      <div class="callbox">粘到你们的对话里发过去就行。</div>
+      ${GO_KEKE}
+    `);
+  } else {
+    // iOS 偶尔会拦剪贴板，退回来让你自己长按全选
     openSheet(`
       <div class="sheet-h"><b>复制这段发给钶钶</b><button class="iconbtn" data-close>✕</button></div>
-      <textarea rows="9" readonly style="font-size:13px">${esc(text)}</textarea>
-      <div class="hint" style="margin-top:10px">长按选中全部，复制。</div>
+      <textarea rows="8" readonly style="font-size:13px">${esc(text)}</textarea>
+      <div class="hint" style="margin-top:8px">长按选中全部，复制。</div>
+      ${GO_KEKE}
     `);
     setTimeout(() => { const t = $('sheetIn').querySelector('textarea'); t?.focus(); t?.select(); }, 80);
   }
