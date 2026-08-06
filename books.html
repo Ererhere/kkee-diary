@@ -151,6 +151,25 @@ mark.hl-b { background: var(--both-hl); }
   width: 3px; height: calc(100% - 8px); border-radius: 2px; background: var(--primary-light);
 }
 
+/* 批注直接长在段落底下，不用去别处翻 */
+.inote {
+  margin: -0.35em 0 1.15em 16px; padding: 11px 13px;
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 3px solid var(--keke); border-radius: 12px;
+  font-size: 14px; line-height: 1.75;
+}
+.inote.e { border-left-color: var(--erere); }
+.inote.reply { margin-left: 34px; }
+.inote-h { font-size: 12px; font-weight: 600; color: var(--keke); margin-bottom: 5px; }
+.inote.e .inote-h { color: var(--erere); }
+.inote-h span { font-weight: 400; color: var(--text-light); margin-left: 6px; }
+.inote-b { white-space: pre-wrap; word-break: break-word; }
+.inote-a { margin-top: 8px; display: flex; gap: 16px; }
+.inote-a button {
+  border: none; background: none; padding: 0; cursor: pointer;
+  font-size: 12.5px; color: var(--text-light); font-family: inherit;
+}
+
 .pagefoot {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 480px; z-index: 30;
@@ -698,16 +717,31 @@ function renderPage() {
   const ids = pages[state.page - 1];
   const box = $('pageBox');
 
+  const card = (n, extra) => `<div class="inote ${n.author === ME ? 'e' : 'k'}${extra}">
+      <div class="inote-h">${n.author}<span>${fmtTime(n.at)}</span></div>
+      <div class="inote-b">${esc(n.text)}</div>
+      <div class="inote-a">${n.author === ME
+        ? `<button data-del="${n.id}">删掉</button>`
+        : `<button data-reply="${n.id}">接一句</button>`}</div>
+    </div>`;
+
   box.innerHTML = ids.map(pid => {
     const p = paraById(pid);
     if (!p) return '';
     const mine = state.anno.annotations.filter(a => a.para === pid);
     const hls = mine.filter(a => a.type === 'hl');
-    const hasNote = mine.some(a => a.type === 'note');
-    return `<div class="para${hasNote ? ' has-note' : ''}" data-pid="${pid}">
+    const notes = mine.filter(a => a.type === 'note');
+    const para = `<div class="para${notes.length ? ' has-note' : ''}" data-pid="${pid}">
       <span class="pid">§${pid}</span>${renderHL(p.text, hls)}
     </div>`;
+    const thread = notes.filter(n => !n.reply).map(n =>
+      card(n, '') + notes.filter(r => r.reply === n.id).map(r => card(r, ' reply')).join('')
+    ).join('');
+    return para + thread;
   }).join('');
+
+  box.querySelectorAll('[data-reply]').forEach(b => b.onclick = () => replyTo(b.dataset.reply));
+  box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => delNote(b.dataset.del));
 
   $('pgInfo').textContent = `${state.page} / ${pages.length}`;
   window.scrollTo(0, 0);
@@ -880,6 +914,37 @@ async function addVocab() {
   commitAnno('生词');
 }
 
+/* ---------------- 接话 / 删掉 ---------------- */
+function replyTo(id) {
+  const target = state.anno.annotations.find(a => a.id === id);
+  if (!target) return;
+  openSheet(`
+    <div class="sheet-h"><b>回${target.author}</b><button class="iconbtn" data-close>✕</button></div>
+    <div class="note-q">${esc(target.text.length > 90 ? target.text.slice(0, 90) + '…' : target.text)}</div>
+    <textarea id="rIn" rows="4" placeholder="接他一句…"></textarea>
+    <button class="btn wide" id="rOk" style="margin-top:12px">发出去</button>
+  `);
+  setTimeout(() => $('rIn')?.focus(), 120);
+  $('rOk').onclick = () => {
+    const v = $('rIn').value.trim();
+    if (!v) return toast('还没写呢');
+    state.anno.annotations.push({ id: uid(), para: target.para, type: 'note', text: v,
+                                 reply: target.id, author: ME, at: now() });
+    closeSheet(); renderPage(); toast('接上了');
+    commitAnno('回批注');
+  };
+}
+
+function delNote(id) {
+  const n = state.anno.annotations.find(a => a.id === id);
+  if (!n) return;
+  state.anno.annotations = state.anno.annotations.filter(a => a.id !== id && a.id !== n.hl);
+  state.anno.deleted.push(id);
+  if (n.hl) state.anno.deleted.push(n.hl);
+  renderPage(); toast('删掉了');
+  commitAnno('删批注');
+}
+
 /* ---------------- 抽屉 ---------------- */
 function openSheet(html) { $('sheetIn').innerHTML = html; $('sheet').classList.add('on'); }
 function closeSheet() { $('sheet').classList.remove('on'); }
@@ -927,28 +992,8 @@ function openNotes() {
     const idx = state.text.pages.findIndex(pg => pg.includes(pid));
     if (idx >= 0) { state.page = idx + 1; closeSheet(); renderPage(); }
   });
-  $('sheetIn').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
-    const id = b.dataset.del;
-    const n = state.anno.annotations.find(a => a.id === id);
-    state.anno.annotations = state.anno.annotations.filter(a => a.id !== id && a.id !== n?.hl);
-    state.anno.deleted.push(id); if (n?.hl) state.anno.deleted.push(n.hl);
-    renderPage(); openNotes(); commitAnno('删批注');
-  });
-  $('sheetIn').querySelectorAll('[data-reply]').forEach(b => b.onclick = () => {
-    const target = state.anno.annotations.find(a => a.id === b.dataset.reply);
-    openSheet(`
-      <div class="sheet-h"><b>回钶钶</b><button class="iconbtn" data-close>✕</button></div>
-      <div class="note-q">${esc(target.text.length > 90 ? target.text.slice(0, 90) + '…' : target.text)}</div>
-      <textarea id="rIn" rows="4" placeholder="接他一句…"></textarea>
-      <button class="btn wide" id="rOk" style="margin-top:12px">发出去</button>
-    `);
-    setTimeout(() => $('rIn')?.focus(), 120);
-    $('rOk').onclick = () => {
-      const v = $('rIn').value.trim(); if (!v) return toast('还没写呢');
-      state.anno.annotations.push({ id: uid(), para: target.para, type: 'note', text: v, reply: target.id, author: ME, at: now() });
-      closeSheet(); renderPage(); toast('接上了'); commitAnno('回批注');
-    };
-  });
+  $('sheetIn').querySelectorAll('[data-del]').forEach(b => b.onclick = () => delNote(b.dataset.del));
+  $('sheetIn').querySelectorAll('[data-reply]').forEach(b => b.onclick = () => replyTo(b.dataset.reply));
 }
 
 /* ---------------- 搜索 ---------------- */
