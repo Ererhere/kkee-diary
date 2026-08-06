@@ -70,7 +70,10 @@ body {
   -webkit-backdrop-filter: saturate(180%) blur(14px);
   border-bottom: 1px solid var(--border);
 }
-.nav h1 { font-size: 17px; font-weight: 600; flex: 1; letter-spacing: .5px; }
+.nav h1 {
+  font-size: 17px; font-weight: 600; flex: 1; letter-spacing: .5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
 .nav .sub { font-size: 12px; color: var(--text-light); font-weight: 400; margin-left: 6px; }
 .iconbtn {
   border: none; background: none; color: var(--text-light);
@@ -131,6 +134,9 @@ input:focus, textarea:focus { border-color: var(--primary); }
   padding: 20px 20px 120px 20px;
   font-size: var(--read-size); line-height: var(--read-lh);
 }
+/* Safari 浏览器里，底部那条地址栏会压住 fixed 元素，
+   整体往上让一截；加到主屏幕之后没有它，就不让。 */
+body.chrome-bar #reader .page { padding-bottom: 176px; }
 .para { margin-bottom: 1.15em; position: relative; }
 .para .pid {
   font-size: 11px; color: var(--text-light); opacity: .45;
@@ -156,17 +162,22 @@ mark.hl-b { background: var(--both-hl); }
 }
 .pagefoot .pg { flex: 1; text-align: center; font-size: 12.5px; color: var(--text-light); }
 .pagefoot .btn { padding: 9px 18px; font-size: 14px; border-radius: 10px; }
+body.chrome-bar .pagefoot { padding-bottom: calc(10px + env(safe-area-inset-bottom) + 52px); }
+/* 选中文字时把翻页条收起来，免得和工具条叠在一起 */
+body.picking .pagefoot { opacity: 0; pointer-events: none; }
+.pagefoot { transition: opacity .18s; }
 
 /* ---------- 选中工具条 ---------- */
 #selbar {
   position: fixed; left: 50%; transform: translateX(-50%) translateY(140%);
-  bottom: calc(72px + env(safe-area-inset-bottom));
+  bottom: calc(14px + env(safe-area-inset-bottom));
   width: calc(100% - 28px); max-width: 452px; z-index: 60;
   background: var(--card); border: 1px solid var(--border);
   border-radius: 16px; box-shadow: 0 6px 24px rgba(100,60,40,.16);
   padding: 12px 14px; transition: transform .22s ease;
 }
 #selbar.on { transform: translateX(-50%) translateY(0); }
+body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px); }
 #selbar .quote {
   font-size: 13px; color: var(--text-light); line-height: 1.6;
   margin-bottom: 10px; max-height: 3.2em; overflow: hidden;
@@ -773,6 +784,7 @@ function pidFromNode(node) {
 function clearSel() {
   state.sel = null;
   $('selbar').classList.remove('on');
+  document.body.classList.remove('picking');
 }
 document.addEventListener('selectionchange', () => {
   if (!$('reader').classList.contains('on')) return;
@@ -786,6 +798,7 @@ document.addEventListener('selectionchange', () => {
   state.sel = { pid, text };
   $('selQuote').textContent = text.length > 60 ? text.slice(0, 60) + '…' : text;
   $('selbar').classList.add('on');
+  document.body.classList.add('picking');
 });
 
 /* ---------------- 划线 / 批注 / 生词 ---------------- */
@@ -1065,6 +1078,11 @@ $('pageBox').addEventListener('touchend', e => {
 
 /* ---------------- 启动 ---------------- */
 (async function boot() {
+  // 在 Safari 里开着地址栏时，底部要多让出一截；从主屏幕图标进来就不用
+  const standalone = window.navigator.standalone === true
+    || window.matchMedia('(display-mode: standalone)').matches;
+  if (!standalone) document.body.classList.add('chrome-bar');
+
   if (localStorage.getItem(LS.night) === '1') {
     document.body.classList.add('night');
     document.querySelector('meta[name=theme-color]').content = '#1a1715';
