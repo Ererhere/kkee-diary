@@ -271,6 +271,22 @@ body.chrome-bar .pagefoot { padding-bottom: calc(10px + env(safe-area-inset-bott
 body.picking .pagefoot { opacity: 0; pointer-events: none; }
 .pagefoot { transition: opacity .18s; }
 
+/* ---------- 叫钶钶 ---------- */
+.fab {
+  position: fixed; right: 16px; z-index: 55;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  width: 46px; height: 46px; border-radius: 50%;
+  background: var(--keke); color: #fff; border: none;
+  font-size: 18px; font-weight: 600; font-family: inherit; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(100,60,40,.26);
+  transition: opacity .18s, transform .15s;
+}
+.fab:active { transform: scale(.92); }
+body.chrome-bar .fab { bottom: calc(86px + env(safe-area-inset-bottom) + 52px); }
+body.picking .fab { opacity: 0; pointer-events: none; }
+.callbox { font-size: 13.5px; line-height: 1.75; color: var(--text-light); margin-bottom: 14px; }
+.callbox b { color: var(--text); }
+
 /* ---------- 选中工具条 ---------- */
 #selbar {
   position: fixed; left: 50%; transform: translateX(-50%) translateY(140%);
@@ -456,6 +472,7 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
     <button class="iconbtn" id="btnPrefs">Aa</button>
   </div>
   <div class="page" id="pageBox"></div>
+  <button class="fab" id="callKe" title="叫钶钶">钶</button>
   <div class="pagefoot">
     <button class="btn ghost" id="btnPrev">上一页</button>
     <div class="pg" id="pgInfo"></div>
@@ -1205,6 +1222,70 @@ function openNotes() {
   $('sheetIn').querySelectorAll('[data-reply]').forEach(b => b.onclick = () => replyTo(b.dataset.reply));
 }
 
+/* ---------------- 叫钶钶 ----------------
+   这个按钮叫不醒他——他只在你跟他说话的时候才在。
+   它做的事是替你把要说的话写好，一键复制，你粘过去就行。   */
+function pageOfPara(id) {
+  const i = state.text.pages.findIndex(pg => pg.includes(id));
+  return i < 0 ? '?' : i + 1;
+}
+
+function buildCall(kind) {
+  const title = state.text.title;
+  if (kind === 'read') {
+    return `钶钶，你读《${title}》第 ${state.page} 页，我等你的字。`;
+  }
+  const since = state.book?.kekeAt || '';
+  const fresh = state.anno.annotations
+    .filter(a => a.author === ME && (a.at || '') > since)
+    .sort((a, b) => a.para - b.para);
+  if (!fresh.length) return `钶钶，我读到《${title}》第 ${state.page} 页了。`;
+
+  const lines = [];
+  for (const a of fresh) {
+    if (a.type === 'hl') {
+      if (fresh.some(x => x.type === 'note' && x.hl === a.id)) continue;  // 有话的等下面一起写
+      lines.push(`§${a.para}（第${pageOfPara(a.para)}页）划线「${a.text}」`);
+    } else {
+      const q = a.quote ? `「${a.quote}」` : '';
+      lines.push(`§${a.para}（第${pageOfPara(a.para)}页）${q} 我说：${a.text.replace(/\n+/g, ' ')}`);
+    }
+  }
+  return `钶钶，《${title}》我留了 ${lines.length} 处：\n\n${lines.join('\n')}\n\n（我读到第 ${state.page} 页）`;
+}
+
+async function handOver(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    closeSheet();
+    toast('复制好了，粘给钶钶', 2600);
+  } catch (e) {
+    openSheet(`
+      <div class="sheet-h"><b>复制这段发给钶钶</b><button class="iconbtn" data-close>✕</button></div>
+      <textarea rows="9" readonly style="font-size:13px">${esc(text)}</textarea>
+      <div class="hint" style="margin-top:10px">长按选中全部，复制。</div>
+    `);
+    setTimeout(() => { const t = $('sheetIn').querySelector('textarea'); t?.focus(); t?.select(); }, 80);
+  }
+}
+
+function openCall() {
+  const since = state.book?.kekeAt || '';
+  const n = state.anno.annotations.filter(a => a.author === ME && (a.at || '') > since).length;
+  openSheet(`
+    <div class="sheet-h"><b>叫钶钶</b><button class="iconbtn" data-close>✕</button></div>
+    <div class="callbox">
+      他只在你跟他说话的时候才在，这个按钮叫不醒他。<br>
+      它替你把话写好，<b>复制</b>之后粘到你们的对话里发过去就行。
+      ${n ? `<br><br>上次他写字之后，你新留下了 <b>${n}</b> 处。` : ''}
+    </div>
+    <button class="btn wide" id="callA" style="margin-bottom:9px">我写了，你来看</button>
+    <button class="btn ghost wide" id="callB">你先读，我等你</button>
+  `);
+  $('callA').onclick = () => handOver(buildCall('mine'));
+  $('callB').onclick = () => handOver(buildCall('read'));
+}
+
 /* ---------------- 目录 ---------------- */
 function openToc() {
   const toc = state.text.toc || [];
@@ -1383,6 +1464,7 @@ $('btnPrev').onclick = () => { state.page--; clearSel(); renderPage(); };
 $('btnNext').onclick = () => { state.page++; clearSel(); renderPage(); };
 $('btnNotes').onclick = openNotes;
 $('btnToc').onclick = openToc;
+$('callKe').onclick = openCall;
 $('btnSearch').onclick = openSearch;
 $('btnPrefs').onclick = openPrefs;
 $('selHl').onclick = addHighlight;
