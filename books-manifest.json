@@ -1,0 +1,16 @@
+{
+  "name": "而而与钶钶 · 书房",
+  "short_name": "书房",
+  "description": "我们一起读的书，和写在旁边的话",
+  "start_url": "./books.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf8f5",
+  "theme_color": "#fdf8f5",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icon-books.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-books.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

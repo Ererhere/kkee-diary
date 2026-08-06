@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>而而与钶钶 · 书房</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="我们的书房">
+<meta name="theme-color" content="#fdf8f5">
+<link rel="apple-touch-icon" href="icon-books.png">
+<link rel="manifest" href="books-manifest.json">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #fdf8f5;
+  --card: #fff;
+  --primary: #d4896a;
+  --primary-light: #f5e6df;
+  --text: #3a2e2a;
+  --text-light: #9a8580;
+  --erere: #7dc49a;
+  --keke: #8faec4;
+  --erere-hl: #d6f0e2;
+  --keke-hl: #d9e7f1;
+  --both-hl: #e6e9d8;
+  --border: #ede5e0;
+  --shadow: 0 2px 16px rgba(100,60,40,0.08);
+  --read-size: 17px;
+  --read-lh: 1.9;
+}
+
+body.night {
+  --bg: #1a1715;
+  --card: #241f1d;
+  --primary: #c98a6d;
+  --primary-light: #332a26;
+  --text: #d8cec8;
+  --text-light: #7d716b;
+  --erere-hl: #2c4a3a;
+  --keke-hl: #2a3d4a;
+  --both-hl: #3d4034;
+  --border: #322b28;
+  --shadow: 0 2px 16px rgba(0,0,0,0.3);
+}
+
+body {
+  font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  transition: background .3s, color .3s;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.view { display: none; }
+.view.on { display: block; }
+
+/* ---------- 顶栏 ---------- */
+.nav {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px calc(14px) 16px;
+  padding-top: calc(14px + env(safe-area-inset-top));
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.nav h1 { font-size: 17px; font-weight: 600; flex: 1; letter-spacing: .5px; }
+.nav .sub { font-size: 12px; color: var(--text-light); font-weight: 400; margin-left: 6px; }
+.iconbtn {
+  border: none; background: none; color: var(--text-light);
+  font-size: 20px; line-height: 1; padding: 6px 8px; cursor: pointer;
+  border-radius: 10px; font-family: inherit;
+}
+.iconbtn:active { background: var(--primary-light); }
+.iconbtn.txt { font-size: 14px; }
+
+/* ---------- 通用 ---------- */
+.wrap { padding: 16px; }
+.btn {
+  border: none; border-radius: 12px; padding: 13px 20px;
+  font-size: 15px; font-family: inherit; cursor: pointer;
+  background: var(--primary); color: #fff; font-weight: 500;
+}
+.btn:active { opacity: .82; }
+.btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn.wide { display: block; width: 100%; }
+input[type=text], input[type=password], textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 12px;
+  padding: 13px 14px; font-size: 15px; font-family: inherit;
+  background: var(--card); color: var(--text); outline: none;
+}
+input:focus, textarea:focus { border-color: var(--primary); }
+.hint { font-size: 12.5px; color: var(--text-light); line-height: 1.7; }
+.empty { text-align: center; color: var(--text-light); padding: 70px 24px; font-size: 14px; line-height: 1.9; }
+
+/* ---------- 设置页 ---------- */
+#setup .wrap { padding-top: 40px; }
+.setup-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+.setup-sub { font-size: 14px; color: var(--text-light); line-height: 1.8; margin-bottom: 28px; }
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 13px; color: var(--text-light); margin-bottom: 8px; }
+
+/* ---------- 书架 ---------- */
+.shelf { display: flex; flex-direction: column; gap: 12px; }
+.bookcard {
+  background: var(--card); border-radius: 16px; padding: 16px;
+  box-shadow: var(--shadow); cursor: pointer; position: relative;
+  border: 1px solid var(--border);
+}
+.bookcard:active { transform: scale(.985); }
+.bookcard h3 { font-size: 16px; font-weight: 600; margin-bottom: 10px; line-height: 1.5; padding-right: 18px; }
+.bookmeta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--text-light); }
+.bookmeta b { font-weight: 600; }
+.dot-e { color: var(--erere); }
+.dot-k { color: var(--keke); }
+.progbar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+.progbar i { display: block; height: 100%; background: var(--primary); border-radius: 2px; }
+.newdot {
+  position: absolute; top: 14px; right: 14px;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--keke);
+}
+
+/* ---------- 阅读页 ---------- */
+#reader .page {
+  padding: 20px 20px 120px 20px;
+  font-size: var(--read-size); line-height: var(--read-lh);
+}
+.para { margin-bottom: 1.15em; position: relative; }
+.para .pid {
+  font-size: 11px; color: var(--text-light); opacity: .45;
+  margin-right: 6px; user-select: none; -webkit-user-select: none;
+}
+mark.hl { background: transparent; color: inherit; border-radius: 3px; padding: 1px 0; }
+mark.hl-e { background: var(--erere-hl); }
+mark.hl-k { background: var(--keke-hl); }
+mark.hl-b { background: var(--both-hl); }
+.para.has-note::after {
+  content: ''; position: absolute; left: -12px; top: 4px;
+  width: 3px; height: calc(100% - 8px); border-radius: 2px; background: var(--primary-light);
+}
+
+.pagefoot {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; z-index: 30;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) 14px;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--border);
+}
+.pagefoot .pg { flex: 1; text-align: center; font-size: 12.5px; color: var(--text-light); }
+.pagefoot .btn { padding: 9px 18px; font-size: 14px; border-radius: 10px; }
+
+/* ---------- 选中工具条 ---------- */
+#selbar {
+  position: fixed; left: 50%; transform: translateX(-50%) translateY(140%);
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  width: calc(100% - 28px); max-width: 452px; z-index: 60;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; box-shadow: 0 6px 24px rgba(100,60,40,.16);
+  padding: 12px 14px; transition: transform .22s ease;
+}
+#selbar.on { transform: translateX(-50%) translateY(0); }
+#selbar .quote {
+  font-size: 13px; color: var(--text-light); line-height: 1.6;
+  margin-bottom: 10px; max-height: 3.2em; overflow: hidden;
+}
+#selbar .row { display: flex; gap: 8px; }
+#selbar .row .btn { flex: 1; padding: 10px 0; font-size: 14px; border-radius: 10px; }
+
+/* ---------- 抽屉 ---------- */
+.sheet {
+  position: fixed; inset: 0; z-index: 80; display: none;
+  background: rgba(40,25,20,.34);
+}
+.sheet.on { display: block; }
+.sheet-in {
+  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; max-height: 82vh; overflow-y: auto;
+  background: var(--bg); border-radius: 22px 22px 0 0;
+  padding: 18px 18px calc(24px + env(safe-area-inset-bottom)) 18px;
+  animation: up .25s ease;
+}
+@keyframes up { from { transform: translateX(-50%) translateY(100%); } }
+.sheet-h { display: flex; align-items: center; margin-bottom: 14px; }
+.sheet-h b { font-size: 16px; flex: 1; }
+
+.note {
+  background: var(--card); border-radius: 14px; padding: 13px 14px;
+  margin-bottom: 10px; border: 1px solid var(--border);
+}
+.note-h { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.note-au { font-size: 13px; font-weight: 600; }
+.note-au.e { color: var(--erere); }
+.note-au.k { color: var(--keke); }
+.note-t { font-size: 11px; color: var(--text-light); flex: 1; }
+.note-q {
+  font-size: 12.5px; color: var(--text-light); line-height: 1.6;
+  padding-left: 9px; border-left: 2px solid var(--border); margin-bottom: 7px;
+}
+.note-b { font-size: 14.5px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
+.note-acts { display: flex; gap: 14px; margin-top: 9px; }
+.note-acts button {
+  border: none; background: none; padding: 0; cursor: pointer;
+  font-size: 12.5px; color: var(--text-light); font-family: inherit;
+}
+.note.reply { margin-left: 18px; border-left: 2px solid var(--primary-light); }
+
+.seg { display: flex; gap: 6px; margin-bottom: 14px; }
+.seg button {
+  flex: 1; border: 1px solid var(--border); background: var(--card);
+  color: var(--text-light); border-radius: 10px; padding: 8px 0;
+  font-size: 13px; font-family: inherit; cursor: pointer;
+}
+.seg button.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.srow {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 2px; border-bottom: 1px solid var(--border); font-size: 15px;
+}
+.srow:last-child { border-bottom: none; }
+.stepper { display: flex; align-items: center; gap: 4px; }
+.stepper button {
+  width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-size: 17px; cursor: pointer; font-family: inherit;
+}
+.switch { width: 46px; height: 27px; border-radius: 14px; background: var(--border); position: relative; cursor: pointer; border: none; }
+.switch i { position: absolute; top: 3px; left: 3px; width: 21px; height: 21px; border-radius: 50%; background: #fff; transition: left .2s; }
+.switch.on { background: var(--primary); }
+.switch.on i { left: 22px; }
+
+.sr { padding: 12px 2px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.sr .sr-p { font-size: 11.5px; color: var(--text-light); margin-bottom: 4px; }
+.sr .sr-t { font-size: 14px; line-height: 1.6; }
+.sr em { font-style: normal; background: var(--primary-light); border-radius: 3px; padding: 0 2px; }
+
+/* ---------- toast / loading ---------- */
+#toast {
+  position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
+  background: rgba(58,46,42,.94); color: #fff; padding: 11px 20px;
+  border-radius: 12px; font-size: 14px; z-index: 200;
+  opacity: 0; pointer-events: none; transition: all .24s; max-width: 82%; text-align: center;
+}
+#toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+#load {
+  position: fixed; inset: 0; z-index: 300; display: none;
+  align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+}
+#load.on { display: flex; }
+.spin {
+  width: 26px; height: 26px; border: 2.5px solid var(--border);
+  border-top-color: var(--primary); border-radius: 50%; animation: sp .8s linear infinite;
+}
+@keyframes sp { to { transform: rotate(360deg); } }
+#load span { font-size: 13.5px; color: var(--text-light); }
+</style>
+</head>
+<body>
+
+<!-- ============ 设置 ============ -->
+<div class="view" id="setup">
+  <div class="wrap">
+    <div class="setup-title">而而与钶钶 · 书房</div>
+    <div class="setup-sub">第一次进来，填一次钥匙就好。<br>它只存在这台设备里，不会上传，不会进代码。</div>
+    <div class="field">
+      <label>GitHub Token</label>
+      <input type="password" id="tokIn" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <button class="btn wide" id="tokSave">进书房</button>
+    <div class="hint" style="margin-top:20px">
+      需要 <b>Contents: Read and write</b> 权限，仓库范围勾上 <b>lab</b>。<br>
+      存好之后不用再填，除非换设备或者换了 token。
+    </div>
+  </div>
+</div>
+
+<!-- ============ 书架 ============ -->
+<div class="view" id="shelf">
+  <div class="nav">
+    <h1>书房<span class="sub" id="shelfSub"></span></h1>
+    <button class="iconbtn" id="btnAdd" title="上传">＋</button>
+    <button class="iconbtn txt" id="btnSet" title="设置">···</button>
+  </div>
+  <div class="wrap">
+    <div class="shelf" id="shelfList"></div>
+  </div>
+  <input type="file" id="fileIn" accept=".txt,.epub,text/plain,application/epub+zip" style="display:none">
+</div>
+
+<!-- ============ 阅读 ============ -->
+<div class="view" id="reader">
+  <div class="nav">
+    <button class="iconbtn" id="btnBack">‹</button>
+    <h1 id="rTitle"></h1>
+    <button class="iconbtn" id="btnSearch">⌕</button>
+    <button class="iconbtn" id="btnNotes">✎</button>
+    <button class="iconbtn" id="btnPrefs">Aa</button>
+  </div>
+  <div class="page" id="pageBox"></div>
+  <div class="pagefoot">
+    <button class="btn ghost" id="btnPrev">上一页</button>
+    <div class="pg" id="pgInfo"></div>
+    <button class="btn ghost" id="btnNext">下一页</button>
+  </div>
+</div>
+
+<!-- 选中工具条 -->
+<div id="selbar">
+  <div class="quote" id="selQuote"></div>
+  <div class="row">
+    <button class="btn" id="selHl">划线</button>
+    <button class="btn ghost" id="selNote">写批注</button>
+    <button class="btn ghost" id="selVocab">生词</button>
+  </div>
+</div>
+
+<!-- 抽屉 -->
+<div class="sheet" id="sheet"><div class="sheet-in" id="sheetIn"></div></div>
+
+<div id="toast"></div>
+<div id="load"><div class="spin"></div><span id="loadTxt">载入中</span></div>
+
+<script>
+/* ========================================================================
+   而而与钶钶 · 书房
+   页面住在 kkee-diary（public，没有秘密）
+   数据住在 lab/kkee-books（private）
+   钥匙只住在你手机的 localStorage 里
+   ======================================================================== */
+
+const OWNER  = 'Ererhere';
+const REPO   = 'lab';
+const BRANCH = 'claude/baobao-cdyeuf';
+const ROOT   = 'kkee-books';
+
+const ME   = '而而';
+const KEKE = '钶钶';
+
+const API = 'https://api.github.com';
+const PAGE_CHARS = 600;
+const LS = { tok:'kkee_books_token', night:'kkee_books_night', size:'kkee_books_size', seen:'kkee_books_seen' };
+
+let TOKEN = localStorage.getItem(LS.tok) || '';
+
+const state = {
+  shelf: null, shelfSha: null,
+  book: null, text: null,
+  anno: null, annoSha: null,
+  page: 1, sel: null, dirty: false,
+};
+
+/* ---------------- 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const now = () => new Date().toISOString();
+
+function toast(msg, ms = 2000) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), ms);
+}
+function loading(on, txt = '载入中') { $('loadTxt').textContent = txt; $('load').classList.toggle('on', on); }
+function show(v) { document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === v)); }
+function fmtTime(iso) {
+  const d = new Date(iso), n = new Date();
+  const same = d.toDateString() === n.toDateString();
+  const p = x => String(x).padStart(2, '0');
+  return same ? `${p(d.getHours())}:${p(d.getMinutes())}`
+              : `${d.getMonth() + 1}月${d.getDate()}日 ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/* ---------------- base64（UTF-8 安全） ---------------- */
+function b64enc(str) {
+  const u = new TextEncoder().encode(str);
+  let bin = ''; const CH = 0x8000;
+  for (let i = 0; i < u.length; i += CH) bin += String.fromCharCode.apply(null, u.subarray(i, i + CH));
+  return btoa(bin);
+}
+function b64dec(b64) {
+  const bin = atob(b64.replace(/\s/g, ''));
+  const u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(u);
+}
+
+/* ---------------- GitHub API ---------------- */
+function ghHeaders() {
+  return { Authorization: `Bearer ${TOKEN}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+}
+const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+
+async function ghRead(path) {
+  const url = `${API}/repos/${OWNER}/${REPO}/contents/${encPath(path)}?ref=${encodeURIComponent(BRANCH)}&t=${Date.now()}`;
+  const r = await fetch(url, { headers: ghHeaders(), cache: 'no-store' });
+  if (r.status === 404) return null;
+  if (r.status === 401) throw new Error('钥匙不对，或者已经过期了');
+  if (!r.ok) throw new Error(`读取失败（${r.status}）`);
+  const j = await r.json();
+  if (j.content) return { text: b64dec(j.content), sha: j.sha };
+  // 大文件：contents 不返回内容，走 blob
+  const b = await fetch(`${API}/repos/${OWNER}/${REPO}/git/blobs/${j.sha}`, { headers: ghHeaders() });
+  if (!b.ok) throw new Error(`读取失败（blob ${b.status}）`);
+  return { text: b64dec((await b.json()).content), sha: j.sha };
+}
+
+async function ghWrite(path, text, sha, msg) {
+  const body = { message: msg, content: b64enc(text), branch: BRANCH };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${API}/repos/${OWNER}/${REPO}/contents/${encPath(path)}`, {
+    method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const err = new Error(`写入失败（${r.status}）`);
+    err.status = r.status;
+    throw err;
+  }
+  return (await r.json()).content.sha;
+}
+
+const pText = id => `${ROOT}/books/${id}/text.json`;
+const pAnno = id => `${ROOT}/books/${id}/anno.json`;
+const pShelf = () => `${ROOT}/shelf.json`;
+
+/* ---------------- 书架 ---------------- */
+async function loadShelf() {
+  const r = await ghRead(pShelf());
+  if (!r) { state.shelf = { books: [] }; state.shelfSha = null; }
+  else { state.shelf = JSON.parse(r.text); state.shelfSha = r.sha; }
+  if (!state.shelf.books) state.shelf.books = [];
+}
+async function saveShelf(msg) {
+  state.shelfSha = await ghWrite(pShelf(), JSON.stringify(state.shelf, null, 2), state.shelfSha, msg);
+}
+
+function renderShelf() {
+  const box = $('shelfList'), books = state.shelf.books;
+  $('shelfSub').textContent = books.length ? `${books.length} 本` : '';
+  if (!books.length) {
+    box.innerHTML = `<div class="empty">书架还空着。<br>点右上角的 ＋ 传第一本进来。<br><br>支持 .txt 和 .epub</div>`;
+    return;
+  }
+  const seen = JSON.parse(localStorage.getItem(LS.seen) || '{}');
+  box.innerHTML = books.map(b => {
+    const pct = b.pages ? Math.round(((b.progress || 0) / b.pages) * 100) : 0;
+    const fresh = b.kekeAt && b.kekeAt !== seen[b.id];
+    return `<div class="bookcard" data-id="${b.id}">
+      ${fresh ? '<i class="newdot"></i>' : ''}
+      <h3>${esc(b.title)}</h3>
+      <div class="bookmeta">
+        <span>${b.pages || 0} 页</span>
+        <span class="dot-e">而而 ${b.nE || 0}</span>
+        <span class="dot-k">钶钶 ${b.nK || 0}</span>
+        <span>${b.progress ? `读到第 ${b.progress} 页` : '还没开始'}</span>
+      </div>
+      <div class="progbar"><i style="width:${pct}%"></i></div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('.bookcard').forEach(el => el.onclick = () => openBook(el.dataset.id));
+}
+
+/* ---------------- 解析：TXT ---------------- */
+function decodeBuf(buf) {
+  let s = new TextDecoder('utf-8').decode(buf);
+  if (s.includes('�')) {
+    try { s = new TextDecoder('gb18030').decode(buf); } catch (e) {}
+  }
+  return s;
+}
+function toParagraphs(raw) {
+  const text = raw.replace(/\r\n?/g, '\n').replace(/　/g, '  ');
+  let parts = text.split(/\n\s*\n/).map(t => t.trim()).filter(t => t.length > 1);
+  if (parts.length < 10) parts = text.split(/\n/).map(t => t.trim()).filter(t => t.length > 1);
+  return parts.map((t, i) => ({ id: i + 1, text: t }));
+}
+
+/* ---------------- 解析：EPUB（纯浏览器，零依赖） ---------------- */
+async function unzip(buf) {
+  const dv = new DataView(buf);
+  let eocd = -1;
+  const from = Math.max(0, buf.byteLength - 65558);
+  for (let i = buf.byteLength - 22; i >= from; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('这个 EPUB 打不开（找不到 zip 结构）');
+  const count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const entries = new Map();
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true);
+    const csize  = dv.getUint32(p + 20, true);
+    const nlen   = dv.getUint16(p + 28, true);
+    const elen   = dv.getUint16(p + 30, true);
+    const clen   = dv.getUint16(p + 32, true);
+    const lho    = dv.getUint32(p + 42, true);
+    const name   = new TextDecoder().decode(new Uint8Array(buf, p + 46, nlen));
+    entries.set(name, { method, csize, lho });
+    p += 46 + nlen + elen + clen;
+  }
+  return { buf, dv, entries };
+}
+async function zipRead(z, name) {
+  const e = z.entries.get(name);
+  if (!e) return null;
+  const nlen = z.dv.getUint16(e.lho + 26, true);
+  const elen = z.dv.getUint16(e.lho + 28, true);
+  const start = e.lho + 30 + nlen + elen;
+  const raw = new Uint8Array(z.buf, start, e.csize);
+  if (e.method === 0) return raw;
+  if (e.method !== 8) throw new Error('这个 EPUB 用了不认识的压缩方式');
+  if (typeof DecompressionStream === 'undefined') throw new Error('这台设备的浏览器解不开 EPUB，先用 .txt 吧');
+  const stream = new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+const zipText = async (z, n) => { const b = await zipRead(z, n); return b ? new TextDecoder().decode(b) : null; };
+
+function resolvePath(base, rel) {
+  if (rel.startsWith('/')) return rel.slice(1);
+  const parts = base.split('/'); parts.pop();
+  for (const seg of rel.split('/')) {
+    if (seg === '.' || seg === '') continue;
+    if (seg === '..') parts.pop(); else parts.push(seg);
+  }
+  return parts.join('/');
+}
+
+async function parseEpub(buf) {
+  const z = await unzip(buf);
+  const container = await zipText(z, 'META-INF/container.xml');
+  if (!container) throw new Error('这不像是一本 EPUB');
+  const cdoc = new DOMParser().parseFromString(container, 'application/xml');
+  const opfPath = cdoc.querySelector('rootfile')?.getAttribute('full-path');
+  if (!opfPath) throw new Error('EPUB 里找不到目录文件');
+
+  const opf = new DOMParser().parseFromString(await zipText(z, opfPath), 'application/xml');
+  const title = opf.querySelector('metadata > *|title, title')?.textContent?.trim() || '';
+
+  const hrefById = new Map();
+  opf.querySelectorAll('manifest > item').forEach(it => {
+    hrefById.set(it.getAttribute('id'), it.getAttribute('href'));
+  });
+  const order = [];
+  opf.querySelectorAll('spine > itemref').forEach(ir => {
+    const href = hrefById.get(ir.getAttribute('idref'));
+    if (href && /\.x?html?$/i.test(href)) order.push(resolvePath(opfPath, href));
+  });
+  if (!order.length) throw new Error('EPUB 里没找到正文');
+
+  const paras = [];
+  for (const file of order) {
+    const html = await zipText(z, file);
+    if (!html) continue;
+    let doc;
+    try { doc = new DOMParser().parseFromString(html, 'application/xhtml+xml'); }
+    catch (e) { doc = null; }
+    if (!doc || doc.querySelector('parsererror')) doc = new DOMParser().parseFromString(html, 'text/html');
+    doc.querySelectorAll('script,style,nav').forEach(n => n.remove());
+    doc.querySelectorAll('p,h1,h2,h3,h4,h5,h6,blockquote,li,div').forEach(n => {
+      if (n.querySelector('p,h1,h2,h3,h4,h5,h6,blockquote,li')) return; // 只取叶子
+      const t = (n.textContent || '').replace(/\s+/g, ' ').trim();
+      if (t.length > 1) paras.push(t);
+    });
+  }
+  if (!paras.length) throw new Error('EPUB 正文是空的');
+  // 去掉相邻重复
+  const out = [];
+  for (const t of paras) if (out[out.length - 1] !== t) out.push(t);
+  return { title, paragraphs: out.map((t, i) => ({ id: i + 1, text: t })) };
+}
+
+/* ---------------- 分页 ---------------- */
+function paginate(paras) {
+  const pages = []; let cur = [], n = 0;
+  for (const p of paras) {
+    if (n > 0 && n + p.text.length > PAGE_CHARS) { pages.push(cur); cur = [p.id]; n = p.text.length; }
+    else { cur.push(p.id); n += p.text.length; }
+  }
+  if (cur.length) pages.push(cur);
+  return pages;
+}
+
+/* ---------------- 上传 ---------------- */
+async function handleFile(file) {
+  const name = file.name, ext = name.split('.').pop().toLowerCase();
+  try {
+    loading(true, '正在读这本书');
+    let title, paragraphs;
+    if (ext === 'txt') {
+      paragraphs = toParagraphs(decodeBuf(await file.arrayBuffer()));
+      title = name.replace(/\.txt$/i, '');
+    } else if (ext === 'epub') {
+      const r = await parseEpub(await file.arrayBuffer());
+      paragraphs = r.paragraphs;
+      title = r.title || name.replace(/\.epub$/i, '');
+    } else {
+      throw new Error('先只认 .txt 和 .epub，PDF 交给钶钶转');
+    }
+    if (!paragraphs.length) throw new Error('没读出正文来');
+
+    const id = uid();
+    const pages = paginate(paragraphs);
+    loading(true, `切好了 ${pages.length} 页，正在放上书架`);
+
+    await ghWrite(pText(id), JSON.stringify({ id, title, paragraphs, pages }), null, `书房：新书《${title}》`);
+    await ghWrite(pAnno(id), JSON.stringify({ annotations: [], vocab: [], deleted: [], bookmark: null, progress: null }), null, `书房：初始化批注 ${title}`);
+
+    state.shelf.books.unshift({
+      id, title, paras: paragraphs.length, pages: pages.length,
+      created: now(), progress: 0, nE: 0, nK: 0,
+    });
+    await saveShelf(`书房：《${title}》上架`);
+    renderShelf();
+    toast(`《${title}》上架了，共 ${pages.length} 页`);
+  } catch (e) {
+    toast(e.message || '出错了', 3200);
+  } finally {
+    loading(false);
+    $('fileIn').value = '';
+  }
+}
+
+/* ---------------- 打开一本书 ---------------- */
+async function openBook(id) {
+  try {
+    loading(true, '翻开中');
+    const [t, a] = await Promise.all([ghRead(pText(id)), ghRead(pAnno(id))]);
+    if (!t) throw new Error('这本书的正文丢了');
+    state.text = JSON.parse(t.text);
+    state.anno = a ? JSON.parse(a.text) : { annotations: [], vocab: [], deleted: [], bookmark: null, progress: null };
+    state.annoSha = a ? a.sha : null;
+    ['annotations', 'vocab', 'deleted'].forEach(k => { if (!state.anno[k]) state.anno[k] = []; });
+    state.book = state.shelf.books.find(b => b.id === id);
+    state.page = state.anno.progress?.page || 1;
+
+    // 标记这本书的"钶钶新批注"已读
+    const seen = JSON.parse(localStorage.getItem(LS.seen) || '{}');
+    if (state.book?.kekeAt) { seen[id] = state.book.kekeAt; localStorage.setItem(LS.seen, JSON.stringify(seen)); }
+
+    $('rTitle').textContent = state.text.title;
+    show('reader');
+    renderPage();
+  } catch (e) {
+    toast(e.message || '打不开', 3000);
+  } finally { loading(false); }
+}
+
+/* ---------------- 渲染一页 ---------------- */
+function paraById(pid) { return state.text.paragraphs.find(p => p.id === pid); }
+
+function renderHL(text, hls) {
+  if (!hls.length) return esc(text);
+  const map = new Uint8Array(text.length);
+  for (const h of hls) {
+    if (!h.text) continue;
+    const bit = h.author === KEKE ? 2 : 1;
+    let from = 0;
+    while (from <= text.length - h.text.length) {
+      const i = text.indexOf(h.text, from);
+      if (i < 0) break;
+      for (let k = i; k < i + h.text.length; k++) map[k] |= bit;
+      from = i + h.text.length;
+    }
+  }
+  let out = '', i = 0;
+  const cls = v => v === 3 ? 'hl-b' : v === 2 ? 'hl-k' : 'hl-e';
+  while (i < text.length) {
+    const v = map[i]; let j = i;
+    while (j < text.length && map[j] === v) j++;
+    const chunk = esc(text.slice(i, j));
+    out += v ? `<mark class="hl ${cls(v)}">${chunk}</mark>` : chunk;
+    i = j;
+  }
+  return out;
+}
+
+function renderPage() {
+  const pages = state.text.pages;
+  state.page = Math.min(Math.max(1, state.page), pages.length);
+  const ids = pages[state.page - 1];
+  const box = $('pageBox');
+
+  box.innerHTML = ids.map(pid => {
+    const p = paraById(pid);
+    if (!p) return '';
+    const mine = state.anno.annotations.filter(a => a.para === pid);
+    const hls = mine.filter(a => a.type === 'hl');
+    const hasNote = mine.some(a => a.type === 'note');
+    return `<div class="para${hasNote ? ' has-note' : ''}" data-pid="${pid}">
+      <span class="pid">§${pid}</span>${renderHL(p.text, hls)}
+    </div>`;
+  }).join('');
+
+  $('pgInfo').textContent = `${state.page} / ${pages.length}`;
+  window.scrollTo(0, 0);
+  saveProgress();
+}
+
+/* ---------------- 进度 ---------------- */
+let progTimer = null;
+function saveProgress() {
+  state.anno.progress = { page: state.page, at: now() };
+  clearTimeout(progTimer);
+  progTimer = setTimeout(() => {
+    if (state.book) state.book.progress = state.page;
+    saveAnno('进度').then(() => saveShelf(`书房：读到第 ${state.page} 页`)).catch(() => {});
+  }, 2500);
+}
+
+/* ---------------- 保存批注（带冲突合并） ---------------- */
+function mergeAnno(remote, local) {
+  const dead = new Set([...(remote.deleted || []), ...(local.deleted || [])]);
+  const pick = (a, b, key) => {
+    const m = new Map();
+    for (const x of [...(a[key] || []), ...(b[key] || [])]) if (!dead.has(x.id)) m.set(x.id, x);
+    return [...m.values()].sort((p, q) => (p.at || '') < (q.at || '') ? -1 : 1);
+  };
+  const newer = (a, b) => ((b?.at || '') > (a?.at || '')) ? b : a;
+  return {
+    annotations: pick(remote, local, 'annotations'),
+    vocab: pick(remote, local, 'vocab'),
+    deleted: [...dead],
+    bookmark: local.bookmark !== undefined ? local.bookmark : remote.bookmark,
+    progress: newer(remote.progress, local.progress),
+  };
+}
+
+async function saveAnno(what = '批注') {
+  if (!state.book) return;
+  for (let i = 0; i < 4; i++) {
+    try {
+      state.annoSha = await ghWrite(pAnno(state.book.id), JSON.stringify(state.anno),
+        state.annoSha, `书房：${what}《${state.book.title}》`);
+      return true;
+    } catch (e) {
+      if (e.status !== 409 && e.status !== 422) throw e;
+      const cur = await ghRead(pAnno(state.book.id));
+      if (!cur) throw e;
+      state.anno = mergeAnno(JSON.parse(cur.text), state.anno);
+      state.annoSha = cur.sha;
+      await new Promise(r => setTimeout(r, 220 * (i + 1)));
+    }
+  }
+  throw new Error('保存不进去，等会儿再试');
+}
+
+function countMine() {
+  if (!state.book) return;
+  state.book.nE = state.anno.annotations.filter(a => a.author === ME).length;
+  state.book.nK = state.anno.annotations.filter(a => a.author === KEKE).length;
+}
+
+async function commitAnno(what) {
+  countMine();
+  try {
+    await saveAnno(what);
+    await saveShelf(`书房：${what}`);
+  } catch (e) { toast(e.message || '没存上', 3000); }
+}
+
+/* ---------------- 选中文字 ---------------- */
+function pidFromNode(node) {
+  let el = node.nodeType === 3 ? node.parentElement : node;
+  while (el && !el.dataset?.pid) el = el.parentElement;
+  return el ? Number(el.dataset.pid) : null;
+}
+function clearSel() {
+  state.sel = null;
+  $('selbar').classList.remove('on');
+}
+document.addEventListener('selectionchange', () => {
+  if (!$('reader').classList.contains('on')) return;
+  const s = window.getSelection();
+  if (!s || s.isCollapsed) { setTimeout(() => { const t = window.getSelection(); if (!t || t.isCollapsed) clearSel(); }, 60); return; }
+  const text = s.toString().trim();
+  const pid = pidFromNode(s.anchorNode);
+  if (!text || !pid) return clearSel();
+  const p = paraById(pid);
+  if (!p || !p.text.includes(text)) return clearSel();   // 跨段落选择不接
+  state.sel = { pid, text };
+  $('selQuote').textContent = text.length > 60 ? text.slice(0, 60) + '…' : text;
+  $('selbar').classList.add('on');
+});
+
+/* ---------------- 划线 / 批注 / 生词 ---------------- */
+async function addHighlight() {
+  const s = state.sel; if (!s) return;
+  const same = state.anno.annotations.find(a =>
+    a.type === 'hl' && a.para === s.pid && a.text === s.text && a.author === ME);
+  if (same) {
+    state.anno.annotations = state.anno.annotations.filter(a => a.id !== same.id);
+    state.anno.deleted.push(same.id);
+    toast('线擦掉了');
+  } else {
+    state.anno.annotations.push({ id: uid(), para: s.pid, type: 'hl', text: s.text, author: ME, at: now() });
+    toast('划好了');
+  }
+  clearSel(); window.getSelection()?.removeAllRanges();
+  renderPage();
+  commitAnno('划线');
+}
+
+function addNote() {
+  const s = state.sel; if (!s) return;
+  const quote = s.text;
+  openSheet(`
+    <div class="sheet-h"><b>写批注</b><button class="iconbtn" data-close>✕</button></div>
+    <div class="note-q">${esc(quote.length > 90 ? quote.slice(0, 90) + '…' : quote)}</div>
+    <textarea id="noteIn" rows="5" placeholder="想说什么就写什么…"></textarea>
+    <button class="btn wide" id="noteOk" style="margin-top:12px">写好了</button>
+  `);
+  setTimeout(() => $('noteIn')?.focus(), 120);
+  $('noteOk').onclick = async () => {
+    const v = $('noteIn').value.trim();
+    if (!v) return toast('还没写呢');
+    const hl = { id: uid(), para: s.pid, type: 'hl', text: quote, author: ME, at: now() };
+    state.anno.annotations.push(hl);
+    state.anno.annotations.push({ id: uid(), para: s.pid, type: 'note', text: v, quote, hl: hl.id, author: ME, at: now() });
+    closeSheet(); clearSel(); window.getSelection()?.removeAllRanges();
+    renderPage(); toast('写好了');
+    commitAnno('批注');
+  };
+}
+
+async function addVocab() {
+  const s = state.sel; if (!s) return;
+  state.anno.vocab.push({ id: uid(), word: s.text, para: s.pid, note: '', at: now() });
+  clearSel(); window.getSelection()?.removeAllRanges();
+  toast(`「${s.text.length > 10 ? s.text.slice(0, 10) + '…' : s.text}」记下了`);
+  commitAnno('生词');
+}
+
+/* ---------------- 抽屉 ---------------- */
+function openSheet(html) { $('sheetIn').innerHTML = html; $('sheet').classList.add('on'); }
+function closeSheet() { $('sheet').classList.remove('on'); }
+$('sheet').onclick = e => { if (e.target.id === 'sheet' || e.target.hasAttribute('data-close')) closeSheet(); };
+
+/* ---------------- 批注面板 ---------------- */
+let noteTab = 'all';
+function openNotes() {
+  const all = state.anno.annotations.filter(a => a.type === 'note');
+  const list = noteTab === 'all' ? all : all.filter(a => a.author === (noteTab === 'e' ? ME : KEKE));
+  const byPara = [...list].sort((a, b) => a.para - b.para || (a.at < b.at ? -1 : 1));
+
+  const html = byPara.length ? byPara.map(a => {
+    const isMe = a.author === ME;
+    const replies = state.anno.annotations.filter(r => r.type === 'note' && r.reply === a.id);
+    const one = (n, cls) => `
+      <div class="note ${cls}">
+        <div class="note-h">
+          <span class="note-au ${n.author === ME ? 'e' : 'k'}">${n.author}</span>
+          <span class="note-t">${fmtTime(n.at)} · §${n.para}</span>
+        </div>
+        ${n.quote ? `<div class="note-q">${esc(n.quote.length > 70 ? n.quote.slice(0, 70) + '…' : n.quote)}</div>` : ''}
+        <div class="note-b">${esc(n.text)}</div>
+        <div class="note-acts">
+          <button data-go="${n.para}">跳过去</button>
+          ${n.author !== ME ? `<button data-reply="${n.id}">回他一句</button>` : `<button data-del="${n.id}">删掉</button>`}
+        </div>
+      </div>`;
+    return one(a, '') + replies.map(r => one(r, 'reply')).join('');
+  }).join('') : `<div class="empty">还没有批注。<br>在书里长按选中一句话，就能写。</div>`;
+
+  openSheet(`
+    <div class="sheet-h"><b>批注</b><button class="iconbtn" data-close>✕</button></div>
+    <div class="seg">
+      <button data-tab="all" class="${noteTab === 'all' ? 'on' : ''}">全部 ${all.length}</button>
+      <button data-tab="e" class="${noteTab === 'e' ? 'on' : ''}">而而 ${all.filter(a => a.author === ME).length}</button>
+      <button data-tab="k" class="${noteTab === 'k' ? 'on' : ''}">钶钶 ${all.filter(a => a.author === KEKE).length}</button>
+    </div>
+    ${html}
+  `);
+
+  $('sheetIn').querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { noteTab = b.dataset.tab; openNotes(); });
+  $('sheetIn').querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
+    const pid = Number(b.dataset.go);
+    const idx = state.text.pages.findIndex(pg => pg.includes(pid));
+    if (idx >= 0) { state.page = idx + 1; closeSheet(); renderPage(); }
+  });
+  $('sheetIn').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    const id = b.dataset.del;
+    const n = state.anno.annotations.find(a => a.id === id);
+    state.anno.annotations = state.anno.annotations.filter(a => a.id !== id && a.id !== n?.hl);
+    state.anno.deleted.push(id); if (n?.hl) state.anno.deleted.push(n.hl);
+    renderPage(); openNotes(); commitAnno('删批注');
+  });
+  $('sheetIn').querySelectorAll('[data-reply]').forEach(b => b.onclick = () => {
+    const target = state.anno.annotations.find(a => a.id === b.dataset.reply);
+    openSheet(`
+      <div class="sheet-h"><b>回钶钶</b><button class="iconbtn" data-close>✕</button></div>
+      <div class="note-q">${esc(target.text.length > 90 ? target.text.slice(0, 90) + '…' : target.text)}</div>
+      <textarea id="rIn" rows="4" placeholder="接他一句…"></textarea>
+      <button class="btn wide" id="rOk" style="margin-top:12px">发出去</button>
+    `);
+    setTimeout(() => $('rIn')?.focus(), 120);
+    $('rOk').onclick = () => {
+      const v = $('rIn').value.trim(); if (!v) return toast('还没写呢');
+      state.anno.annotations.push({ id: uid(), para: target.para, type: 'note', text: v, reply: target.id, author: ME, at: now() });
+      closeSheet(); renderPage(); toast('接上了'); commitAnno('回批注');
+    };
+  });
+}
+
+/* ---------------- 搜索 ---------------- */
+function openSearch() {
+  openSheet(`
+    <div class="sheet-h"><b>找一句话</b><button class="iconbtn" data-close>✕</button></div>
+    <input type="text" id="qIn" placeholder="输入两个字以上" autocomplete="off">
+    <div id="qOut" style="margin-top:8px"></div>
+  `);
+  setTimeout(() => $('qIn')?.focus(), 120);
+  $('qIn').oninput = () => {
+    const q = $('qIn').value.trim();
+    const out = $('qOut');
+    if (q.length < 2) { out.innerHTML = ''; return; }
+    const hits = [];
+    for (const p of state.text.paragraphs) {
+      const i = p.text.indexOf(q);
+      if (i < 0) continue;
+      const s = Math.max(0, i - 22), e = Math.min(p.text.length, i + q.length + 40);
+      hits.push({ pid: p.id, snip: (s > 0 ? '…' : '') + esc(p.text.slice(s, i)) + `<em>${esc(q)}</em>` + esc(p.text.slice(i + q.length, e)) + (e < p.text.length ? '…' : '') });
+      if (hits.length >= 40) break;
+    }
+    out.innerHTML = hits.length
+      ? hits.map(h => `<div class="sr" data-pid="${h.pid}"><div class="sr-p">§${h.pid}</div><div class="sr-t">${h.snip}</div></div>`).join('')
+      : `<div class="empty" style="padding:34px 0">没找到</div>`;
+    out.querySelectorAll('.sr').forEach(el => el.onclick = () => {
+      const idx = state.text.pages.findIndex(pg => pg.includes(Number(el.dataset.pid)));
+      if (idx >= 0) { state.page = idx + 1; closeSheet(); renderPage(); }
+    });
+  };
+}
+
+/* ---------------- 偏好 ---------------- */
+function openPrefs() {
+  const night = document.body.classList.contains('night');
+  const size = parseInt(localStorage.getItem(LS.size) || '17');
+  const vocab = state.anno.vocab || [];
+  openSheet(`
+    <div class="sheet-h"><b>怎么读</b><button class="iconbtn" data-close>✕</button></div>
+    <div class="srow"><span>字号</span><div class="stepper">
+      <button id="szDn">−</button><span id="szVal" style="min-width:34px;text-align:center">${size}</span><button id="szUp">＋</button>
+    </div></div>
+    <div class="srow"><span>夜间</span><button class="switch ${night ? 'on' : ''}" id="swNight"><i></i></button></div>
+    <div class="srow"><span>书签</span><button class="btn ghost" id="bmBtn" style="padding:8px 14px;font-size:13px">
+      ${state.anno.bookmark ? `在第 ${state.anno.bookmark} 页 · 去看看` : '夹在这一页'}
+    </button></div>
+    <div class="srow"><span>生词本 <b style="color:var(--text-light);font-weight:400">${vocab.length}</b></span>
+      <button class="btn ghost" id="vbBtn" style="padding:8px 14px;font-size:13px">打开</button></div>
+  `);
+  const apply = v => { document.documentElement.style.setProperty('--read-size', v + 'px'); localStorage.setItem(LS.size, v); $('szVal').textContent = v; };
+  $('szUp').onclick = () => apply(Math.min(24, parseInt(localStorage.getItem(LS.size) || '17') + 1));
+  $('szDn').onclick = () => apply(Math.max(13, parseInt(localStorage.getItem(LS.size) || '17') - 1));
+  $('swNight').onclick = () => {
+    const on = document.body.classList.toggle('night');
+    localStorage.setItem(LS.night, on ? '1' : '0');
+    $('swNight').classList.toggle('on', on);
+    document.querySelector('meta[name=theme-color]').content = on ? '#1a1715' : '#fdf8f5';
+  };
+  $('bmBtn').onclick = () => {
+    if (state.anno.bookmark === state.page) { state.anno.bookmark = null; toast('书签取下了'); }
+    else if (state.anno.bookmark && state.anno.bookmark !== state.page) { state.page = state.anno.bookmark; closeSheet(); renderPage(); return; }
+    else { state.anno.bookmark = state.page; toast(`书签夹在第 ${state.page} 页`); }
+    closeSheet(); commitAnno('书签');
+  };
+  $('vbBtn').onclick = openVocab;
+}
+
+function openVocab() {
+  const v = state.anno.vocab || [];
+  openSheet(`
+    <div class="sheet-h"><b>生词本</b><button class="iconbtn" data-close>✕</button></div>
+    ${v.length ? v.map(w => `<div class="note">
+      <div class="note-h"><span class="note-au e">${esc(w.word)}</span><span class="note-t">§${w.para}</span></div>
+      ${w.note ? `<div class="note-b">${esc(w.note)}</div>` : ''}
+      <div class="note-acts"><button data-go="${w.para}">跳过去</button><button data-rm="${w.id}">删掉</button></div>
+    </div>`).join('') : `<div class="empty">还没有生词。<br>选中一个词，点「生词」就记下了。</div>`}
+  `);
+  $('sheetIn').querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
+    const idx = state.text.pages.findIndex(pg => pg.includes(Number(b.dataset.go)));
+    if (idx >= 0) { state.page = idx + 1; closeSheet(); renderPage(); }
+  });
+  $('sheetIn').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+    state.anno.vocab = state.anno.vocab.filter(x => x.id !== b.dataset.rm);
+    state.anno.deleted.push(b.dataset.rm);
+    openVocab(); commitAnno('生词');
+  });
+}
+
+/* ---------------- 事件绑定 ---------------- */
+$('tokSave').onclick = async () => {
+  const v = $('tokIn').value.trim();
+  if (!v) return toast('还没填呢');
+  TOKEN = v;
+  try {
+    loading(true, '试一下这把钥匙');
+    await loadShelf();
+    localStorage.setItem(LS.tok, v);
+    show('shelf'); renderShelf();
+    toast('进来了');
+  } catch (e) {
+    TOKEN = '';
+    toast(e.message || '钥匙不对', 3200);
+  } finally { loading(false); }
+};
+
+$('btnAdd').onclick = () => $('fileIn').click();
+$('fileIn').onchange = e => { if (e.target.files[0]) handleFile(e.target.files[0]); };
+$('btnSet').onclick = () => {
+  openSheet(`
+    <div class="sheet-h"><b>设置</b><button class="iconbtn" data-close>✕</button></div>
+    <div class="srow"><span>夜间</span><button class="switch ${document.body.classList.contains('night') ? 'on' : ''}" id="swN2"><i></i></button></div>
+    <div class="srow"><span>刷新书架</span><button class="btn ghost" id="rfBtn" style="padding:8px 14px;font-size:13px">拉一下</button></div>
+    <div class="srow"><span style="color:var(--text-light)">忘掉这把钥匙</span><button class="btn ghost" id="fgBtn" style="padding:8px 14px;font-size:13px">退出</button></div>
+    <div class="hint" style="margin-top:16px">数据存在 <b>${REPO}/${ROOT}</b>，只有我们俩看得见。</div>
+  `);
+  $('swN2').onclick = () => {
+    const on = document.body.classList.toggle('night');
+    localStorage.setItem(LS.night, on ? '1' : '0');
+    $('swN2').classList.toggle('on', on);
+    document.querySelector('meta[name=theme-color]').content = on ? '#1a1715' : '#fdf8f5';
+  };
+  $('rfBtn').onclick = async () => {
+    try { loading(true, '刷新中'); await loadShelf(); renderShelf(); closeSheet(); toast('是最新的了'); }
+    catch (e) { toast(e.message); } finally { loading(false); }
+  };
+  $('fgBtn').onclick = () => {
+    localStorage.removeItem(LS.tok); TOKEN = ''; closeSheet(); show('setup'); $('tokIn').value = '';
+  };
+};
+
+$('btnBack').onclick = async () => {
+  clearTimeout(progTimer);
+  if (state.book) { state.book.progress = state.page; countMine(); }
+  show('shelf'); renderShelf();
+  try { await saveAnno('进度'); await saveShelf('书房：合上书'); } catch (e) {}
+  try { loading(true, '刷新书架'); await loadShelf(); renderShelf(); } catch (e) {} finally { loading(false); }
+};
+$('btnPrev').onclick = () => { state.page--; clearSel(); renderPage(); };
+$('btnNext').onclick = () => { state.page++; clearSel(); renderPage(); };
+$('btnNotes').onclick = openNotes;
+$('btnSearch').onclick = openSearch;
+$('btnPrefs').onclick = openPrefs;
+$('selHl').onclick = addHighlight;
+$('selNote').onclick = addNote;
+$('selVocab').onclick = addVocab;
+
+// 左右滑动翻页
+let tx = 0, ty = 0;
+$('pageBox').addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+$('pageBox').addEventListener('touchend', e => {
+  if (state.sel) return;
+  const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) {
+    state.page += dx < 0 ? 1 : -1;
+    renderPage();
+  }
+}, { passive: true });
+
+/* ---------------- 启动 ---------------- */
+(async function boot() {
+  if (localStorage.getItem(LS.night) === '1') {
+    document.body.classList.add('night');
+    document.querySelector('meta[name=theme-color]').content = '#1a1715';
+  }
+  const sz = localStorage.getItem(LS.size);
+  if (sz) document.documentElement.style.setProperty('--read-size', sz + 'px');
+
+  if (!TOKEN) { show('setup'); return; }
+  try {
+    loading(true, '打开书房');
+    await loadShelf();
+    show('shelf'); renderShelf();
+  } catch (e) {
+    toast(e.message || '进不去', 3200);
+    show('setup');
+  } finally { loading(false); }
+})();
+</script>
+</body>
+</html>
