@@ -220,6 +220,17 @@ mark.hl { background: transparent; color: inherit; border-radius: 3px; padding: 
 mark.hl-e { background: var(--erere-hl); }
 mark.hl-k { background: var(--keke-hl); }
 mark.hl-b { background: var(--both-hl); }
+
+/* 底下挂着话的，只划一道虚线；点它才展开 */
+mark.nl {
+  background: transparent; color: inherit; cursor: pointer;
+  border-bottom: 1.6px dashed; padding-bottom: 1px;
+}
+mark.nl-e { border-color: var(--erere); }
+mark.nl-k { border-color: var(--keke); }
+mark.nl-b { border-color: var(--primary); }
+.pid.talk { opacity: .9; color: var(--primary); cursor: pointer; }
+.notes { margin: -.25em 0 1.15em 0; }
 .para.has-note::after {
   content: ''; position: absolute; left: -12px; top: 4px;
   width: 3px; height: calc(100% - 8px); border-radius: 2px; background: var(--primary-light);
@@ -237,7 +248,7 @@ mark.hl-b { background: var(--both-hl); }
 .inote-h { font-size: 12px; font-weight: 600; color: var(--keke); margin-bottom: 5px; }
 .inote.e .inote-h { color: var(--erere); }
 .inote-h span { font-weight: 400; color: var(--text-light); margin-left: 6px; }
-.inote-b { white-space: pre-wrap; word-break: break-word; }
+.inote-b { white-space: pre-wrap; word-break: break-word; font-style: italic; }
 .inote-a { margin-top: 8px; display: flex; gap: 16px; }
 .inote-a button {
   border: none; background: none; padding: 0; cursor: pointer;
@@ -849,12 +860,14 @@ async function openBook(id) {
 /* ---------------- 渲染一页 ---------------- */
 function paraById(pid) { return state.text.paragraphs.find(p => p.id === pid); }
 
-function renderHL(text, hls) {
+// 低两位 = 纯划线（涂底色），高两位 = 挂着批注的（划虚线，点开才看内容）
+function renderHL(text, hls, noted, pid) {
   if (!hls.length) return esc(text);
   const map = new Uint8Array(text.length);
   for (const h of hls) {
     if (!h.text) continue;
-    const bit = h.author === KEKE ? 2 : 1;
+    let bit = h.author === KEKE ? 2 : 1;
+    if (noted && noted.has(h.id)) bit <<= 2;
     let from = 0;
     while (from <= text.length - h.text.length) {
       const i = text.indexOf(h.text, from);
@@ -863,13 +876,17 @@ function renderHL(text, hls) {
       from = i + h.text.length;
     }
   }
+  const cls = v => {
+    const n = v >> 2, g = v & 3;
+    if (n) return 'nl ' + (n === 3 ? 'nl-b' : n === 2 ? 'nl-k' : 'nl-e');
+    return 'hl ' + (g === 3 ? 'hl-b' : g === 2 ? 'hl-k' : 'hl-e');
+  };
   let out = '', i = 0;
-  const cls = v => v === 3 ? 'hl-b' : v === 2 ? 'hl-k' : 'hl-e';
   while (i < text.length) {
     const v = map[i]; let j = i;
     while (j < text.length && map[j] === v) j++;
     const chunk = esc(text.slice(i, j));
-    out += v ? `<mark class="hl ${cls(v)}">${chunk}</mark>` : chunk;
+    out += v ? `<mark class="${cls(v)}"${v >> 2 ? ` data-open="${pid}"` : ''}>${chunk}</mark>` : chunk;
     i = j;
   }
   return out;
@@ -901,17 +918,25 @@ function renderPage() {
     const mine = state.anno.annotations.filter(a => a.para === pid);
     const hls = mine.filter(a => a.type === 'hl');
     const notes = mine.filter(a => a.type === 'note');
-    const para = `<div class="para${notes.length ? ' has-note' : ''}" data-pid="${pid}">
-      <span class="pid">§${pid}</span>${renderHL(p.text, hls)}
+    const noted = new Set(notes.map(n => n.hl).filter(Boolean));
+    const para = `<div class="para" data-pid="${pid}">
+      <span class="pid${notes.length ? ' talk' : ''}"${notes.length ? ` data-open="${pid}"` : ''}>§${pid}</span>${renderHL(p.text, hls, noted, pid)}
     </div>`;
+    if (!notes.length) return para;
     const thread = notes.filter(n => !n.reply).map(n =>
       card(n, '') + notes.filter(r => r.reply === n.id).map(r => card(r, ' reply')).join('')
     ).join('');
-    return para + thread;
+    return para + `<div class="notes" id="nt-${pid}" hidden>${thread}</div>`;
   }).join('');
 
   box.querySelectorAll('[data-reply]').forEach(b => b.onclick = () => replyTo(b.dataset.reply));
   box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => delNote(b.dataset.del));
+  box.querySelectorAll('[data-open]').forEach(el => el.onclick = e => {
+    if (!window.getSelection()?.isCollapsed) return;   // 正在选字，不是要展开
+    e.stopPropagation();
+    const n = $('nt-' + el.dataset.open);
+    if (n) n.hidden = !n.hidden;
+  });
   box.querySelectorAll('[data-goto]').forEach(el => el.onclick = () => {
     const idx = state.text.pages.findIndex(pg => pg.includes(Number(el.dataset.goto)));
     if (idx >= 0) { state.page = idx + 1; renderPage(); }
