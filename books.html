@@ -830,6 +830,7 @@ async function openBook(id) {
     ['annotations', 'vocab', 'deleted'].forEach(k => { if (!state.anno[k]) state.anno[k] = []; });
     state.book = state.shelf.books.find(b => b.id === id);
     state.page = state.anno.progress?.page || 1;
+    savedPage = state.page;                  // 刚打开就跟远端一致，不必立刻回写
     localStorage.setItem(LS.last, id);
 
     // 标记这本书的"钶钶新批注"已读
@@ -922,14 +923,18 @@ function renderPage() {
 }
 
 /* ---------------- 进度 ---------------- */
-let progTimer = null;
+let progTimer = null, savedPage = null;
 function saveProgress() {
   state.anno.progress = { page: state.page, at: now() };
   clearTimeout(progTimer);
-  progTimer = setTimeout(() => {
+  if (state.page === savedPage) return;      // 翻回原处，不用再存
+  // 存得太勤会把仓库刷成一串"读到第 N 页"，等停下来再说
+  progTimer = setTimeout(async () => {
+    if (state.page === savedPage) return;
+    savedPage = state.page;
     if (state.book) state.book.progress = state.page;
-    saveAnno('进度').then(() => saveShelf(`书房：读到第 ${state.page} 页`)).catch(() => {});
-  }, 2500);
+    try { await saveAnno('进度'); await saveShelf(`书房：读到第 ${state.page} 页`); } catch (e) {}
+  }, 25000);
 }
 
 /* ---------------- 保存批注（带冲突合并） ---------------- */
@@ -1341,6 +1346,7 @@ $('btnBack').onclick = async () => {
   stopPoll();
   clearTimeout(progTimer);
   if (state.book) { state.book.progress = state.page; countMine(); }
+  savedPage = state.page;                    // 合上书这一次一定写，之后不再重复
   const back = state.from === 'home' ? 'home' : 'shelf';
   const paint = () => back === 'home' ? renderHome() : renderShelf();
   show(back); paint();
