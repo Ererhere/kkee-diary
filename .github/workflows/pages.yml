@@ -1,0 +1,35 @@
+name: Deploy Pages
+
+# GitHub 自带的 "pages build and deployment" 在这个仓库上会卡在
+# deployment_queued 出不来，重排和取消都无效。改由我们自己触发部署，
+# 走的是另一条通道。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 新的推送直接顶掉在跑的那次，避免再堆出一队僵尸
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
