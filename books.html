@@ -8,7 +8,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="我们的书房">
 <meta name="theme-color" content="#fdf8f5">
-<link rel="apple-touch-icon" href="icon-books.png">
+<link rel="apple-touch-icon" href="icon-books-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-books-180.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-books.png">
+<link rel="icon" type="image/png" href="icon-books-180.png">
 <link rel="manifest" href="books-manifest.json">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -342,6 +345,18 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
 .switch.on { background: var(--primary); }
 .switch.on i { left: 22px; }
 
+/* 目录抽屉 */
+.tocrow {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 12px 2px; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.tocrow:active { background: var(--primary-light); }
+.tocrow span { flex: 1; font-size: 14.5px; line-height: 1.6; }
+.tocrow i { font-style: normal; font-size: 12px; color: var(--text-light); }
+.tocrow.chap span { font-weight: 600; }
+.tocrow.here span { color: var(--primary); font-weight: 600; }
+.tocrow.here i { color: var(--primary); }
+
 .sr { padding: 12px 2px; border-bottom: 1px solid var(--border); cursor: pointer; }
 .sr .sr-p { font-size: 11.5px; color: var(--text-light); margin-bottom: 4px; }
 .sr .sr-t { font-size: 14px; line-height: 1.6; }
@@ -424,6 +439,7 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
   <div class="nav">
     <button class="iconbtn" id="btnBack">‹</button>
     <h1 id="rTitle"></h1>
+    <button class="iconbtn" id="btnToc" title="目录">☰</button>
     <button class="iconbtn" id="btnSearch">⌕</button>
     <button class="iconbtn" id="btnNotes">✎</button>
     <button class="iconbtn" id="btnPrefs">Aa</button>
@@ -1158,6 +1174,36 @@ function openNotes() {
   $('sheetIn').querySelectorAll('[data-reply]').forEach(b => b.onclick = () => replyTo(b.dataset.reply));
 }
 
+/* ---------------- 目录 ---------------- */
+function openToc() {
+  const toc = state.text.toc || [];
+  if (!toc.length) return toast('这本书没认出目录');
+  const pm = new Map(state.text.paragraphs.map(p => [p.id, p.text]));
+  const pageOf = id => state.text.pages.findIndex(pg => pg.includes(id)) + 1;
+
+  openSheet(`
+    <div class="sheet-h"><b>目录</b>
+      <span style="font-size:12px;color:var(--text-light);margin-left:8px">${toc.length} 条</span>
+      <button class="iconbtn" data-close>✕</button></div>
+    ${toc.map(x => {
+      const t = pm.get(x.from) || '';
+      const pg = pageOf(x.to);
+      const chap = /^第[一二三四五六七八九十百]+[章部]|^前言|^代序|^附录|年表$/.test(t);
+      const here = pg > 0 && pg === state.page;
+      return `<div class="tocrow${chap ? ' chap' : ''}${here ? ' here' : ''}" data-p="${pg}">
+        <span>${esc(t)}</span><i>${pg > 0 ? pg : '—'}</i></div>`;
+    }).join('')}
+  `);
+
+  $('sheetIn').querySelectorAll('[data-p]').forEach(el => el.onclick = () => {
+    const p = Number(el.dataset.p);
+    if (p > 0) { state.page = p; clearSel(); closeSheet(); renderPage(); }
+  });
+  // 打开时滚到当前所在的那一条
+  setTimeout(() => $('sheetIn').querySelector('.tocrow.here')
+    ?.scrollIntoView({ block: 'center' }), 60);
+}
+
 /* ---------------- 搜索 ---------------- */
 function openSearch() {
   openSheet(`
@@ -1304,6 +1350,7 @@ $('btnBack').onclick = async () => {
 $('btnPrev').onclick = () => { state.page--; clearSel(); renderPage(); };
 $('btnNext').onclick = () => { state.page++; clearSel(); renderPage(); };
 $('btnNotes').onclick = openNotes;
+$('btnToc').onclick = openToc;
 $('btnSearch').onclick = openSearch;
 $('btnPrefs').onclick = openPrefs;
 $('selHl').onclick = addHighlight;
