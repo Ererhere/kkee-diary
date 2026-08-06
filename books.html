@@ -109,6 +109,35 @@ input:focus, textarea:focus { border-color: var(--primary); }
 .field { margin-bottom: 18px; }
 .field label { display: block; font-size: 13px; color: var(--text-light); margin-bottom: 8px; }
 
+/* ---------- 首页 ---------- */
+.wrap.home { padding: 0 18px 40px 18px; padding-top: calc(58px + env(safe-area-inset-top)); }
+.home .hi { font-size: 14px; color: var(--text-light); margin-bottom: 6px; }
+.home-name { font-size: 25px; font-weight: 600; letter-spacing: .5px; margin-bottom: 30px; }
+
+.cont {
+  background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+  padding: 18px; box-shadow: var(--shadow); cursor: pointer; margin-bottom: 14px;
+}
+.cont:active { transform: scale(.985); }
+.cont .tag { font-size: 12px; color: var(--primary); margin-bottom: 9px; letter-spacing: .5px; }
+.cont h3 { font-size: 17px; font-weight: 600; line-height: 1.5; margin-bottom: 12px; }
+.cont .meta { font-size: 12.5px; color: var(--text-light); margin-bottom: 10px; }
+
+.voice { margin-bottom: 14px; }
+.voice .tag { font-size: 12px; color: var(--text-light); margin: 0 0 9px 2px; letter-spacing: .5px; }
+.voice .inote { margin: 0 0 8px 0; }
+
+.entry {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 16px 18px; margin-bottom: 11px; cursor: pointer;
+}
+.entry:active { background: var(--primary-light); }
+.entry b { font-size: 15.5px; font-weight: 600; }
+.entry span { font-size: 12.5px; color: var(--text-light); margin-left: 9px; }
+.entry i { font-style: normal; font-size: 19px; color: var(--text-light); }
+.home-foot { text-align: center; margin-top: 26px; }
+
 /* ---------- 书架 ---------- */
 .shelf { display: flex; flex-direction: column; gap: 12px; }
 .bookcard {
@@ -142,6 +171,20 @@ body.chrome-bar #reader .page { padding-bottom: 176px; }
   font-size: 11px; color: var(--text-light); opacity: .45;
   margin-right: 6px; user-select: none; -webkit-user-select: none;
 }
+
+/* 书前目次：点一下就翻过去 */
+.tocitem {
+  position: relative; padding: 13px 26px 13px 2px;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px; line-height: 1.6; cursor: pointer;
+  user-select: none; -webkit-user-select: none;
+}
+.tocitem::after {
+  content: '›'; position: absolute; right: 6px; top: 50%;
+  transform: translateY(-50%); color: var(--text-light); font-size: 20px;
+}
+.tocitem:active { background: var(--primary-light); }
+.tocitem.chap { font-weight: 600; margin-top: 6px; }
 mark.hl { background: transparent; color: inherit; border-radius: 3px; padding: 1px 0; }
 mark.hl-e { background: var(--erere-hl); }
 mark.hl-k { background: var(--keke-hl); }
@@ -193,9 +236,15 @@ body.picking .pagefoot { opacity: 0; pointer-events: none; }
   width: calc(100% - 28px); max-width: 452px; z-index: 60;
   background: var(--card); border: 1px solid var(--border);
   border-radius: 16px; box-shadow: 0 6px 24px rgba(100,60,40,.16);
-  padding: 12px 14px; transition: transform .22s ease;
+  padding: 12px 14px;
+  /* 收起时彻底藏干净：光靠位移会在安全区上露一道边 */
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: transform .22s ease, opacity .22s ease, visibility .22s;
 }
-#selbar.on { transform: translateX(-50%) translateY(0); }
+#selbar.on {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1; visibility: visible; pointer-events: auto;
+}
 body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px); }
 #selbar .quote {
   font-size: 13px; color: var(--text-light); line-height: 1.6;
@@ -311,10 +360,28 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
   </div>
 </div>
 
+<!-- ============ 首页 ============ -->
+<div class="view" id="home">
+  <div class="wrap home">
+    <div class="hi" id="homeHi"></div>
+    <div class="home-name">而而与钶钶的书房</div>
+    <div id="homeCont"></div>
+    <div id="homeVoice"></div>
+    <div class="entry" id="toShelf">
+      <div><b>书架</b><span id="homeCount"></span></div><i>›</i>
+    </div>
+    <div class="entry" id="homeAdd">
+      <div><b>传一本进来</b><span>.txt / .epub</span></div><i>＋</i>
+    </div>
+    <div class="home-foot"><button class="iconbtn txt" id="homeSet">设置</button></div>
+  </div>
+</div>
+
 <!-- ============ 书架 ============ -->
 <div class="view" id="shelf">
   <div class="nav">
-    <h1>书房<span class="sub" id="shelfSub"></span></h1>
+    <button class="iconbtn" id="shelfBack">‹</button>
+    <h1>书架<span class="sub" id="shelfSub"></span></h1>
     <button class="iconbtn" id="btnAdd" title="上传">＋</button>
     <button class="iconbtn txt" id="btnSet" title="设置">···</button>
   </div>
@@ -375,7 +442,8 @@ const KEKE = '钶钶';
 
 const API = 'https://api.github.com';
 const PAGE_CHARS = 600;
-const LS = { tok:'kkee_books_token', night:'kkee_books_night', size:'kkee_books_size', seen:'kkee_books_seen' };
+const LS = { tok:'kkee_books_token', night:'kkee_books_night', size:'kkee_books_size',
+             seen:'kkee_books_seen', last:'kkee_books_last' };
 
 let TOKEN = localStorage.getItem(LS.tok) || '';
 
@@ -383,7 +451,7 @@ const state = {
   shelf: null, shelfSha: null,
   book: null, text: null,
   anno: null, annoSha: null,
-  page: 1, sel: null, dirty: false,
+  page: 1, sel: null, dirty: false, from: 'shelf',
 };
 
 /* ---------------- 小工具 ---------------- */
@@ -469,6 +537,47 @@ async function saveShelf(msg) {
   state.shelfSha = await ghWrite(pShelf(), JSON.stringify(state.shelf, null, 2), state.shelfSha, msg);
 }
 
+/* ---------------- 首页 ---------------- */
+function renderHome() {
+  const h = new Date().getHours();
+  $('homeHi').textContent =
+    h < 5 ? '夜深了' : h < 11 ? '早上好' : h < 14 ? '中午好'
+    : h < 18 ? '下午好' : h < 23 ? '晚上好' : '夜深了';
+
+  const books = state.shelf.books;
+  $('homeCount').textContent = books.length ? `${books.length} 本` : '还空着';
+
+  // 接着读：优先上次打开的那本，其次是有进度的
+  const lastId = localStorage.getItem(LS.last);
+  const b = books.find(x => x.id === lastId) || books.find(x => x.progress > 0);
+  if (b) {
+    const pct = b.pages ? Math.round(((b.progress || 0) / b.pages) * 100) : 0;
+    $('homeCont').innerHTML = `<div class="cont" data-id="${b.id}">
+      <div class="tag">上次读到</div>
+      <h3>${esc(b.title)}</h3>
+      <div class="meta">第 ${b.progress || 1} 页 · 共 ${b.pages} 页 · ${pct}%
+        ${b.nE || b.nK ? ` · 批注 ${(b.nE || 0) + (b.nK || 0)}` : ''}</div>
+      <div class="progbar"><i style="width:${pct}%"></i></div>
+    </div>`;
+    $('homeCont').querySelector('.cont').onclick = () => { state.from = 'home'; openBook(b.id); };
+  } else {
+    $('homeCont').innerHTML = '';
+  }
+
+  // 最近谁说了什么
+  const spoken = books.filter(x => x.lastNote)
+                      .sort((p, q) => p.lastNote.at < q.lastNote.at ? 1 : -1);
+  const top = spoken[0];
+  $('homeVoice').innerHTML = top ? `<div class="voice">
+      <div class="tag">最近的话 · ${esc(top.title)}</div>
+      <div class="inote ${top.lastNote.author === ME ? 'e' : 'k'}">
+        <div class="inote-h">${top.lastNote.author}<span>${fmtTime(top.lastNote.at)} · §${top.lastNote.para}</span></div>
+        <div class="inote-b">${esc(top.lastNote.text)}</div>
+      </div>
+    </div>` : '';
+  if (top) $('homeVoice').querySelector('.voice').onclick = () => { state.from = 'home'; openBook(top.id); };
+}
+
 function renderShelf() {
   const box = $('shelfList'), books = state.shelf.books;
   $('shelfSub').textContent = books.length ? `${books.length} 本` : '';
@@ -492,7 +601,9 @@ function renderShelf() {
       <div class="progbar"><i style="width:${pct}%"></i></div>
     </div>`;
   }).join('');
-  box.querySelectorAll('.bookcard').forEach(el => el.onclick = () => openBook(el.dataset.id));
+  box.querySelectorAll('.bookcard').forEach(el => el.onclick = () => {
+    state.from = 'shelf'; openBook(el.dataset.id);
+  });
 }
 
 /* ---------------- 解析：TXT ---------------- */
@@ -668,6 +779,7 @@ async function openBook(id) {
     ['annotations', 'vocab', 'deleted'].forEach(k => { if (!state.anno[k]) state.anno[k] = []; });
     state.book = state.shelf.books.find(b => b.id === id);
     state.page = state.anno.progress?.page || 1;
+    localStorage.setItem(LS.last, id);
 
     // 标记这本书的"钶钶新批注"已读
     const seen = JSON.parse(localStorage.getItem(LS.seen) || '{}');
@@ -725,9 +837,15 @@ function renderPage() {
         : `<button data-reply="${n.id}">接一句</button>`}</div>
     </div>`;
 
+  const toc = new Map((state.text.toc || []).map(x => [x.from, x.to]));
+
   box.innerHTML = ids.map(pid => {
     const p = paraById(pid);
     if (!p) return '';
+    if (toc.has(pid)) {
+      const chap = /^第[一二三四五六七八九十百]+[章部]|^前言|^代序|^目录$/.test(p.text);
+      return `<div class="tocitem${chap ? ' chap' : ''}" data-goto="${toc.get(pid)}">${esc(p.text)}</div>`;
+    }
     const mine = state.anno.annotations.filter(a => a.para === pid);
     const hls = mine.filter(a => a.type === 'hl');
     const notes = mine.filter(a => a.type === 'note');
@@ -742,6 +860,10 @@ function renderPage() {
 
   box.querySelectorAll('[data-reply]').forEach(b => b.onclick = () => replyTo(b.dataset.reply));
   box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => delNote(b.dataset.del));
+  box.querySelectorAll('[data-goto]').forEach(el => el.onclick = () => {
+    const idx = state.text.pages.findIndex(pg => pg.includes(Number(el.dataset.goto)));
+    if (idx >= 0) { state.page = idx + 1; renderPage(); }
+  });
 
   $('pgInfo').textContent = `${state.page} / ${pages.length}`;
   window.scrollTo(0, 0);
@@ -800,6 +922,11 @@ function countMine() {
   if (!state.book) return;
   state.book.nE = state.anno.annotations.filter(a => a.author === ME).length;
   state.book.nK = state.anno.annotations.filter(a => a.author === KEKE).length;
+  // 首页那句「最近的话」从这里来，免得为它多拉一趟
+  const notes = state.anno.annotations.filter(a => a.type === 'note');
+  const last = notes.reduce((a, b) => (!a || (b.at || '') > (a.at || '')) ? b : a, null);
+  if (last) state.book.lastNote = { author: last.author, at: last.at,
+                                    para: last.para, text: last.text.slice(0, 140) };
 }
 
 async function commitAnno(what) {
@@ -1091,7 +1218,7 @@ $('tokSave').onclick = async () => {
     loading(true, '试一下这把钥匙');
     await loadShelf();
     localStorage.setItem(LS.tok, v);
-    show('shelf'); renderShelf();
+    show('home'); renderHome(); renderShelf();
     toast('进来了');
   } catch (e) {
     TOKEN = '';
@@ -1101,7 +1228,7 @@ $('tokSave').onclick = async () => {
 
 $('btnAdd').onclick = () => $('fileIn').click();
 $('fileIn').onchange = e => { if (e.target.files[0]) handleFile(e.target.files[0]); };
-$('btnSet').onclick = () => {
+function openSettings() {
   openSheet(`
     <div class="sheet-h"><b>设置</b><button class="iconbtn" data-close>✕</button></div>
     <div class="srow"><span>夜间</span><button class="switch ${document.body.classList.contains('night') ? 'on' : ''}" id="swN2"><i></i></button></div>
@@ -1116,21 +1243,28 @@ $('btnSet').onclick = () => {
     document.querySelector('meta[name=theme-color]').content = on ? '#1a1715' : '#fdf8f5';
   };
   $('rfBtn').onclick = async () => {
-    try { loading(true, '刷新中'); await loadShelf(); renderShelf(); closeSheet(); toast('是最新的了'); }
+    try { loading(true, '刷新中'); await loadShelf(); renderShelf(); renderHome(); closeSheet(); toast('是最新的了'); }
     catch (e) { toast(e.message); } finally { loading(false); }
   };
   $('fgBtn').onclick = () => {
     localStorage.removeItem(LS.tok); TOKEN = ''; closeSheet(); show('setup'); $('tokIn').value = '';
   };
-};
+}
+$('btnSet').onclick = openSettings;
+$('homeSet').onclick = openSettings;
+$('homeAdd').onclick = () => $('fileIn').click();
+$('toShelf').onclick = () => { show('shelf'); renderShelf(); };
+$('shelfBack').onclick = () => { show('home'); renderHome(); };
 
 $('btnBack').onclick = async () => {
   stopPoll();
   clearTimeout(progTimer);
   if (state.book) { state.book.progress = state.page; countMine(); }
-  show('shelf'); renderShelf();
+  const back = state.from === 'home' ? 'home' : 'shelf';
+  const paint = () => back === 'home' ? renderHome() : renderShelf();
+  show(back); paint();
   try { await saveAnno('进度'); await saveShelf('书房：合上书'); } catch (e) {}
-  try { loading(true, '刷新书架'); await loadShelf(); renderShelf(); } catch (e) {} finally { loading(false); }
+  try { loading(true, '刷新'); await loadShelf(); paint(); } catch (e) {} finally { loading(false); }
 };
 $('btnPrev').onclick = () => { state.page--; clearSel(); renderPage(); };
 $('btnNext').onclick = () => { state.page++; clearSel(); renderPage(); };
@@ -1171,7 +1305,7 @@ $('pageBox').addEventListener('touchend', e => {
   try {
     loading(true, '打开书房');
     await loadShelf();
-    show('shelf'); renderShelf();
+    show('home'); renderHome(); renderShelf();
   } catch (e) {
     toast(e.message || '进不去', 3200);
     show('setup');
