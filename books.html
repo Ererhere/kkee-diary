@@ -657,6 +657,7 @@ async function openBook(id) {
     $('rTitle').textContent = state.text.title;
     show('reader');
     renderPage();
+    startPoll();
   } catch (e) {
     toast(e.message || '打不开', 3000);
   } finally { loading(false); }
@@ -774,6 +775,36 @@ async function commitAnno(what) {
     await saveShelf(`书房：${what}`);
   } catch (e) { toast(e.message || '没存上', 3000); }
 }
+
+/* ---------------- 悄悄去看对方写了什么 ---------------- */
+let pollTimer = null;
+
+async function pollOnce(quiet) {
+  if (!state.book || state.sel || document.hidden) return;
+  let r;
+  try { r = await ghRead(pAnno(state.book.id)); } catch (e) { return; }
+  if (!r || r.sha === state.annoSha) return;
+
+  const before = new Set(state.anno.annotations.map(a => a.id));
+  state.anno = mergeAnno(JSON.parse(r.text), state.anno);
+  state.annoSha = r.sha;
+
+  const fresh = state.anno.annotations.filter(a => !before.has(a.id) && a.author === KEKE);
+  renderPage();
+  if (fresh.length && !quiet) {
+    const n = fresh.find(a => a.type === 'note');
+    toast(n ? `钶钶：${n.text.split('\n')[0].slice(0, 16)}…`
+            : `钶钶划了 ${fresh.length} 道线`, 4200);
+  }
+}
+
+function startPoll() { stopPoll(); pollTimer = setInterval(() => pollOnce(false), 20000); }
+function stopPoll()  { clearInterval(pollTimer); pollTimer = null; }
+
+// 从后台切回来立刻看一眼，不用等那二十秒
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && state.book) pollOnce(false);
+});
 
 /* ---------------- 选中文字 ---------------- */
 function pidFromNode(node) {
@@ -1049,6 +1080,7 @@ $('btnSet').onclick = () => {
 };
 
 $('btnBack').onclick = async () => {
+  stopPoll();
   clearTimeout(progTimer);
   if (state.book) { state.book.progress = state.page; countMine(); }
   show('shelf'); renderShelf();
