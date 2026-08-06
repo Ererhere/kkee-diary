@@ -146,19 +146,19 @@ input:focus, textarea:focus { border-color: var(--primary); }
 
 /* 没有封面图，就按书名生成一张 */
 .cover {
-  aspect-ratio: 3 / 4.2; border-radius: 7px;
-  background: hsl(var(--h) 30% 87%);
-  color: hsl(var(--h) 48% 25%);
+  aspect-ratio: 3 / 4.2; min-height: 148px; border-radius: 7px;
+  background: hsl(var(--h), 30%, 87%);
+  color: hsl(var(--h), 48%, 25%);
   box-shadow: 0 2px 9px rgba(100,60,40,.16);
   padding: 14px 11px 13px 11px; overflow: hidden;
   display: flex; flex-direction: column; justify-content: space-between;
   position: relative; transition: transform .15s;
-  border-left: 3px solid hsl(var(--h) 40% 72%);
+  border-left: 3px solid hsl(var(--h), 40%, 72%);
 }
 body.night .cover {
-  background: hsl(var(--h) 15% 22%);
-  color: hsl(var(--h) 28% 76%);
-  border-left-color: hsl(var(--h) 22% 33%);
+  background: hsl(var(--h), 15%, 22%);
+  color: hsl(var(--h), 28%, 76%);
+  border-left-color: hsl(var(--h), 22%, 33%);
   box-shadow: 0 2px 9px rgba(0,0,0,.34);
 }
 .cv-main {
@@ -173,7 +173,7 @@ body.night .cover {
   position: absolute; left: 3px; right: 0; bottom: 0; height: 3px;
   background: rgba(0,0,0,.07); border-radius: 0 0 8px 0; overflow: hidden;
 }
-.cv-bar i { display: block; height: 100%; background: hsl(var(--h) 40% 52%); }
+.cv-bar i { display: block; height: 100%; background: hsl(var(--h), 40%, 52%); }
 .bookfoot { margin-top: 7px; font-size: 10.5px; color: var(--text-light); line-height: 1.5; }
 .bookfoot .n { display: inline-block; margin-right: 7px; }
 .dot-e { color: var(--erere); }
