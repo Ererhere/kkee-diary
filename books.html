@@ -190,8 +190,48 @@ body.night .cover {
 }
 
 /* ---------- 阅读页 ---------- */
+/* 书头：照着导出的 HTML 长，跟着正文一起滚 */
+.bookhead {
+  padding: calc(14px + env(safe-area-inset-top)) 20px 0 20px;
+}
+.bookhead .back {
+  margin: 0 0 2px -6px; font-size: 22px; line-height: 1; display: block;
+}
+.bookhead h2 { font-size: 18px; font-weight: 600; line-height: 1.4; margin-bottom: 3px; }
+.bookhead .m { font-size: 12px; color: var(--text-light); line-height: 1.6; }
+.bookhead .row {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+}
+.bookhead .legend { flex: 1; min-width: 0; }
+.bookhead .acts { display: flex; gap: 0; flex-shrink: 0; margin-bottom: -4px; }
+.bookhead .acts .iconbtn { font-size: 17px; padding: 3px 5px; }
+.bookhead .acts .iconbtn.txt { font-size: 13px; }
+.bookhead hr { border: none; border-top: 1px solid var(--border); margin: 13px 0 4px; }
+
+/* 书头滚出屏幕后，顶上滑下这根细条 */
+.minibar {
+  position: fixed; top: 0; left: 50%; z-index: 45;
+  transform: translateX(-50%) translateY(-105%);
+  width: 100%; max-width: 480px;
+  display: flex; align-items: center; gap: 2px;
+  padding: 7px 12px; padding-top: calc(7px + env(safe-area-inset-top));
+  background: color-mix(in srgb, var(--bg) 93%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--border);
+  transition: transform .22s ease;
+}
+.minibar.on { transform: translateX(-50%) translateY(0); }
+.minibar .mtitle {
+  flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.minibar .iconbtn { font-size: 17px; padding: 3px 5px; }
+.minibar .iconbtn.txt { font-size: 13px; }
+body.picking .minibar { opacity: 0; pointer-events: none; }
+
 #reader .page {
-  padding: 20px 20px 120px 20px;
+  padding: 4px 20px 120px 20px;
   font-size: var(--read-size); line-height: var(--read-lh);
 }
 /* Safari 浏览器里，底部那条地址栏会压住 fixed 元素，
@@ -453,13 +493,29 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
 
 <!-- ============ 阅读 ============ -->
 <div class="view" id="reader">
-  <div class="nav">
-    <button class="iconbtn" id="btnBack">‹</button>
-    <h1 id="rTitle"></h1>
-    <button class="iconbtn" id="btnToc" title="目录">☰</button>
-    <button class="iconbtn" id="btnSearch">⌕</button>
-    <button class="iconbtn" id="btnNotes">✎</button>
-    <button class="iconbtn" id="btnPrefs">Aa</button>
+  <div class="minibar" id="miniBar">
+    <button class="iconbtn" id="mBack">‹</button>
+    <span class="mtitle" id="miniTitle"></span>
+    <button class="iconbtn" id="mToc">☰</button>
+    <button class="iconbtn" id="mSearch">⌕</button>
+    <button class="iconbtn" id="mNotes">✎</button>
+    <button class="iconbtn txt" id="mPrefs">Aa</button>
+  </div>
+  <div class="bookhead" id="bookHead">
+    <button class="iconbtn back" id="btnBack">‹</button>
+    <h2 id="rTitle"></h2>
+    <div class="m">而而与钶钶　共读</div>
+    <div class="m" id="rMeta"></div>
+    <div class="m row">
+      <span class="legend">绿色虚线是而而划的，蓝色虚线是钶钶划的</span>
+      <span class="acts">
+        <button class="iconbtn" id="btnToc" title="目录">☰</button>
+        <button class="iconbtn" id="btnSearch">⌕</button>
+        <button class="iconbtn" id="btnNotes">✎</button>
+        <button class="iconbtn txt" id="btnPrefs">Aa</button>
+      </span>
+    </div>
+    <hr>
   </div>
   <div class="page" id="pageBox"></div>
   <div class="pagefoot"><div class="pg" id="pgInfo"></div></div>
@@ -851,6 +907,7 @@ async function openBook(id) {
     if (state.book?.kekeAt) { seen[id] = state.book.kekeAt; localStorage.setItem(LS.seen, JSON.stringify(seen)); }
 
     $('rTitle').textContent = state.text.title;
+    $('miniTitle').textContent = state.text.title;
     show('reader');
     buildChapters();
     renderFlow(state.page);
@@ -958,7 +1015,9 @@ function renderFlow(center) {
   const box = $('pageBox');
   box.innerHTML = h;
   const at = box.querySelector(`[data-pg="${state.page}"]`);
-  window.scrollTo(0, at ? Math.max(0, at.offsetTop - 64) : 0);
+  // 第一页停在最上面，好让书头露出来；否则对齐到那一页
+  window.scrollTo(0, (state.page === 1 || !at) ? 0 : Math.max(0, at.offsetTop - 64));
+  updateHead();
   updateFoot();
   saveProgress();
 }
@@ -986,6 +1045,15 @@ function growUp() {
   window.scrollBy(0, document.documentElement.scrollHeight - before);  // 补偿，别让画面跳
 }
 
+function updateHead() {
+  if (!state.text) return;
+  const n = state.anno.annotations || [];
+  const nE = n.filter(a => a.author === ME).length;
+  const nK = n.filter(a => a.author === KEKE).length;
+  $('rMeta').textContent =
+    `读到第 ${state.page} / ${state.text.pages.length} 页　·　而而 ${nE} 处　·　钶钶 ${nK} 处`;
+}
+
 function updateFoot() {
   const box = $('pageBox');
   const line = window.innerHeight * 0.4;
@@ -998,7 +1066,10 @@ function updateFoot() {
   const pg = Number(cur.dataset.pg);
   const chap = state.chapOf ? (state.chapOf.get(Number(cur.dataset.pid)) || '') : '';
   $('pgInfo').textContent = (chap ? chap + '　·　' : '') + `${pg} / ${state.text.pages.length}`;
-  if (pg !== state.page) { state.page = pg; saveProgress(); }
+  if (pg !== state.page) { state.page = pg; saveProgress(); updateHead(); }
+  // 书头滚出去了就把细条放下来
+  const h = $('bookHead');
+  $('miniBar').classList.toggle('on', window.scrollY > (h ? h.offsetHeight - 40 : 120));
 }
 
 let flowTick = false;
@@ -1174,7 +1245,7 @@ async function addHighlight() {
     toast('划好了');
   }
   clearSel(); window.getSelection()?.removeAllRanges();
-  refreshFlow();
+  refreshFlow(); updateHead();
   commitAnno('划线');
 }
 
@@ -1195,7 +1266,7 @@ function addNote() {
     state.anno.annotations.push(hl);
     state.anno.annotations.push({ id: uid(), para: s.pid, type: 'note', text: v, quote, hl: hl.id, author: ME, at: now() });
     closeSheet(); clearSel(); window.getSelection()?.removeAllRanges();
-    refreshFlow(); toast('写好了');
+    refreshFlow(); updateHead(); toast('写好了');
     commitAnno('批注');
   };
 }
@@ -1224,7 +1295,7 @@ function replyTo(id) {
     if (!v) return toast('还没写呢');
     state.anno.annotations.push({ id: uid(), para: target.para, type: 'note', text: v,
                                  reply: target.id, author: ME, at: now() });
-    closeSheet(); refreshFlow(); toast('接上了');
+    closeSheet(); refreshFlow(); updateHead(); toast('接上了');
     commitAnno('回批注');
   };
 }
@@ -1235,7 +1306,7 @@ function delNote(id) {
   state.anno.annotations = state.anno.annotations.filter(a => a.id !== id && a.id !== n.hl);
   state.anno.deleted.push(id);
   if (n.hl) state.anno.deleted.push(n.hl);
-  refreshFlow(); toast('删掉了');
+  refreshFlow(); updateHead(); toast('删掉了');
   commitAnno('删批注');
 }
 
@@ -1553,6 +1624,11 @@ $('btnBack').onclick = async () => {
 };
 $('btnNotes').onclick = openNotes;
 $('btnToc').onclick = openToc;
+$('mToc').onclick = openToc;
+$('mSearch').onclick = openSearch;
+$('mNotes').onclick = openNotes;
+$('mPrefs').onclick = openPrefs;
+$('mBack').onclick = () => $('btnBack').click();
 $('btnSearch').onclick = openSearch;
 $('btnPrefs').onclick = openPrefs;
 $('selHl').onclick = addHighlight;
