@@ -198,9 +198,21 @@ body.night .cover {
    整体往上让一截；加到主屏幕之后没有它，就不让。 */
 body.chrome-bar #reader .page { padding-bottom: 176px; }
 .para { margin-bottom: 1.15em; position: relative; }
-.para .pid {
-  font-size: 11px; color: var(--text-light); opacity: .45;
-  margin-right: 6px; user-select: none; -webkit-user-select: none;
+.para.chap {
+  font-size: 1.06em; font-weight: 600; letter-spacing: .5px;
+  margin: 1.8em 0 1.1em;
+}
+/* 批注：小一号斜体，用括号跟在正文后面 */
+.inote-line {
+  font-size: .82em; font-style: italic; color: var(--text-light);
+  margin-left: .3em; line-height: 1.75;
+}
+.inote-line i { font-style: normal; font-weight: 600; }
+.inote-line i.e { color: var(--erere); }
+.inote-line i.k { color: var(--keke); }
+.inote-line b {
+  font-style: normal; font-weight: 400; color: var(--primary);
+  margin-left: .5em; cursor: pointer; padding: 0 .3em;
 }
 
 /* 书前目次：点一下就翻过去 */
@@ -229,12 +241,6 @@ mark.nl {
 mark.nl-e { border-color: var(--erere); }
 mark.nl-k { border-color: var(--keke); }
 mark.nl-b { border-color: var(--primary); }
-.pid.talk { opacity: .9; color: var(--primary); cursor: pointer; }
-.notes { margin: -.25em 0 1.15em 0; }
-.para.has-note::after {
-  content: ''; position: absolute; left: -12px; top: 4px;
-  width: 3px; height: calc(100% - 8px); border-radius: 2px; background: var(--primary-light);
-}
 
 /* 批注直接长在段落底下，不用去别处翻 */
 .inote {
@@ -259,14 +265,14 @@ mark.nl-b { border-color: var(--primary); }
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 480px; z-index: 30;
   display: flex; align-items: center; gap: 8px;
-  padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) 14px;
+  padding: 7px 14px calc(7px + env(safe-area-inset-bottom)) 14px;
   background: color-mix(in srgb, var(--bg) 94%, transparent);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--border);
 }
 .pagefoot .pg { flex: 1; text-align: center; font-size: 12.5px; color: var(--text-light); }
 .pagefoot .btn { padding: 9px 18px; font-size: 14px; border-radius: 10px; }
-body.chrome-bar .pagefoot { padding-bottom: calc(10px + env(safe-area-inset-bottom) + 52px); }
+body.chrome-bar .pagefoot { padding-bottom: calc(7px + env(safe-area-inset-bottom) + 52px); }
 /* 选中文字时把翻页条收起来，免得和工具条叠在一起 */
 body.picking .pagefoot { opacity: 0; pointer-events: none; }
 .pagefoot { transition: opacity .18s; }
@@ -456,11 +462,7 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
     <button class="iconbtn" id="btnPrefs">Aa</button>
   </div>
   <div class="page" id="pageBox"></div>
-  <div class="pagefoot">
-    <button class="btn ghost" id="btnPrev">上一页</button>
-    <div class="pg" id="pgInfo"></div>
-    <button class="btn ghost" id="btnNext">下一页</button>
-  </div>
+  <div class="pagefoot"><div class="pg" id="pgInfo"></div></div>
 </div>
 
 <!-- 选中工具条 -->
@@ -850,7 +852,8 @@ async function openBook(id) {
 
     $('rTitle').textContent = state.text.title;
     show('reader');
-    renderPage();
+    buildChapters();
+    renderFlow(state.page);
     startPoll();
   } catch (e) {
     toast(e.message || '打不开', 3000);
@@ -892,60 +895,143 @@ function renderHL(text, hls, noted, pid) {
   return out;
 }
 
-function renderPage() {
-  const pages = state.text.pages;
-  state.page = Math.min(Math.max(1, state.page), pages.length);
-  const ids = pages[state.page - 1];
-  const box = $('pageBox');
+/* ---------------- 连续滚动阅读 ----------------
+   页仍然是数据里的分页单位（进度、目录、书签都靠它），
+   但屏幕上不再一页一页翻，而是上下连着滚，滚到边界再续。 */
+const CHAP_RE = /^第[一二三四五六七八九十百千]+[章部回卷]|^前言$|^代序|^附录/;
 
-  const card = (n, extra) => `<div class="inote ${n.author === ME ? 'e' : 'k'}${extra}">
-      <div class="inote-h">${n.author}<span>${fmtTime(n.at)}</span></div>
-      <div class="inote-b">${esc(n.text)}</div>
-      <div class="inote-a">${n.author === ME
-        ? `<button data-del="${n.id}">删掉</button>`
-        : `<button data-reply="${n.id}">接一句</button>`}</div>
-    </div>`;
-
-  const toc = new Map((state.text.toc || []).map(x => [x.from, x.to]));
-
-  box.innerHTML = ids.map(pid => {
-    const p = paraById(pid);
-    if (!p) return '';
-    if (toc.has(pid)) {
-      const chap = /^第[一二三四五六七八九十百]+[章部]|^前言|^代序|^目录$/.test(p.text);
-      return `<div class="tocitem${chap ? ' chap' : ''}" data-goto="${toc.get(pid)}">${esc(p.text)}</div>`;
+function inlineNotes(notes, pid) {
+  const bits = [];
+  for (const n of notes.filter(x => !x.reply)) {
+    const w = n.author === ME ? 'e' : 'k';
+    bits.push(`<i class="${w}">${n.author}</i>：${esc(n.text).replace(/\n+/g, ' ')}`);
+    for (const r of notes.filter(x => x.reply === n.id)) {
+      const rw = r.author === ME ? 'e' : 'k';
+      bits.push(`<i class="${rw}">${r.author}回复</i>：${esc(r.text).replace(/\n+/g, ' ')}`);
     }
-    const mine = state.anno.annotations.filter(a => a.para === pid);
-    const hls = mine.filter(a => a.type === 'hl');
-    const notes = mine.filter(a => a.type === 'note');
-    const noted = new Set(notes.map(n => n.hl).filter(Boolean));
-    const para = `<div class="para" data-pid="${pid}">
-      <span class="pid${notes.length ? ' talk' : ''}"${notes.length ? ` data-open="${pid}"` : ''}>§${pid}</span>${renderHL(p.text, hls, noted, pid)}
-    </div>`;
-    if (!notes.length) return para;
-    const thread = notes.filter(n => !n.reply).map(n =>
-      card(n, '') + notes.filter(r => r.reply === n.id).map(r => card(r, ' reply')).join('')
-    ).join('');
-    return para + `<div class="notes" id="nt-${pid}" hidden>${thread}</div>`;
-  }).join('');
+  }
+  const other = notes.find(n => n.author !== ME);
+  const act = other ? `<b data-reply="${other.id}">接一句</b>` : '';
+  // 没挂在划线上的批注没处点开，就一直显示着
+  const canHide = notes.some(n => n.hl);
+  return `<span class="inote-line" id="nt-${pid}"${canHide ? ' hidden' : ''}>（${bits.join('　')}${act}）</span>`;
+}
 
-  box.querySelectorAll('[data-reply]').forEach(b => b.onclick = () => replyTo(b.dataset.reply));
-  box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => delNote(b.dataset.del));
-  box.querySelectorAll('[data-open]').forEach(el => el.onclick = e => {
-    if (!window.getSelection()?.isCollapsed) return;   // 正在选字，不是要展开
-    e.stopPropagation();
-    const n = $('nt-' + el.dataset.open);
-    if (n) n.hidden = !n.hidden;
-  });
-  box.querySelectorAll('[data-goto]').forEach(el => el.onclick = () => {
-    const idx = state.text.pages.findIndex(pg => pg.includes(Number(el.dataset.goto)));
-    if (idx >= 0) { state.page = idx + 1; renderPage(); }
-  });
+function paraHTML(pid, pageNo) {
+  const p = paraById(pid);
+  if (!p) return '';
+  if (state._toc.has(pid)) {
+    const c = CHAP_RE.test(p.text);
+    return `<div class="tocitem${c ? ' chap' : ''}" data-goto="${state._toc.get(pid)}">${esc(p.text)}</div>`;
+  }
+  const mine  = state.anno.annotations.filter(a => a.para === pid);
+  const hls   = mine.filter(a => a.type === 'hl');
+  const notes = mine.filter(a => a.type === 'note');
+  const noted = new Set(notes.map(n => n.hl).filter(Boolean));
+  const chap  = CHAP_RE.test(p.text) && p.text.length < 24;
+  return `<div class="para${chap ? ' chap' : ''}" data-pid="${pid}" data-pg="${pageNo}">`
+       + renderHL(p.text, hls, noted, pid)
+       + (notes.length ? inlineNotes(notes, pid) : '')
+       + '</div>';
+}
 
-  $('pgInfo').textContent = `${state.page} / ${pages.length}`;
-  window.scrollTo(0, 0);
+const pageHTML = n => (state.text.pages[n - 1] || []).map(pid => paraHTML(pid, n)).join('');
+
+function buildChapters() {
+  const m = new Map(); let cur = '';
+  const from = state.text.bodyFrom || 0;
+  for (const p of state.text.paragraphs) {
+    if (p.id >= from && CHAP_RE.test(p.text) && p.text.length < 24) cur = p.text;
+    m.set(p.id, cur);
+  }
+  state.chapOf = m;
+}
+
+function renderFlow(center) {
+  const total = state.text.pages.length;
+  state.page = Math.min(Math.max(1, center), total);
+  state._toc = new Map((state.text.toc || []).map(x => [x.from, x.to]));
+  state.lo = Math.max(1, state.page - 1);
+  state.hi = Math.min(total, state.page + 1);
+  let h = '';
+  for (let i = state.lo; i <= state.hi; i++) h += pageHTML(i);
+  const box = $('pageBox');
+  box.innerHTML = h;
+  const at = box.querySelector(`[data-pg="${state.page}"]`);
+  window.scrollTo(0, at ? Math.max(0, at.offsetTop - 64) : 0);
+  updateFoot();
   saveProgress();
 }
+
+/** 写完批注后原地重绘，不动滚动位置 */
+function refreshFlow() {
+  const y = window.scrollY;
+  let h = '';
+  for (let i = state.lo; i <= state.hi; i++) h += pageHTML(i);
+  $('pageBox').innerHTML = h;
+  window.scrollTo(0, y);
+}
+
+function growDown() {
+  if (state.hi >= state.text.pages.length) return;
+  state.hi++;
+  $('pageBox').insertAdjacentHTML('beforeend', pageHTML(state.hi));
+}
+
+function growUp() {
+  if (state.lo <= 1) return;
+  const before = document.documentElement.scrollHeight;
+  state.lo--;
+  $('pageBox').insertAdjacentHTML('afterbegin', pageHTML(state.lo));
+  window.scrollBy(0, document.documentElement.scrollHeight - before);  // 补偿，别让画面跳
+}
+
+function updateFoot() {
+  const box = $('pageBox');
+  const line = window.innerHeight * 0.4;
+  let cur = null;
+  for (const el of box.querySelectorAll('[data-pg]')) {
+    if (el.getBoundingClientRect().top <= line) cur = el; else break;
+  }
+  cur = cur || box.querySelector('[data-pg]');
+  if (!cur) return;
+  const pg = Number(cur.dataset.pg);
+  const chap = state.chapOf ? (state.chapOf.get(Number(cur.dataset.pid)) || '') : '';
+  $('pgInfo').textContent = (chap ? chap + '　·　' : '') + `${pg} / ${state.text.pages.length}`;
+  if (pg !== state.page) { state.page = pg; saveProgress(); }
+}
+
+let flowTick = false;
+window.addEventListener('scroll', () => {
+  if (flowTick || !$('reader').classList.contains('on') || !state.text) return;
+  flowTick = true;
+  requestAnimationFrame(() => {
+    const y = window.scrollY, vh = window.innerHeight;
+    const H = document.documentElement.scrollHeight;
+    if (H - (y + vh) < 900) growDown();
+    if (y < 500) growUp();
+    updateFoot();
+    flowTick = false;
+  });
+}, { passive: true });
+
+// 内容是滚动中续上的，事件用委托，不必每次重绑
+$('pageBox').addEventListener('click', e => {
+  const dash = e.target.closest('[data-open]');
+  if (dash) {
+    if (!window.getSelection()?.isCollapsed) return;   // 正在选字
+    const n = $('nt-' + dash.dataset.open);
+    if (n) n.hidden = !n.hidden;
+    return;
+  }
+  const rep = e.target.closest('.inote-line b[data-reply]');
+  if (rep) { replyTo(rep.dataset.reply); return; }
+  const go = e.target.closest('[data-goto]');
+  if (go) {
+    const i = state.text.pages.findIndex(pg => pg.includes(Number(go.dataset.goto)));
+    if (i >= 0) renderFlow(i + 1);
+  }
+});
 
 /* ---------------- 进度 ---------------- */
 let progTimer = null, savedPage = null;
@@ -1032,7 +1118,7 @@ async function pollOnce(quiet) {
   state.annoSha = r.sha;
 
   const fresh = state.anno.annotations.filter(a => !before.has(a.id) && a.author === KEKE);
-  renderPage();
+  refreshFlow();
   if (fresh.length && !quiet) {
     const n = fresh.find(a => a.type === 'note');
     toast(n ? `钶钶：${n.text.split('\n')[0].slice(0, 16)}…`
@@ -1088,7 +1174,7 @@ async function addHighlight() {
     toast('划好了');
   }
   clearSel(); window.getSelection()?.removeAllRanges();
-  renderPage();
+  refreshFlow();
   commitAnno('划线');
 }
 
@@ -1109,7 +1195,7 @@ function addNote() {
     state.anno.annotations.push(hl);
     state.anno.annotations.push({ id: uid(), para: s.pid, type: 'note', text: v, quote, hl: hl.id, author: ME, at: now() });
     closeSheet(); clearSel(); window.getSelection()?.removeAllRanges();
-    renderPage(); toast('写好了');
+    refreshFlow(); toast('写好了');
     commitAnno('批注');
   };
 }
@@ -1138,7 +1224,7 @@ function replyTo(id) {
     if (!v) return toast('还没写呢');
     state.anno.annotations.push({ id: uid(), para: target.para, type: 'note', text: v,
                                  reply: target.id, author: ME, at: now() });
-    closeSheet(); renderPage(); toast('接上了');
+    closeSheet(); refreshFlow(); toast('接上了');
     commitAnno('回批注');
   };
 }
@@ -1149,7 +1235,7 @@ function delNote(id) {
   state.anno.annotations = state.anno.annotations.filter(a => a.id !== id && a.id !== n.hl);
   state.anno.deleted.push(id);
   if (n.hl) state.anno.deleted.push(n.hl);
-  renderPage(); toast('删掉了');
+  refreshFlow(); toast('删掉了');
   commitAnno('删批注');
 }
 
@@ -1199,7 +1285,7 @@ function openNotes() {
   $('sheetIn').querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
     const pid = Number(b.dataset.go);
     const idx = state.text.pages.findIndex(pg => pg.includes(pid));
-    if (idx >= 0) { state.page = idx + 1; closeSheet(); renderPage(); }
+    if (idx >= 0) { closeSheet(); renderFlow(idx + 1); }
   });
   $('sheetIn').querySelectorAll('[data-del]').forEach(b => b.onclick = () => delNote(b.dataset.del));
   $('sheetIn').querySelectorAll('[data-reply]').forEach(b => b.onclick = () => replyTo(b.dataset.reply));
@@ -1228,7 +1314,7 @@ function openToc() {
 
   $('sheetIn').querySelectorAll('[data-p]').forEach(el => el.onclick = () => {
     const p = Number(el.dataset.p);
-    if (p > 0) { state.page = p; clearSel(); closeSheet(); renderPage(); }
+    if (p > 0) { clearSel(); closeSheet(); renderFlow(p); }
   });
   // 打开时滚到当前所在的那一条
   setTimeout(() => $('sheetIn').querySelector('.tocrow.here')
@@ -1260,7 +1346,7 @@ function openSearch() {
       : `<div class="empty" style="padding:34px 0">没找到</div>`;
     out.querySelectorAll('.sr').forEach(el => el.onclick = () => {
       const idx = state.text.pages.findIndex(pg => pg.includes(Number(el.dataset.pid)));
-      if (idx >= 0) { state.page = idx + 1; closeSheet(); renderPage(); }
+      if (idx >= 0) { closeSheet(); renderFlow(idx + 1); }
     });
   };
 }
@@ -1293,7 +1379,7 @@ function openPrefs() {
   };
   $('bmBtn').onclick = () => {
     if (state.anno.bookmark === state.page) { state.anno.bookmark = null; toast('书签取下了'); }
-    else if (state.anno.bookmark && state.anno.bookmark !== state.page) { state.page = state.anno.bookmark; closeSheet(); renderPage(); return; }
+    else if (state.anno.bookmark && state.anno.bookmark !== state.page) { const b = state.anno.bookmark; closeSheet(); renderFlow(b); return; }
     else { state.anno.bookmark = state.page; toast(`书签夹在第 ${state.page} 页`); }
     closeSheet(); commitAnno('书签');
   };
@@ -1312,7 +1398,7 @@ function openVocab() {
   `);
   $('sheetIn').querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
     const idx = state.text.pages.findIndex(pg => pg.includes(Number(b.dataset.go)));
-    if (idx >= 0) { state.page = idx + 1; closeSheet(); renderPage(); }
+    if (idx >= 0) { closeSheet(); renderFlow(idx + 1); }
   });
   $('sheetIn').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
     state.anno.vocab = state.anno.vocab.filter(x => x.id !== b.dataset.rm);
@@ -1379,8 +1465,6 @@ $('btnBack').onclick = async () => {
   try { await saveAnno('进度'); await saveShelf('书房：合上书'); } catch (e) {}
   try { loading(true, '刷新'); await loadShelf(); paint(); } catch (e) {} finally { loading(false); }
 };
-$('btnPrev').onclick = () => { state.page--; clearSel(); renderPage(); };
-$('btnNext').onclick = () => { state.page++; clearSel(); renderPage(); };
 $('btnNotes').onclick = openNotes;
 $('btnToc').onclick = openToc;
 $('btnSearch').onclick = openSearch;
@@ -1388,18 +1472,6 @@ $('btnPrefs').onclick = openPrefs;
 $('selHl').onclick = addHighlight;
 $('selNote').onclick = addNote;
 $('selVocab').onclick = addVocab;
-
-// 左右滑动翻页
-let tx = 0, ty = 0;
-$('pageBox').addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
-$('pageBox').addEventListener('touchend', e => {
-  if (state.sel) return;
-  const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
-  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) {
-    state.page += dx < 0 ? 1 : -1;
-    renderPage();
-  }
-}, { passive: true });
 
 /* ---------------- 启动 ---------------- */
 (async function boot() {
