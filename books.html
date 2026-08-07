@@ -1351,6 +1351,89 @@ function openSearch() {
   };
 }
 
+/* ---------------- 导出：装订成一本读过的书 ---------------- */
+function buildExportHTML() {
+  const t = state.text, annots = state.anno.annotations || [];
+  const hls   = annots.filter(x => x.type === 'hl');
+  const notes = annots.filter(x => x.type === 'note');
+  const bodyFrom = t.bodyFrom || t.paragraphs[0].id;
+  const within = new Set();
+  t.pages.slice(0, state.page).forEach(pg => pg.forEach(id => within.add(id)));
+
+  const mark = (pid, raw) => {
+    let s = esc(raw);
+    for (const h of hls.filter(x => x.para === pid).sort((a, b) => b.text.length - a.text.length)) {
+      const f = esc(h.text);
+      if (s.includes(f)) s = s.replace(f, `<u class="${h.author === ME ? 'e' : 'k'}">${f}</u>`);
+    }
+    return s;
+  };
+  const talk = pid => {
+    const top = notes.filter(n => n.para === pid && !n.reply);
+    if (!top.length) return '';
+    const bits = [];
+    for (const n of top) {
+      bits.push(`<i class="${n.author === ME ? 'e' : 'k'}">${n.author}</i>：${esc(n.text).replace(/\n+/g, ' ')}`);
+      for (const r of notes.filter(x => x.reply === n.id))
+        bits.push(`<i class="${r.author === ME ? 'e' : 'k'}">${r.author}回复</i>：${esc(r.text).replace(/\n+/g, ' ')}`);
+    }
+    return `<span class="n">（${bits.join('　')}）</span>`;
+  };
+
+  const rows = t.paragraphs
+    .filter(p => p.id >= bodyFrom && within.has(p.id))
+    .map(p => `<p>${mark(p.id, p.text)}${talk(p.id)}</p>`).join('\n');
+  const nE = annots.filter(x => x.author === ME).length;
+  const nK = annots.filter(x => x.author === KEKE).length;
+
+  return `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(t.title)} · 而而与钶钶</title>
+<style>
+ body{font-family:-apple-system,'PingFang SC','Hiragino Sans GB',serif;
+   background:#fdf8f5;color:#3a2e2a;line-height:2;font-size:16px;
+   max-width:34em;margin:0 auto;padding:22px 20px 80px}
+ h1{font-size:18px;font-weight:600;line-height:1.4;margin:0 0 3px}
+ .m{font-size:12px;color:#9a8580;line-height:1.6;margin-bottom:1px}
+ hr{border:none;border-top:1px solid #ede5e0;margin:14px 0 24px}
+ p{margin:0 0 1.3em;text-align:justify}
+ u{text-decoration:none;border-bottom:1.6px dashed;padding-bottom:1px}
+ u.e{border-color:#7dc49a} u.k{border-color:#8faec4}
+ .n{font-size:13px;font-style:italic;color:#8a7a74;margin-left:.3em}
+ .n i{font-style:normal;font-weight:600}
+ i.e{color:#5aa87c} i.k{color:#6b93ad}
+ @media(prefers-color-scheme:dark){
+   body{background:#1a1715;color:#d8cec8} hr{border-color:#322b28}
+   .m{color:#7d716b} .n{color:#8d817b}
+   i.e{color:#7dc49a} i.k{color:#8faec4}}
+</style></head><body>
+<h1>${esc(t.title)}</h1>
+<div class="m">而而与钶钶　共读</div>
+<div class="m">读到第 ${state.page} / ${t.pages.length} 页　·　而而 ${nE} 处　·　钶钶 ${nK} 处</div>
+<div class="m">绿色虚线是而而划的，蓝色虚线是钶钶划的</div>
+<hr>
+${rows}
+</body></html>
+`;
+}
+
+async function exportBook() {
+  try {
+    loading(true, '正在装订');
+    const html = buildExportHTML();
+    const name = `${state.text.title.split('：')[0]}·而而与钶钶.html`;
+    const path = `${ROOT}/exports/${name}`;
+    let sha = null;
+    try { const cur = await ghRead(path); if (cur) sha = cur.sha; } catch (e) {}
+    await ghWrite(path, html, sha, `书房：装订《${state.text.title}》读到第 ${state.page} 页`);
+    closeSheet();
+    toast(`装订好了 · exports/${name}`, 4200);
+  } catch (e) {
+    toast(e.message || '装订失败', 3200);
+  } finally { loading(false); }
+}
+
 /* ---------------- 偏好 ---------------- */
 function openPrefs() {
   const night = document.body.classList.contains('night');
@@ -1367,6 +1450,8 @@ function openPrefs() {
     </button></div>
     <div class="srow"><span>生词本 <b style="color:var(--text-light);font-weight:400">${vocab.length}</b></span>
       <button class="btn ghost" id="vbBtn" style="padding:8px 14px;font-size:13px">打开</button></div>
+    <div class="srow"><span>装订成书 <b style="color:var(--text-light);font-weight:400">读到这里为止</b></span>
+      <button class="btn ghost" id="expBtn" style="padding:8px 14px;font-size:13px">导出</button></div>
   `);
   const apply = v => { document.documentElement.style.setProperty('--read-size', v + 'px'); localStorage.setItem(LS.size, v); $('szVal').textContent = v; };
   $('szUp').onclick = () => apply(Math.min(24, parseInt(localStorage.getItem(LS.size) || '17') + 1));
@@ -1384,6 +1469,7 @@ function openPrefs() {
     closeSheet(); commitAnno('书签');
   };
   $('vbBtn').onclick = openVocab;
+  $('expBtn').onclick = exportBook;
 }
 
 function openVocab() {
