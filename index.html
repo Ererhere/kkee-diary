@@ -673,7 +673,7 @@
         <li>GitHub → 右上角头像 → Settings</li>
         <li>最底下 Developer settings → Personal access tokens → Fine-grained tokens</li>
         <li>Generate new token</li>
-        <li>Repository access 选 Only select repositories，勾上 <b>CLAUDE.md</b></li>
+        <li>Repository access 选 Only select repositories，只勾 <b>CLAUDE.md</b>（书房那把是另一把，不要混）</li>
         <li>Permissions → Repository permissions → Contents 选 <b>Read and write</b></li>
         <li>生成之后把那一串复制过来</li>
       </ol>
@@ -742,12 +742,14 @@
 /* 钥匙只住在这台设备的 localStorage 里。
    以前它是明文写在这个文件里的——而这个仓库是公开的，
    GitHub 扫到就会把它吊销，所以日记本隔一阵子就打不开一次。
-   现在网页里一个字都不留。书房那把钥匙同一个域名，能借来先试。 */
+   现在网页里一个字都不留。
+   日记和书房各用各的钥匙——而而要的，一边坏了另一边照样开，
+   所以这里只认自己那把，不去借书房的。 */
 const LS_KEY = 'kkee_diary_token';
-let TOKEN = localStorage.getItem(LS_KEY) || localStorage.getItem('kkee_books_token') || '';
+let TOKEN = localStorage.getItem(LS_KEY) || '';
 /* 这一版的记号。钶钶每次改完都会把它换掉，
    页面靠它认出自己是不是过期了。*/
-const BUILD = '20260809-2';
+const BUILD = '20260809-3';
 
 const OWNER = 'ererhere';
 const REPO = 'CLAUDE.md';
