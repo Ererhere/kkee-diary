@@ -115,8 +115,12 @@ input:focus, textarea:focus { border-color: var(--primary); }
 
 /* ---------- 首页 ---------- */
 .wrap.home { padding: 0 18px 40px 18px; padding-top: calc(58px + env(safe-area-inset-top)); }
-.home .hi { font-size: 14px; color: var(--text-light); margin-bottom: 6px; }
-.home-name { font-size: 27px; font-weight: 600; letter-spacing: 1.2px; margin-bottom: 30px; text-align: center; }
+.home .hi { font-size: 14px; color: var(--text-light); margin-bottom: 30px; text-align: center; }
+.home-name {
+  font-family: Baskerville, "Iowan Old Style", Georgia, "Times New Roman", serif;
+  font-size: 34px; font-weight: 400; letter-spacing: 2.5px;
+  margin-bottom: 7px; text-align: center;
+}
 
 .cont {
   background: var(--card); border: 1px solid var(--border); border-radius: 18px;
@@ -461,8 +465,8 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
 <!-- ============ 首页 ============ -->
 <div class="view" id="home">
   <div class="wrap home">
-    <div class="hi" id="homeHi"></div>
     <div class="home-name">Ke-Books</div>
+    <div class="hi" id="homeHi"></div>
     <div id="homeCont"></div>
     <div id="homeVoice"></div>
     <div class="entry" id="toShelf">
@@ -536,6 +540,10 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
    数据住在 lab/kkee-books（private）
    钥匙只住在你手机的 localStorage 里
    ======================================================================== */
+
+/* 这一版的记号。钶钶每次改完书房都会把它换掉，
+   页面靠它认出自己是不是过期了。*/
+const BUILD = '20260809-1';
 
 const OWNER  = 'Ererhere';
 const REPO   = 'lab';
@@ -1647,6 +1655,26 @@ $('selVocab').onclick = addVocab;
     show('setup');
   } finally { loading(false); }
 })();
+
+/* ---------- 悄悄看一眼有没有新版本 ----------
+   GitHub Pages 给 HTML 挂十分钟 CDN 缓存，手机自己又压一层，
+   所以钶钶改完，而而这边常常还是旧的。
+   开页面几秒后绕开缓存问一次线上的 BUILD，不一样就自己换上。 */
+setTimeout(async () => {
+  try {
+    // 只在首页换。而而要是已经进书了，正读着或者正在打字，不去打扰
+    if (!$('home').classList.contains('on')) return;
+    const url = location.pathname + '?_=' + Date.now();
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) return;
+    const m = (await r.text()).match(/const BUILD = '([^']+)'/);
+    if (!m || m[1] === BUILD) return;
+    // 同一个新版本只换一次，免得来回打转
+    if (sessionStorage.getItem('kkee_books_reloaded') === m[1]) return;
+    sessionStorage.setItem('kkee_books_reloaded', m[1]);
+    location.replace(location.pathname + '?_=' + Date.now());
+  } catch (e) {}
+}, 4000);
 </script>
 </body>
 </html>
