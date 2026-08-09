@@ -199,13 +199,7 @@ body.night .cover {
 }
 .bookhead h2 { font-size: 18px; font-weight: 600; line-height: 1.4; margin-bottom: 3px; }
 .bookhead .m { font-size: 12px; color: var(--text-light); line-height: 1.6; }
-.bookhead .row {
-  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
-}
-.bookhead .legend { flex: 1; min-width: 0; }
-.bookhead .acts { display: flex; gap: 0; flex-shrink: 0; margin-bottom: -4px; }
-.bookhead .acts .iconbtn { font-size: 17px; padding: 3px 5px; }
-.bookhead .acts .iconbtn.txt { font-size: 13px; }
+.bookhead .legend { min-width: 0; }
 .bookhead hr { border: none; border-top: 1px solid var(--border); margin: 13px 0 4px; }
 
 /* 书头滚出屏幕后，顶上滑下这根细条 */
@@ -506,15 +500,7 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
     <h2 id="rTitle"></h2>
     <div class="m">而而与钶钶　共读</div>
     <div class="m" id="rMeta"></div>
-    <div class="m row">
-      <span class="legend">绿色虚线是而而划的，蓝色虚线是钶钶划的</span>
-      <span class="acts">
-        <button class="iconbtn" id="btnToc" title="目录">☰</button>
-        <button class="iconbtn" id="btnSearch">⌕</button>
-        <button class="iconbtn" id="btnNotes">✎</button>
-        <button class="iconbtn txt" id="btnPrefs">Aa</button>
-      </span>
-    </div>
+    <div class="m legend">绿色虚线是而而划的，蓝色虚线是钶钶划的</div>
     <hr>
   </div>
   <div class="page" id="pageBox"></div>
@@ -1626,15 +1612,11 @@ $('btnBack').onclick = async () => {
   try { await saveAnno('进度'); await saveShelf('书房：合上书'); } catch (e) {}
   try { loading(true, '刷新'); await loadShelf(); paint(); } catch (e) {} finally { loading(false); }
 };
-$('btnNotes').onclick = openNotes;
-$('btnToc').onclick = openToc;
 $('footToc').onclick = openToc;
 $('footNotes').onclick = openNotes;
 $('mSearch').onclick = openSearch;
 $('mPrefs').onclick = openPrefs;
 $('mBack').onclick = () => $('btnBack').click();
-$('btnSearch').onclick = openSearch;
-$('btnPrefs').onclick = openPrefs;
 $('selHl').onclick = addHighlight;
 $('selNote').onclick = addNote;
 $('selVocab').onclick = addVocab;
