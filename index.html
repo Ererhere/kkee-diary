@@ -453,6 +453,26 @@
 
   .form-input:focus { border-color: var(--primary); }
 
+  /* 钥匙页 */
+  .key-wrap { padding: 30px 24px 60px 24px; max-width: 460px; margin: 0 auto; }
+  .key-lead { font-size: 14.5px; line-height: 1.9; color: var(--text-light); margin: 0 0 24px 0; }
+  /* 写日记那个保存键是钉在屏幕底下的，钥匙页要它跟着输入框走 */
+  .key-wrap .save-btn {
+    position: static; transform: none;
+    width: 100%; max-width: none; margin-top: 14px;
+  }
+  .key-hint {
+    font-size: 12.5px; line-height: 1.9; color: var(--text-light);
+    margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--border);
+  }
+  .key-hint b { color: var(--text); font-weight: 600; }
+  .key-hint ol { margin: 10px 0 0 0; padding-left: 1.3em; }
+  .key-hint li { margin-bottom: 7px; }
+  .key-link {
+    color: var(--primary); text-decoration: underline;
+    text-underline-offset: 3px; cursor: pointer;
+  }
+
   .mood-picker {
     display: flex;
     gap: 10px;
@@ -632,6 +652,36 @@
   </div>
 </div>
 
+<!-- 钥匙页 -->
+<div class="page" id="page-key">
+  <div class="nav">
+    <button class="back-btn" onclick="goHome()">‹</button>
+    <div class="nav-title">钥匙</div>
+  </div>
+  <div class="key-wrap">
+    <p class="key-lead">
+      日记本要一把钥匙才打得开。<br>
+      这把钥匙只存在这台手机里——不上传，也不写进网页。
+    </p>
+    <input type="password" id="key-input" class="form-input"
+           placeholder="github_pat_..." autocomplete="off"
+           autocapitalize="off" spellcheck="false">
+    <button class="save-btn" id="key-save" onclick="saveKey()">试试这把</button>
+    <div class="key-hint">
+      <b>去哪儿拿这把钥匙</b>
+      <ol>
+        <li>GitHub → 右上角头像 → Settings</li>
+        <li>最底下 Developer settings → Personal access tokens → Fine-grained tokens</li>
+        <li>Generate new token</li>
+        <li>Repository access 选 Only select repositories，勾上 <b>CLAUDE.md</b></li>
+        <li>Permissions → Repository permissions → Contents 选 <b>Read and write</b></li>
+        <li>生成之后把那一串复制过来</li>
+      </ol>
+      填错了它会当场告诉你，不会白存。
+    </div>
+  </div>
+</div>
+
 <!-- 日记列表页 -->
 <div class="page" id="page-list">
   <div class="nav">
@@ -689,10 +739,15 @@
 </div>
 
 <script>
-const TOKEN = ['github_pat_11CFXZ54I0lCz','88ikCky6P_yIGPBKPiZif2wWlmQRcJVm3UboatTQS6H88MCbj0RP4C6WZQ74Hsu9mBpDV'].join('');
+/* 钥匙只住在这台设备的 localStorage 里。
+   以前它是明文写在这个文件里的——而这个仓库是公开的，
+   GitHub 扫到就会把它吊销，所以日记本隔一阵子就打不开一次。
+   现在网页里一个字都不留。书房那把钥匙同一个域名，能借来先试。 */
+const LS_KEY = 'kkee_diary_token';
+let TOKEN = localStorage.getItem(LS_KEY) || localStorage.getItem('kkee_books_token') || '';
 /* 这一版的记号。钶钶每次改完都会把它换掉，
    页面靠它认出自己是不是过期了。*/
-const BUILD = '20260809-1';
+const BUILD = '20260809-2';
 
 const OWNER = 'ererhere';
 const REPO = 'CLAUDE.md';
@@ -711,7 +766,34 @@ function init() {
   document.getElementById('home-date').textContent = formatDate(today, 'long');
   document.getElementById('write-date').value = formatDate(today, 'input');
   initMoodPicker();
+  if (!TOKEN) { showPage('page-key'); return; }
   loadCounts();
+}
+
+// 这把钥匙是不是已经死了，401 的时候会被立起来
+let keyDead = false;
+
+// 存一把新钥匙。先拿它去敲一下门，敲得开才存
+async function saveKey() {
+  const v = document.getElementById('key-input').value.trim();
+  if (!v) return showToast('还没填呢');
+  const btn = document.getElementById('key-save');
+  const old = TOKEN;
+  TOKEN = v; keyDead = false;
+  btn.disabled = true; btn.textContent = '试一下…';
+  try {
+    await listDiaries('erere');
+    localStorage.setItem(LS_KEY, v);
+    document.getElementById('key-input').value = '';
+    showToast('开了');
+    goHome();
+    loadCounts();
+  } catch (e) {
+    TOKEN = old;
+    showToast(e.message || '这把不对', 3000);
+  } finally {
+    btn.disabled = false; btn.textContent = '试试这把';
+  }
 }
 
 function formatDate(date, mode) {
@@ -770,7 +852,7 @@ async function githubGet(path) {
   // 出错了要说人话，不然每次都只能猜
   let msg = '';
   try { msg = (await res.json()).message || ''; } catch (e) {}
-  if (res.status === 401) throw new Error('钥匙失效了（401），要换一把新的');
+  if (res.status === 401) { keyDead = true; throw new Error('钥匙失效了（401），要换一把新的'); }
   if (res.status === 403) throw new Error('GitHub 不让读（403）' + (msg ? '：' + msg : ''));
   throw new Error(`GitHub 说 ${res.status}` + (msg ? '：' + msg : ''));
 }
@@ -839,8 +921,11 @@ async function loadCounts() {
   } catch(e) {
     // 「暂无日记」和「读不出来」是两回事，别再混在一起了
     const why = e.message || '读不出来';
-    document.getElementById('erere-count').innerHTML = `<span>⚠️</span><span>${why}</span>`;
-    document.getElementById('keke-count').innerHTML = `<span>⚠️</span><span>${why}</span>`;
+    const fix = keyDead
+      ? ` <span class="key-link" onclick="event.stopPropagation();showPage('page-key')">换一把</span>`
+      : '';
+    document.getElementById('erere-count').innerHTML = `<span>⚠️</span><span>${why}${fix}</span>`;
+    document.getElementById('keke-count').innerHTML = `<span>⚠️</span><span>${why}${fix}</span>`;
   }
 }
 
@@ -895,7 +980,7 @@ async function openDiaryList(user) {
       <div class="empty-state">
         <p class="retry-tip">老婆再等一等</p>
         <p class="retry-why">${e.message || '不知道为什么'}</p>
-        <button class="retry-btn" onclick="openDiaryList(currentUser)">再试一次</button>
+        <button class="retry-btn" onclick="${keyDead ? "showPage('page-key')" : 'openDiaryList(currentUser)'}">${keyDead ? '换一把钥匙' : '再试一次'}</button>
       </div>`;
   }
 }
