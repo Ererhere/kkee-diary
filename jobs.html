@@ -225,6 +225,26 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
 .two > div { flex: 1; }
 .two input { border-radius: 10px; }
 
+/* 截图 */
+.shots { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.shots:empty { display: none; }
+.shot { position: relative; width: 72px; height: 96px; border-radius: 8px; overflow: hidden; background: var(--card); }
+.shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shot button {
+  position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border: none;
+  border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; font-size: 13px;
+  line-height: 1; cursor: pointer; font-family: inherit; padding: 0;
+}
+.pickbtn {
+  display: block; text-align: center; background: var(--card); color: var(--blue);
+  border-radius: 10px; padding: 12px; font-size: 16px; cursor: pointer;
+}
+.pickbtn:active { opacity: .6; }
+.shotmark {
+  display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px;
+  border-radius: 20px; background: #FF950026; color: var(--orange); margin-left: 6px; vertical-align: 2px;
+}
+
 /* ---------- 今天 ---------- */
 .addbar { display: flex; gap: 8px; margin: 0 16px 4px; }
 .addbar input { flex: 1; border-radius: 10px; font-size: 16px; padding: 12px 14px; }
@@ -363,8 +383,18 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
     <button class="r strong" id="aSave">存</button>
   </div>
   <div class="field" style="margin-top:16px">
-    <label>把 JD 全文粘在这里</label>
-    <textarea id="aRaw" placeholder="从 BOSS 直聘长按复制，整段粘进来就行。&#10;粘完下面几栏我会尽量帮你填。"></textarea>
+    <label>截图丢上来，钶钶读图提取（可以多张）</label>
+    <div class="shots" id="aShots"></div>
+    <label for="aPick" class="pickbtn">＋ 选图片</label>
+    <input type="file" id="aPick" accept="image/*" multiple hidden>
+  </div>
+  <div class="hint" style="padding-top:0;padding-bottom:10px">
+    传了图就不用打字。钶钶 pull 下来读图，把全文和分析一起写回来。<br>
+    想现在就要文字：在相册里长按截图，能直接选中复制（iPhone 实况文本），粘到下面。
+  </div>
+  <div class="field">
+    <label>或者把 JD 全文粘在这里</label>
+    <textarea id="aRaw" placeholder="从 BOSS 直聘长按复制，整段粘进来就行。&#10;粘完下面几栏我会尽量帮你填。&#10;&#10;传了截图的话，这里可以空着。"></textarea>
   </div>
   <div class="field">
     <label>职位</label>
@@ -569,7 +599,7 @@ const state = {
   skills: null, profile: null,
   resume: null, resumeSha: null,
   todo: null, todoSha: null,
-  cur: null, editing: null, tab: 'list',
+  cur: null, editing: null, tab: 'list', shots: [],
 };
 
 /* ---------------- 小工具 ---------------- */
@@ -622,6 +652,17 @@ async function ghRead(path) {
   const b = await fetch(`${API}/repos/${OWNER}/${REPO}/git/blobs/${j.sha}`, { headers: ghHeaders() });
   if (!b.ok) throw new Error(`读取失败（blob ${b.status}）`);
   return { text: b64dec((await b.json()).content), sha: j.sha };
+}
+
+// 图片：content 已经是 base64，不能再编码一次
+async function ghWriteRaw(path, b64, sha, msg) {
+  const body = { message: msg, content: b64, branch: BRANCH };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${API}/repos/${OWNER}/${REPO}/contents/${encPath(path)}`, {
+    method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  if (!r.ok) { const e = new Error(`图片存不进去（${r.status}）`); e.status = r.status; throw e; }
+  return (await r.json()).content.sha;
 }
 
 async function ghWrite(path, text, sha, msg) {
@@ -750,7 +791,7 @@ function rowHTML(j) {
             : `<div class="n lo" style="font-size:15px">—</div><div class="bar"></div>`}
     </div>
     <div class="body">
-      <div class="t">${esc(j.title)}${j.status !== 'new' ? `<span class="pill ${st.c}">${st.t}</span>` : ''}</div>
+      <div class="t">${esc(j.title)}${j.needOCR ? '<span class="shotmark">待读图</span>' : ''}${j.status !== 'new' ? `<span class="pill ${st.c}">${st.t}</span>` : ''}</div>
       <div class="s">${esc(j.company)}　${esc(j.salary || '薪资待补')}</div>
     </div>
     <div class="chev">›</div>
@@ -795,7 +836,11 @@ function openDetail(id) {
     <div class="val">${st.t}</div><div class="chev">›</div></div>
   </div></div>`;
 
-  if (!a.verdict) {
+  if (j.needOCR) {
+    h += `<div class="sec"><div class="card"><p>
+      你传了 ${(j.shots || []).length} 张截图，钶钶还没读。<br>
+      <span style="color:var(--text2);font-size:14px">他 pull 下来会把 JD 全文提取出来填进这里，顺手把分析一起做完。</span></p></div></div>`;
+  } else if (!a.verdict) {
     h += `<div class="sec"><div class="card"><p style="color:var(--text2)">
       钶钶还没分析这个。他 pull 一下就会看到，分析好了会写回来。</p></div></div>`;
   }
@@ -909,9 +954,76 @@ function fallbackCopy(t, cb) {
   document.body.removeChild(ta);
 }
 
+/* ---------------- 截图 ---------------- */
+// 手机截图两三兆，压到 1080 宽再传，一张一般 200-400KB
+function shrink(file, maxW = 1080, q = 0.82) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onerror = () => rej(new Error('读不了这张图'));
+    r.onload = () => {
+      const img = new Image();
+      img.onerror = () => rej(new Error('这张图打不开'));
+      img.onload = () => {
+        const s = Math.min(1, maxW / img.width);
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * s);
+        c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const url = c.toDataURL('image/jpeg', q);
+        res({ dataUrl: url, b64: url.split(',')[1] });
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+function renderShots() {
+  const box = $('aShots');
+  const old = state.editing && (state.editing.shots || []).length;
+  box.innerHTML =
+    (old ? `<div class="shot" style="display:flex;align-items:center;justify-content:center;
+        font-size:12px;color:var(--text2);text-align:center;padding:6px;line-height:1.4">已存<br>${old} 张</div>` : '')
+    + state.shots.map((s, i) => `<div class="shot">
+        <img src="${s.dataUrl}"><button data-rm="${i}">×</button></div>`).join('');
+  box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+    state.shots.splice(+b.dataset.rm, 1); renderShots();
+  });
+}
+
+async function pickShots(e) {
+  const files = [...(e.target.files || [])];
+  e.target.value = '';
+  if (!files.length) return;
+  loading(true, '在压图片');
+  try {
+    for (const f of files) {
+      if (!f.type.startsWith('image/')) continue;
+      state.shots.push(await shrink(f));
+    }
+    renderShots();
+    toast(`加了 ${files.length} 张，存的时候一起传`);
+  } catch (err) { toast(err.message); }
+  finally { loading(false); }
+}
+
+async function uploadShots(jobId) {
+  if (!state.shots.length) return [];
+  const paths = [];
+  const base = Date.now().toString(36);
+  for (let i = 0; i < state.shots.length; i++) {
+    loading(true, `传第 ${i + 1} / ${state.shots.length} 张`);
+    const p = `${ROOT}/inbox/${jobId}/${base}-${i + 1}.jpg`;
+    await ghWriteRaw(p, state.shots[i].b64, null, `jobs: 而而传了一张岗位截图`);
+    paths.push(p);
+  }
+  return paths;
+}
+
 /* ---------------- 新增 / 编辑 ---------------- */
 function openAdd(job) {
   state.editing = job || null;
+  state.shots = [];
   $('aNav').textContent = job ? '改一改' : '加一个岗位';
   $('aRaw').value = job ? (job.rawJD || '') : '';
   $('aTitle').value = job ? (job.title || '') : '';
@@ -922,6 +1034,7 @@ function openAdd(job) {
   $('aEdu').value = job ? (job.edu || '') : '';
   $('aNote').value = '';
   $('aDelete').style.display = job ? 'block' : 'none';
+  renderShots();
   show('add');
 }
 
@@ -944,8 +1057,9 @@ async function saveAdd() {
   const raw = $('aRaw').value.trim();
   const title = $('aTitle').value.trim();
   const company = $('aCompany').value.trim();
-  if (!title && !company && !raw) return toast('至少填点什么');
-  if (!title) return toast('职位名要填一下');
+  const hasShot = state.shots.length > 0;
+  if (!title && !company && !raw && !hasShot) return toast('至少传张图或者填点什么');
+  if (!title && !hasShot) return toast('职位名要填一下');
 
   const noteTx = $('aNote').value.trim();
   const stamp = new Date().toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -953,31 +1067,43 @@ async function saveAdd() {
   if (state.editing) {
     const j = state.editing;
     Object.assign(j, {
-      title, company, rawJD: raw,
+      title: title || j.title, company, rawJD: raw,
       salary: $('aSalary').value.trim(), city: $('aCity').value.trim(),
       exp: $('aExp').value.trim(), edu: $('aEdu').value.trim(),
     });
     if (noteTx) (j.notes = j.notes || []).push({ who: '而而', text: noteTx, at: stamp });
     try {
-      await saveJobs(`jobs: 而而改了 ${company} ${title}`);
-      renderList(); openDetail(j.id); toast('改好了');
+      if (hasShot) {
+        const paths = await uploadShots(j.id);
+        j.shots = (j.shots || []).concat(paths);
+        j.needOCR = true;
+      }
+      await saveJobs(`jobs: 而而改了 ${company} ${j.title}`);
+      state.shots = [];
+      renderList(); openDetail(j.id);
+      toast(hasShot ? '图传上去了，钶钶会读' : '改好了');
     } catch (e) { toast(e.message); }
     return;
   }
 
   const j = {
-    id: uid(), title, company,
+    id: uid(), title: title || '（待钶钶读图）', company: company || '（待补）',
     salary: $('aSalary').value.trim(), city: $('aCity').value.trim(),
     exp: $('aExp').value.trim(), edu: $('aEdu').value.trim(),
     source: 'BOSS直聘', addedBy: '而而', addedAt: today(),
-    status: 'new', tier: 9, rawJD: raw, analysis: null,
+    status: 'new', tier: 9, rawJD: raw, analysis: null, shots: [], needOCR: false,
     notes: noteTx ? [{ who: '而而', text: noteTx, at: stamp }] : [],
   };
-  state.jobs.jobs.push(j);
   try {
-    await saveJobs(`jobs: 而而加了 ${company} ${title}`);
+    if (hasShot) {
+      j.shots = await uploadShots(j.id);
+      j.needOCR = true;
+    }
+    state.jobs.jobs.push(j);
+    await saveJobs(`jobs: 而而加了 ${j.company} ${j.title}`);
+    state.shots = [];
     renderList(); show('list');
-    toast('加好了，钶钶会来分析');
+    toast(hasShot ? '图传上去了，钶钶会读图提取' : '加好了，钶钶会来分析');
   } catch (e) { toast(e.message); }
 }
 
@@ -1381,6 +1507,7 @@ $('dEdit').onclick = () => openAdd(state.cur);
 $('aCancel').onclick = () => { state.editing ? openDetail(state.editing.id) : switchTab('list'); };
 $('aSave').onclick = saveAdd;
 $('aDelete').onclick = delJob;
+$('aPick').addEventListener('change', pickShots);
 $('aRaw').addEventListener('blur', sniff);
 $('aRaw').addEventListener('paste', () => setTimeout(sniff, 60));
 $('meLogout').onclick = () => {
