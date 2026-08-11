@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>而而的求职台</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="求职台">
+<meta name="theme-color" content="#F2F2F7">
+<link rel="apple-touch-icon" href="icon-jobs-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-jobs-180.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-jobs.png">
+<link rel="icon" type="image/png" href="icon-jobs-180.png">
+<link rel="manifest" href="jobs-manifest.json">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #F2F2F7;
+  --card: #FFFFFF;
+  --text: #000000;
+  --text2: #8E8E93;
+  --text3: #C7C7CC;
+  --sep: #E5E5EA;
+  --blue: #007AFF;
+  --green: #34C759;
+  --orange: #FF9500;
+  --red: #FF3B30;
+  --fill: #78788033;
+  --nav: rgba(249,249,249,.82);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --text: #FFFFFF;
+    --text2: #8E8E93;
+    --text3: #48484A;
+    --sep: #38383A;
+    --blue: #0A84FF;
+    --green: #30D158;
+    --orange: #FF9F0A;
+    --red: #FF453A;
+    --fill: #7878805C;
+    --nav: rgba(28,28,30,.82);
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  max-width: 520px;
+  margin: 0 auto;
+  font-size: 17px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.view { display: none; padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+.view.on { display: block; }
+
+/* ---------- 顶栏 ---------- */
+.nav {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 4px; min-height: 44px;
+  padding: 0 8px;
+  padding-top: env(safe-area-inset-top);
+  background: var(--nav);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: .5px solid var(--sep);
+}
+.nav .mid { flex: 1; text-align: center; font-size: 17px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav button {
+  border: none; background: none; color: var(--blue);
+  font-size: 17px; font-family: inherit; cursor: pointer;
+  padding: 8px 8px; border-radius: 8px; min-width: 60px;
+}
+.nav button:active { opacity: .4; }
+.nav button.r { text-align: right; }
+.nav button.l { text-align: left; }
+.nav button.strong { font-weight: 600; }
+.nav button:disabled { color: var(--text3); }
+
+/* 大标题 */
+.big { padding: 8px 20px 12px; }
+.big h1 { font-size: 34px; font-weight: 700; letter-spacing: .37px; line-height: 1.2; }
+.big p { font-size: 15px; color: var(--text2); margin-top: 4px; }
+
+/* ---------- 分组列表 ---------- */
+.grp { margin: 22px 0 0; }
+.grp > h2 {
+  font-size: 13px; font-weight: 400; color: var(--text2);
+  padding: 0 32px 7px; text-transform: none; letter-spacing: -.08px;
+}
+.list {
+  background: var(--card); border-radius: 10px; margin: 0 16px; overflow: hidden;
+}
+.row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; min-height: 44px;
+  border-bottom: .5px solid var(--sep); cursor: pointer;
+  position: relative;
+}
+.row:last-child { border-bottom: none; }
+.row:active { background: var(--fill); }
+.row .body { flex: 1; min-width: 0; }
+.row .t { font-size: 17px; letter-spacing: -.4px; }
+.row .s { font-size: 13px; color: var(--text2); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .chev { color: var(--text3); font-size: 15px; flex: none; }
+.row .val { color: var(--text2); font-size: 16px; flex: none; }
+.row.plain { cursor: default; }
+.row.plain:active { background: none; }
+
+/* 几率块 */
+.pct { flex: none; width: 46px; text-align: center; }
+.pct .n { font-size: 17px; font-weight: 600; letter-spacing: -.4px; }
+.pct .bar { height: 3px; border-radius: 2px; background: var(--sep); margin-top: 3px; overflow: hidden; }
+.pct .bar i { display: block; height: 100%; border-radius: 2px; }
+.hi { color: var(--green); } .hi + .bar i, i.hi { background: var(--green); }
+.mid2 { color: var(--orange); } i.mid2 { background: var(--orange); }
+.lo { color: var(--text2); } i.lo { background: var(--text3); }
+
+/* 状态胶囊 */
+.pill {
+  display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .2px;
+  padding: 2px 7px; border-radius: 20px; background: var(--fill); color: var(--text2);
+  vertical-align: 2px; margin-left: 6px;
+}
+.pill.go { background: #34C75926; color: var(--green); }
+.pill.wait { background: #FF950026; color: var(--orange); }
+.pill.dead { background: var(--fill); color: var(--text2); }
+
+/* ---------- 详情 ---------- */
+.hero { padding: 12px 20px 4px; }
+.hero h1 { font-size: 28px; font-weight: 700; letter-spacing: .34px; line-height: 1.25; }
+.hero .co { font-size: 17px; color: var(--text2); margin-top: 4px; }
+.hero .meta { font-size: 15px; color: var(--text2); margin-top: 8px; }
+.hero .sal { color: var(--text); font-weight: 600; }
+
+.gauge { display: flex; align-items: center; gap: 14px; padding: 16px 20px 6px; }
+.gauge .ring { position: relative; width: 62px; height: 62px; flex: none; }
+.gauge .ring svg { transform: rotate(-90deg); }
+.gauge .ring span {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700; letter-spacing: -.5px;
+}
+.gauge .lab { font-size: 13px; color: var(--text2); }
+.gauge .lab b { display: block; font-size: 15px; color: var(--text); font-weight: 600; margin-bottom: 2px; }
+
+.sec { margin: 24px 0 0; }
+.sec > h3 {
+  font-size: 13px; color: var(--text2); padding: 0 32px 7px; font-weight: 400;
+}
+.card { background: var(--card); border-radius: 10px; margin: 0 16px; padding: 14px 16px; }
+.card + .card { margin-top: 8px; }
+.card p { font-size: 15px; line-height: 1.55; letter-spacing: -.2px; }
+.card p + p { margin-top: 10px; }
+
+.bul { background: var(--card); border-radius: 10px; margin: 0 16px; overflow: hidden; }
+.bul li { list-style: none; padding: 12px 16px; border-bottom: .5px solid var(--sep);
+  font-size: 15px; line-height: 1.5; letter-spacing: -.2px; display: flex; gap: 10px; }
+.bul li:last-child { border-bottom: none; }
+.bul li .dot { flex: none; width: 20px; text-align: center; color: var(--blue); font-weight: 600; font-size: 14px; }
+.bul li .dot.g { color: var(--green); }
+.bul li .dot.o { color: var(--orange); }
+.bul li .dot.r { color: var(--red); }
+.bul li .tx { flex: 1; min-width: 0; }
+.bul li .tx em { font-style: normal; color: var(--text2); font-size: 13.5px; display: block; margin-top: 3px; }
+.bul li .tag { font-size: 12px; color: var(--text2); background: var(--fill);
+  border-radius: 6px; padding: 1px 6px; margin-left: 6px; white-space: nowrap; }
+
+.pitch { background: var(--card); border-radius: 10px; margin: 0 16px; padding: 14px 16px; }
+.pitch p { font-size: 15px; line-height: 1.6; letter-spacing: -.2px; }
+.pitch button {
+  margin-top: 12px; width: 100%; border: none; background: var(--blue); color: #fff;
+  font-size: 15px; font-weight: 600; font-family: inherit; padding: 11px; border-radius: 10px; cursor: pointer;
+}
+.pitch button:active { opacity: .7; }
+
+.raw { margin: 0 16px; background: var(--card); border-radius: 10px; overflow: hidden; }
+.raw summary { padding: 13px 16px; font-size: 15px; color: var(--blue); cursor: pointer; list-style: none; }
+.raw summary::-webkit-details-marker { display: none; }
+.raw pre {
+  padding: 4px 16px 16px; font-family: inherit; font-size: 14px; line-height: 1.65;
+  white-space: pre-wrap; word-break: break-word; color: var(--text2); letter-spacing: -.1px;
+}
+
+.note { display: flex; gap: 10px; padding: 12px 16px; border-bottom: .5px solid var(--sep); }
+.note:last-child { border-bottom: none; }
+.note .who { flex: none; font-size: 13px; font-weight: 600; width: 32px; }
+.note .who.e { color: var(--green); }
+.note .who.k { color: var(--blue); }
+.note .c { flex: 1; font-size: 15px; line-height: 1.5; }
+.note .c em { font-style: normal; display: block; font-size: 12px; color: var(--text2); margin-top: 3px; }
+
+/* ---------- 表单 ---------- */
+.field { margin: 0 16px 8px; }
+.field label { display: block; font-size: 13px; color: var(--text2); padding: 0 16px 6px; }
+input[type=text], input[type=password], textarea, select {
+  width: 100%; border: none; border-radius: 10px;
+  padding: 12px 16px; font-size: 17px; font-family: inherit;
+  background: var(--card); color: var(--text); outline: none; -webkit-appearance: none;
+}
+textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150px; }
+.btn {
+  display: block; width: calc(100% - 32px); margin: 20px 16px;
+  border: none; border-radius: 12px; padding: 14px;
+  font-size: 17px; font-weight: 600; font-family: inherit; cursor: pointer;
+  background: var(--blue); color: #fff;
+}
+.btn:active { opacity: .7; }
+.btn.ghost { background: var(--card); color: var(--blue); font-weight: 400; }
+.btn.danger { background: var(--card); color: var(--red); font-weight: 400; }
+.hint { font-size: 13px; color: var(--text2); line-height: 1.6; padding: 8px 32px 0; }
+.hint a { color: var(--blue); }
+
+.two { display: flex; gap: 8px; margin: 0 16px 8px; }
+.two > div { flex: 1; }
+.two input { border-radius: 10px; }
+
+/* ---------- tab bar ---------- */
+.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  display: flex; max-width: 520px; margin: 0 auto;
+  background: var(--nav);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: .5px solid var(--sep);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabs button {
+  flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
+  padding: 7px 0 6px; color: var(--text2); display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
+}
+.tabs button.on { color: var(--blue); }
+.tabs button svg { width: 26px; height: 22px; }
+.tabs button span { font-size: 10px; letter-spacing: .1px; }
+.tabs.hide { display: none; }
+
+/* ---------- 杂 ---------- */
+#toast {
+  position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 12px); z-index: 90;
+  background: rgba(0,0,0,.82); color: #fff; font-size: 14px;
+  padding: 10px 18px; border-radius: 20px; opacity: 0; pointer-events: none;
+  transition: opacity .22s, transform .22s; max-width: 80%; text-align: center;
+  backdrop-filter: blur(10px);
+}
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
+#load {
+  position: fixed; inset: 0; z-index: 100; display: none;
+  align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+  background: color-mix(in srgb, var(--bg) 72%, transparent); backdrop-filter: blur(3px);
+}
+#load.on { display: flex; }
+.spin {
+  width: 28px; height: 28px; border: 2.5px solid var(--sep);
+  border-top-color: var(--text2); border-radius: 50%; animation: sp .7s linear infinite;
+}
+@keyframes sp { to { transform: rotate(360deg); } }
+#loadTxt { font-size: 14px; color: var(--text2); }
+.empty { text-align: center; color: var(--text2); padding: 70px 32px; font-size: 15px; line-height: 1.8; }
+.spacer { height: 24px; }
+</style>
+</head>
+<body>
+
+<!-- ════════ 设置钥匙 ════════ -->
+<div class="view" id="setup">
+  <div class="big" style="padding-top:calc(28px + env(safe-area-inset-top))">
+    <h1>求职台</h1>
+    <p>而而的岗位，钶钶的分析</p>
+  </div>
+  <div class="hint" style="padding:8px 32px 20px">
+    第一次用，要放一把钥匙进来。<br>
+    钥匙只存在这台手机里，不会上传到任何地方。
+  </div>
+  <div class="field">
+    <label>GitHub Token</label>
+    <input type="password" id="tokIn" placeholder="ghp_..." autocomplete="off">
+  </div>
+  <div class="hint">
+    跟书房用的是同一把钥匙，直接粘贴就行。
+  </div>
+  <button class="btn" id="tokSave">存好，进去</button>
+</div>
+
+<!-- ════════ 岗位列表 ════════ -->
+<div class="view" id="list">
+  <div class="nav">
+    <button class="l" id="listRefresh">刷新</button>
+    <div class="mid"></div>
+    <button class="r strong" id="listAdd">＋</button>
+  </div>
+  <div class="big">
+    <h1>岗位</h1>
+    <p id="listSub"></p>
+  </div>
+  <div id="listBody"></div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ════════ 岗位详情 ════════ -->
+<div class="view" id="detail">
+  <div class="nav">
+    <button class="l" id="dBack">‹ 岗位</button>
+    <div class="mid" id="dNav"></div>
+    <button class="r" id="dEdit">编辑</button>
+  </div>
+  <div id="dBody"></div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ════════ 新增 / 编辑 ════════ -->
+<div class="view" id="add">
+  <div class="nav">
+    <button class="l" id="aCancel">取消</button>
+    <div class="mid" id="aNav">加一个岗位</div>
+    <button class="r strong" id="aSave">存</button>
+  </div>
+  <div class="field" style="margin-top:16px">
+    <label>把 JD 全文粘在这里</label>
+    <textarea id="aRaw" placeholder="从 BOSS 直聘长按复制，整段粘进来就行。&#10;粘完下面几栏我会尽量帮你填。"></textarea>
+  </div>
+  <div class="field">
+    <label>职位</label>
+    <input type="text" id="aTitle" placeholder="AI知识库运营专员">
+  </div>
+  <div class="field">
+    <label>公司</label>
+    <input type="text" id="aCompany" placeholder="地上铁">
+  </div>
+  <div class="two">
+    <div>
+      <label style="display:block;font-size:13px;color:var(--text2);padding:0 16px 6px">薪资</label>
+      <input type="text" id="aSalary" placeholder="15-20K">
+    </div>
+    <div>
+      <label style="display:block;font-size:13px;color:var(--text2);padding:0 16px 6px">城市</label>
+      <input type="text" id="aCity" placeholder="深圳">
+    </div>
+  </div>
+  <div class="two">
+    <div>
+      <label style="display:block;font-size:13px;color:var(--text2);padding:0 16px 6px">经验</label>
+      <input type="text" id="aExp" placeholder="经验不限">
+    </div>
+    <div>
+      <label style="display:block;font-size:13px;color:var(--text2);padding:0 16px 6px">学历</label>
+      <input type="text" id="aEdu" placeholder="本科">
+    </div>
+  </div>
+  <div class="field">
+    <label>想跟钶钶说的（可以不填）</label>
+    <input type="text" id="aNote" placeholder="比如：这个我特别想去">
+  </div>
+  <div class="hint">存进去之后，钶钶那边 pull 一下就能看见，会把分析写好还给你。</div>
+  <button class="btn danger" id="aDelete" style="display:none">删掉这个岗位</button>
+  <div class="spacer"></div>
+</div>
+
+<!-- ════════ 技能 ════════ -->
+<div class="view" id="skills">
+  <div class="nav">
+    <button class="l" id="skRefresh">刷新</button>
+    <div class="mid"></div>
+    <button class="r" style="visibility:hidden">－</button>
+  </div>
+  <div class="big">
+    <h1>要会的</h1>
+    <p id="skSub"></p>
+  </div>
+  <div id="skBody"></div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ════════ 我 ════════ -->
+<div class="view" id="me">
+  <div class="nav">
+    <button class="l" style="visibility:hidden">－</button>
+    <div class="mid"></div>
+    <button class="r" style="visibility:hidden">－</button>
+  </div>
+  <div class="big">
+    <h1>而而</h1>
+    <p id="meSub"></p>
+  </div>
+  <div id="meBody"></div>
+  <button class="btn danger" id="meLogout">拿走钥匙</button>
+  <div class="spacer"></div>
+</div>
+
+<!-- ════════ tab bar ════════ -->
+<nav class="tabs hide" id="tabs">
+  <button data-tab="list" class="on">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+    </svg><span>岗位</span>
+  </button>
+  <button data-tab="skills">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+    </svg><span>要会的</span>
+  </button>
+  <button data-tab="me">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg><span>我</span>
+  </button>
+</nav>
+
+<div id="toast"></div>
+<div id="load"><div class="spin"></div><div id="loadTxt">载入中</div></div>
+
+<script>
+/* ========================================================================
+   而而的求职台
+   页面住在 kkee-diary（public，没有秘密）
+   数据住在 lab/kkee-jobs（private）
+   钥匙只住在你手机的 localStorage 里
+   ======================================================================== */
+
+const OWNER  = 'Ererhere';
+const REPO   = 'lab';
+const BRANCH = 'claude/gege-sjarsl';
+const ROOT   = 'kkee-jobs';
+
+const API = 'https://api.github.com';
+const LS = { tok: 'kkee_jobs_token' };
+
+let TOKEN = localStorage.getItem(LS.tok) || '';
+
+const STATUS = {
+  new:       { t: '待处理',   c: '' },
+  ready:     { t: '准备好了', c: 'wait' },
+  contacted: { t: '已打招呼', c: 'wait' },
+  replied:   { t: '对方回了', c: 'go' },
+  interview: { t: '面试中',   c: 'go' },
+  offer:     { t: '拿到了',   c: 'go' },
+  passed:    { t: '没过',     c: 'dead' },
+  dropped:   { t: '不投了',   c: 'dead' },
+};
+const TIER = {
+  1: { t: '第一梯队 · 现在就投', s: '门槛够得着，不用等作品' },
+  2: { t: '第二梯队 · 准备后冲', s: '补上缺口再聊，两三周' },
+  3: { t: '第三梯队 · 先存着',   s: '当目标和学习地图用' },
+};
+const SKMARK = {
+  done:  { m: '✓', c: 'g', t: '已经会' },
+  half:  { m: '◐', c: 'o', t: '半会' },
+  todo:  { m: '○', c: '',  t: '要学' },
+  later: { m: '·', c: '',  t: '往后排' },
+};
+
+const state = {
+  jobs: null, jobsSha: null,
+  skills: null, profile: null,
+  cur: null, editing: null, tab: 'list',
+};
+
+/* ---------------- 小工具 ---------------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const nl = s => esc(s).replace(/\n/g, '<br>');
+const uid = () => 'j' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+const today = () => new Date().toISOString().slice(0, 10);
+
+function toast(msg, ms = 2000) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), ms);
+}
+function loading(on, txt = '载入中') { $('loadTxt').textContent = txt; $('load').classList.toggle('on', on); }
+function show(v) {
+  document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === v));
+  $('tabs').classList.toggle('hide', v === 'setup' || v === 'add');
+  window.scrollTo(0, 0);
+}
+function lv(n) { return n >= 60 ? 'hi' : n >= 40 ? 'mid2' : 'lo'; }
+
+/* ---------------- base64（UTF-8 安全） ---------------- */
+function b64enc(str) {
+  const u = new TextEncoder().encode(str);
+  let bin = ''; const CH = 0x8000;
+  for (let i = 0; i < u.length; i += CH) bin += String.fromCharCode.apply(null, u.subarray(i, i + CH));
+  return btoa(bin);
+}
+function b64dec(b64) {
+  const bin = atob(b64.replace(/\s/g, ''));
+  const u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(u);
+}
+
+/* ---------------- GitHub ---------------- */
+function ghHeaders() {
+  return { Authorization: `Bearer ${TOKEN}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+}
+const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+
+async function ghRead(path) {
+  const url = `${API}/repos/${OWNER}/${REPO}/contents/${encPath(path)}?ref=${encodeURIComponent(BRANCH)}&t=${Date.now()}`;
+  const r = await fetch(url, { headers: ghHeaders(), cache: 'no-store' });
+  if (r.status === 404) return null;
+  if (r.status === 401) throw new Error('钥匙不对，或者过期了');
+  if (!r.ok) throw new Error(`读取失败（${r.status}）`);
+  const j = await r.json();
+  if (j.content) return { text: b64dec(j.content), sha: j.sha };
+  const b = await fetch(`${API}/repos/${OWNER}/${REPO}/git/blobs/${j.sha}`, { headers: ghHeaders() });
+  if (!b.ok) throw new Error(`读取失败（blob ${b.status}）`);
+  return { text: b64dec((await b.json()).content), sha: j.sha };
+}
+
+async function ghWrite(path, text, sha, msg) {
+  const body = { message: msg, content: b64enc(text), branch: BRANCH };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${API}/repos/${OWNER}/${REPO}/contents/${encPath(path)}`, {
+    method: 'PUT', headers: { ...ghHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  if (!r.ok) { const e = new Error(`存不进去（${r.status}）`); e.status = r.status; throw e; }
+  return (await r.json()).content.sha;
+}
+
+const pJobs = () => `${ROOT}/jobs.json`;
+const pSkills = () => `${ROOT}/skills.json`;
+const pProfile = () => `${ROOT}/profile.json`;
+
+async function loadAll(quiet) {
+  if (!quiet) loading(true, '在拿最新的');
+  try {
+    const [a, b, c] = await Promise.all([ghRead(pJobs()), ghRead(pSkills()), ghRead(pProfile())]);
+    state.jobs = a ? JSON.parse(a.text) : { jobs: [] };
+    state.jobsSha = a ? a.sha : null;
+    state.skills = b ? JSON.parse(b.text) : { skills: [], works: [] };
+    state.profile = c ? JSON.parse(c.text) : null;
+    if (!state.jobs.jobs) state.jobs.jobs = [];
+  } finally { if (!quiet) loading(false); }
+}
+
+async function saveJobs(msg) {
+  loading(true, '存进去');
+  try {
+    state.jobs.updatedAt = today();
+    state.jobsSha = await ghWrite(pJobs(), JSON.stringify(state.jobs, null, 2) + '\n', state.jobsSha, msg);
+  } catch (e) {
+    if (e.status === 409) {
+      toast('钶钶那边刚改过，帮你重新拿一次，再存一遍');
+      await loadAll(true);
+    } else throw e;
+  } finally { loading(false); }
+}
+
+/* ---------------- 岗位列表 ---------------- */
+function renderList() {
+  const all = state.jobs.jobs;
+  const live = all.filter(j => !['passed', 'dropped'].includes(j.status));
+  const done = all.filter(j => ['passed', 'dropped'].includes(j.status));
+  const acted = all.filter(j => ['contacted', 'replied', 'interview', 'offer'].includes(j.status)).length;
+  const pend = all.filter(j => !(j.analysis || {}).verdict).length;
+
+  $('listSub').textContent =
+    `${all.length} 个 · 已经聊了 ${acted} 个` + (pend ? ` · ${pend} 个等钶钶分析` : '');
+
+  if (!all.length) {
+    $('listBody').innerHTML = '<div class="empty">还没有岗位。<br>点右上角的 ＋ 把 JD 粘进来。</div>';
+    return;
+  }
+
+  let h = '';
+  for (const tier of [1, 2, 3]) {
+    const g = live.filter(j => (j.tier || 9) === tier)
+      .sort((x, y) => ((y.analysis || {}).chance || 0) - ((x.analysis || {}).chance || 0));
+    if (!g.length) continue;
+    h += `<div class="grp"><h2>${TIER[tier].t}　·　${TIER[tier].s}</h2><div class="list">`;
+    h += g.map(rowHTML).join('');
+    h += '</div></div>';
+  }
+  const un = live.filter(j => !j.tier || j.tier > 3);
+  if (un.length) {
+    h += `<div class="grp"><h2>还没分级 · 等钶钶看</h2><div class="list">${un.map(rowHTML).join('')}</div></div>`;
+  }
+  if (done.length) {
+    h += `<div class="grp"><h2>结束了</h2><div class="list">${done.map(rowHTML).join('')}</div></div>`;
+  }
+  $('listBody').innerHTML = h;
+  $('listBody').querySelectorAll('.row').forEach(r => r.onclick = () => openDetail(r.dataset.id));
+}
+
+function rowHTML(j) {
+  const a = j.analysis || {};
+  const st = STATUS[j.status] || STATUS.new;
+  const has = typeof a.chance === 'number';
+  const k = has ? lv(a.chance) : 'lo';
+  return `<div class="row" data-id="${j.id}">
+    <div class="pct">
+      ${has ? `<div class="n ${k}">${a.chance}</div><div class="bar"><i class="${k}" style="width:${a.chance}%"></i></div>`
+            : `<div class="n lo" style="font-size:15px">—</div><div class="bar"></div>`}
+    </div>
+    <div class="body">
+      <div class="t">${esc(j.title)}${j.status !== 'new' ? `<span class="pill ${st.c}">${st.t}</span>` : ''}</div>
+      <div class="s">${esc(j.company)}　${esc(j.salary || '薪资待补')}</div>
+    </div>
+    <div class="chev">›</div>
+  </div>`;
+}
+
+/* ---------------- 详情 ---------------- */
+function ring(n) {
+  const r = 26, c = 2 * Math.PI * r, k = lv(n);
+  const col = k === 'hi' ? 'var(--green)' : k === 'mid2' ? 'var(--orange)' : 'var(--text3)';
+  return `<div class="ring">
+    <svg width="62" height="62" viewBox="0 0 62 62">
+      <circle cx="31" cy="31" r="${r}" fill="none" stroke="var(--sep)" stroke-width="5"/>
+      <circle cx="31" cy="31" r="${r}" fill="none" stroke="${col}" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - n / 100)}"/>
+    </svg><span class="${k}">${n}</span></div>`;
+}
+
+function openDetail(id) {
+  const j = state.jobs.jobs.find(x => x.id === id);
+  if (!j) return;
+  state.cur = j;
+  $('dNav').textContent = j.company;
+  const a = j.analysis || {};
+  const st = STATUS[j.status] || STATUS.new;
+
+  let h = `<div class="hero">
+    <h1>${esc(j.title)}</h1>
+    <div class="co">${esc(j.company)}</div>
+    <div class="meta"><span class="sal">${esc(j.salary || '薪资待补')}</span>　${esc(j.city || '')}　${esc(j.exp || '')}　${esc(j.edu || '')}</div>
+  </div>`;
+
+  if (typeof a.chance === 'number') {
+    h += `<div class="gauge">${ring(a.chance)}
+      <div class="lab"><b>${a.chance >= 60 ? '够得着' : a.chance >= 40 ? '补一补能上' : a.chance >= 20 ? '要准备' : '先存着'}</b>
+      钶钶估的达成几率　${TIER[j.tier] ? TIER[j.tier].t : ''}</div></div>`;
+  }
+
+  // 状态
+  h += `<div class="sec"><h3>现在到哪一步了</h3><div class="list">
+    <div class="row" id="stRow"><div class="body"><div class="t">状态</div></div>
+    <div class="val">${st.t}</div><div class="chev">›</div></div>
+  </div></div>`;
+
+  if (!a.verdict) {
+    h += `<div class="sec"><div class="card"><p style="color:var(--text2)">
+      钶钶还没分析这个。他 pull 一下就会看到，分析好了会写回来。</p></div></div>`;
+  }
+
+  if (a.verdict) {
+    h += `<div class="sec"><h3>钶钶的判断</h3><div class="card"><p>${nl(a.verdict)}</p></div></div>`;
+  }
+  if (a.have && a.have.length) {
+    h += sec('你已经有的', a.have.map(x => li('✓', 'g', x)).join(''));
+  }
+  if (a.need && a.need.length) {
+    h += sec('要补的', a.need.map(x =>
+      li('○', 'o', `${esc(x.item)}<span class="tag">${x.days}天</span><em>${esc(x.why)}</em>`, true)).join(''));
+  }
+  if (a.canDo && a.canDo.length) {
+    h += sec('现在就能做', a.canDo.map(x => li('→', '', x)).join(''));
+  }
+  if (a.steps && a.steps.length) {
+    h += sec('步骤', a.steps.map(s =>
+      li(String(s.n), '', `${esc(s.do)}${s.when ? `<span class="tag">${esc(s.when)}</span>` : ''}`, true)).join(''));
+  }
+  if (a.risks && a.risks.length) {
+    h += sec('坑', a.risks.map(x => li('!', 'r', x)).join(''));
+  }
+  if (a.askThem && a.askThem.length) {
+    h += sec('面试要问对方', a.askThem.map(x => li('?', '', x)).join(''));
+  }
+  if (a.pitch) {
+    h += `<div class="sec"><h3>打招呼可以这么说</h3><div class="pitch">
+      <p id="pitchTx">${nl(a.pitch)}</p>
+      <button id="copyPitch">拷贝这段话</button></div></div>`;
+  }
+
+  // 留言
+  h += `<div class="sec"><h3>说的话</h3><div class="list" id="noteList">`;
+  h += (j.notes || []).length
+    ? j.notes.map(n => `<div class="note"><div class="who ${n.who === '而而' ? 'e' : 'k'}">${esc(n.who)}</div>
+        <div class="c">${nl(n.text)}<em>${esc(n.at)}</em></div></div>`).join('')
+    : '<div class="note"><div class="c" style="color:var(--text2)">还没有人说话</div></div>';
+  h += `</div><button class="btn ghost" id="addNote" style="margin-top:8px">写一句给钶钶</button></div>`;
+
+  if (j.rawJD) {
+    h += `<div class="sec"><h3>JD 原文</h3><details class="raw">
+      <summary>展开看全文</summary><pre>${esc(j.rawJD)}</pre></details></div>`;
+  }
+
+  $('dBody').innerHTML = h;
+  show('detail');
+
+  $('stRow').onclick = changeStatus;
+  const cp = $('copyPitch'); if (cp) cp.onclick = copyPitch;
+  $('addNote').onclick = addNote;
+}
+
+function sec(title, inner) {
+  return `<div class="sec"><h3>${title}</h3><ul class="bul">${inner}</ul></div>`;
+}
+function li(dot, cls, text, rawHTML) {
+  return `<li><span class="dot ${cls}">${esc(dot)}</span><span class="tx">${rawHTML ? text : nl(text)}</span></li>`;
+}
+
+async function changeStatus() {
+  const keys = Object.keys(STATUS);
+  const cur = state.cur.status || 'new';
+  const msg = '现在到哪一步了？输入数字：\n' + keys.map((k, i) => `${i + 1}. ${STATUS[k].t}`).join('\n');
+  const v = prompt(msg, String(keys.indexOf(cur) + 1));
+  if (!v) return;
+  const k = keys[parseInt(v, 10) - 1];
+  if (!k) return toast('没这个数字');
+  state.cur.status = k;
+  try {
+    await saveJobs(`jobs: ${state.cur.company} → ${STATUS[k].t}`);
+    openDetail(state.cur.id); renderList();
+    toast(`记下了：${STATUS[k].t}`);
+  } catch (e) { toast(e.message); }
+}
+
+async function addNote() {
+  const t = prompt('想跟钶钶说什么？');
+  if (!t || !t.trim()) return;
+  state.cur.notes = state.cur.notes || [];
+  state.cur.notes.push({
+    who: '而而', text: t.trim(),
+    at: new Date().toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+  });
+  try {
+    await saveJobs(`jobs: 而而在 ${state.cur.company} 下面说了一句`);
+    openDetail(state.cur.id);
+    toast('钶钶会看到的');
+  } catch (e) { toast(e.message); }
+}
+
+function copyPitch() {
+  const t = state.cur.analysis.pitch;
+  const done = () => toast('拷好了，去 BOSS 粘上');
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(t).then(done).catch(() => fallbackCopy(t, done));
+  } else fallbackCopy(t, done);
+}
+function fallbackCopy(t, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); cb(); } catch (e) { toast('拷不了，长按选中吧'); }
+  document.body.removeChild(ta);
+}
+
+/* ---------------- 新增 / 编辑 ---------------- */
+function openAdd(job) {
+  state.editing = job || null;
+  $('aNav').textContent = job ? '改一改' : '加一个岗位';
+  $('aRaw').value = job ? (job.rawJD || '') : '';
+  $('aTitle').value = job ? (job.title || '') : '';
+  $('aCompany').value = job ? (job.company || '') : '';
+  $('aSalary').value = job ? (job.salary || '') : '';
+  $('aCity').value = job ? (job.city || '') : '深圳';
+  $('aExp').value = job ? (job.exp || '') : '';
+  $('aEdu').value = job ? (job.edu || '') : '';
+  $('aNote').value = '';
+  $('aDelete').style.display = job ? 'block' : 'none';
+  show('add');
+}
+
+// 从粘进来的 JD 里尽量猜几个字段，猜不到就算了
+function sniff() {
+  const t = $('aRaw').value;
+  if (!t.trim()) return;
+  const put = (el, v) => { if (v && !$(el).value.trim()) $(el).value = v; };
+  const sal = t.match(/\d+\s*[-–~]\s*\d+\s*[KkWw](\s*[·・]?\s*\d+\s*薪)?/);
+  put('aSalary', sal && sal[0].replace(/\s/g, ''));
+  const city = t.match(/(深圳|广州|东莞|北京|上海|杭州|成都|佛山|惠州)/);
+  put('aCity', city && city[1]);
+  const exp = t.match(/(经验不限|应届|\d+\s*[-–~]\s*\d+\s*年|\d+\s*年以[上内])/);
+  put('aExp', exp && exp[0].replace(/\s/g, ''));
+  const edu = t.match(/(本科及以上|统招本科|学历不限|大专及以上|硕士|本科|大专)/);
+  put('aEdu', edu && edu[1]);
+}
+
+async function saveAdd() {
+  const raw = $('aRaw').value.trim();
+  const title = $('aTitle').value.trim();
+  const company = $('aCompany').value.trim();
+  if (!title && !company && !raw) return toast('至少填点什么');
+  if (!title) return toast('职位名要填一下');
+
+  const noteTx = $('aNote').value.trim();
+  const stamp = new Date().toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  if (state.editing) {
+    const j = state.editing;
+    Object.assign(j, {
+      title, company, rawJD: raw,
+      salary: $('aSalary').value.trim(), city: $('aCity').value.trim(),
+      exp: $('aExp').value.trim(), edu: $('aEdu').value.trim(),
+    });
+    if (noteTx) (j.notes = j.notes || []).push({ who: '而而', text: noteTx, at: stamp });
+    try {
+      await saveJobs(`jobs: 而而改了 ${company} ${title}`);
+      renderList(); openDetail(j.id); toast('改好了');
+    } catch (e) { toast(e.message); }
+    return;
+  }
+
+  const j = {
+    id: uid(), title, company,
+    salary: $('aSalary').value.trim(), city: $('aCity').value.trim(),
+    exp: $('aExp').value.trim(), edu: $('aEdu').value.trim(),
+    source: 'BOSS直聘', addedBy: '而而', addedAt: today(),
+    status: 'new', tier: 9, rawJD: raw, analysis: null,
+    notes: noteTx ? [{ who: '而而', text: noteTx, at: stamp }] : [],
+  };
+  state.jobs.jobs.push(j);
+  try {
+    await saveJobs(`jobs: 而而加了 ${company} ${title}`);
+    renderList(); show('list');
+    toast('加好了，钶钶会来分析');
+  } catch (e) { toast(e.message); }
+}
+
+async function delJob() {
+  if (!state.editing) return;
+  if (!confirm(`真的删掉「${state.editing.company} ${state.editing.title}」？`)) return;
+  state.jobs.jobs = state.jobs.jobs.filter(x => x.id !== state.editing.id);
+  try {
+    await saveJobs(`jobs: 而而删了 ${state.editing.company}`);
+    state.editing = null; renderList(); show('list'); toast('删掉了');
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------- 技能 ---------------- */
+function renderSkills() {
+  const d = state.skills;
+  if (!d) return;
+  const todo = d.skills.filter(s => s.status === 'todo' || s.status === 'half');
+  const days = todo.reduce((a, s) => a + (s.days || 0), 0);
+  $('skSub').textContent = `还差 ${todo.length} 样，加起来大约 ${days} 天`;
+
+  let h = '';
+  const order = ['done', 'half', 'todo', 'later'];
+  const label = { done: '已经会了 · 这是你的资产', half: '半会 · 补个格式就行', todo: '要学 · 按这个顺序', later: '往后排 · 不着急' };
+  for (const k of order) {
+    const g = d.skills.filter(s => s.status === k);
+    if (!g.length) continue;
+    h += `<div class="grp"><h2>${label[k]}</h2><ul class="bul">`;
+    h += g.map(s => {
+      const m = SKMARK[s.status];
+      return `<li><span class="dot ${m.c}">${m.m}</span><span class="tx">
+        ${esc(s.name)}${s.days ? `<span class="tag">${s.days}天</span>` : ''}
+        <em>${esc(s.why)}</em><em style="color:var(--blue)">${esc(s.how)}</em>
+        <em>要它的岗位：${esc((s.jobs || []).join('、'))}</em></span></li>`;
+    }).join('');
+    h += '</ul></div>';
+  }
+
+  h += `<div class="grp"><h2>要做出来的东西 · 这是补经验的唯一办法</h2><ul class="bul">`;
+  h += d.works.map(w => {
+    const m = SKMARK[w.status] || SKMARK.todo;
+    return `<li><span class="dot ${m.c}">${m.m}</span><span class="tx">
+      ${esc(w.name)}<span class="tag">${esc(w.tool)}</span>
+      <em>${esc(w.spec)}</em>
+      <em style="color:var(--blue)">为什么：${esc(w.why)}</em>
+      <em>打中：${esc((w.coversJobs || []).join('、'))}</em></span></li>`;
+  }).join('');
+  h += '</ul></div>';
+  $('skBody').innerHTML = h;
+}
+
+/* ---------------- 我 ---------------- */
+function renderMe() {
+  const p = state.profile;
+  if (!p) { $('meBody').innerHTML = '<div class="empty">档案还没建</div>'; return; }
+  const b = p.background;
+  $('meSub').textContent = `${b.major}　${b.lastRole} ${b.years}`;
+
+  let h = `<div class="grp"><h2>现在</h2><div class="list">
+    <div class="row plain"><div class="body"><div class="t">状态</div></div><div class="val">${esc(p.status)}</div></div>
+    <div class="row plain"><div class="body"><div class="t">城市</div></div><div class="val">${esc(p.city)}</div></div>
+    <div class="row plain"><div class="body"><div class="t">上一份</div></div><div class="val">${esc(b.lastSalary)}</div></div>
+  </div></div>`;
+
+  h += `<div class="grp"><h2>方向</h2><div class="card">
+    <p><b>${esc(p.target.oneLine)}</b></p>
+    <p style="color:var(--text2);font-size:14px">想要：${esc(p.target.want)}</p>
+    <p style="color:var(--text2);font-size:14px">谈薪：${esc(p.target.salaryFloor)}</p>
+  </div></div>`;
+
+  h += `<div class="grp"><h2>手里有的</h2><ul class="bul">`;
+  h += p.assets.map(a => {
+    const ok = a.level === '已具备';
+    return `<li><span class="dot ${ok ? 'g' : 'o'}">${ok ? '✓' : '○'}</span><span class="tx">
+      ${esc(a.item)}<span class="tag">${esc(a.level)}</span>
+      ${a.evidence ? `<em>${esc(a.evidence)}</em>` : ''}</span></li>`;
+  }).join('') + '</ul></div>';
+
+  h += `<div class="grp"><h2>缺的，和怎么补</h2><ul class="bul">`;
+  h += p.gaps.map(g => `<li><span class="dot ${g.hard ? 'r' : 'o'}">${g.hard ? '!' : '·'}</span><span class="tx">
+    ${esc(g.item)}<em style="color:var(--blue)">${esc(g.fix)}</em></span></li>`).join('') + '</ul></div>';
+
+  $('meBody').innerHTML = h;
+}
+
+/* ---------------- 起飞 ---------------- */
+function switchTab(t) {
+  state.tab = t;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  if (t === 'list') renderList();
+  if (t === 'skills') renderSkills();
+  if (t === 'me') renderMe();
+  show(t);
+}
+
+async function boot() {
+  if (!TOKEN) return show('setup');
+  try {
+    await loadAll();
+    switchTab('list');
+  } catch (e) {
+    toast(e.message, 3500);
+    show('setup');
+  }
+}
+
+$('tokSave').onclick = async () => {
+  const v = $('tokIn').value.trim();
+  if (!v) return toast('把钥匙粘进来');
+  TOKEN = v; localStorage.setItem(LS.tok, v);
+  try { await loadAll(); switchTab('list'); }
+  catch (e) { toast(e.message, 3500); TOKEN = ''; localStorage.removeItem(LS.tok); }
+};
+
+$('listRefresh').onclick = async () => {
+  try { await loadAll(); renderList(); toast('是最新的了'); } catch (e) { toast(e.message); }
+};
+$('skRefresh').onclick = async () => {
+  try { await loadAll(); renderSkills(); toast('是最新的了'); } catch (e) { toast(e.message); }
+};
+$('listAdd').onclick = () => openAdd(null);
+$('dBack').onclick = () => { switchTab('list'); };
+$('dEdit').onclick = () => openAdd(state.cur);
+$('aCancel').onclick = () => { state.editing ? openDetail(state.editing.id) : switchTab('list'); };
+$('aSave').onclick = saveAdd;
+$('aDelete').onclick = delJob;
+$('aRaw').addEventListener('blur', sniff);
+$('aRaw').addEventListener('paste', () => setTimeout(sniff, 60));
+$('meLogout').onclick = () => {
+  if (!confirm('把钥匙拿走？下次要重新粘一遍。')) return;
+  localStorage.removeItem(LS.tok); TOKEN = ''; $('tokIn').value = ''; show('setup');
+};
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+
+boot();
+</script>
+</body>
+</html>
