@@ -958,6 +958,19 @@ function renderResume() {
 
   let h = '';
 
+  // 在线简历的「个人优势」栏，三版，直接拷
+  const adv = d.advantage;
+  if (adv && (adv.versions || []).length) {
+    h += `<div class="grp"><h2>在线简历的「个人优势」　·　BOSS / 猎聘那一栏</h2>`;
+    if (adv.note) h += `<div class="card"><p style="color:var(--text2);font-size:14px">${nl(adv.note)}</p></div>`;
+    h += adv.versions.map((v, i) => `<div class="pitch" style="margin-top:8px">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">
+          <b style="color:var(--text);font-size:15px">${esc(v.name)}</b>　${esc(v.for || '')}</p>
+        <p style="white-space:pre-wrap">${esc(v.text)}</p>
+        <button data-adv="${i}">拷贝这一版</button></div>`).join('');
+    h += '</div>';
+  }
+
   if (latest) {
     const r = latest.review || {};
     h += `<div class="grp"><h2>最新一版　·　${esc(latest.name)}　${esc(latest.at)}</h2>`;
@@ -1018,6 +1031,8 @@ function renderResume() {
   }
 
   $('reBody').innerHTML = h;
+  $('reBody').querySelectorAll('[data-adv]').forEach(b => b.onclick = () =>
+    copyText(adv.versions[+b.dataset.adv].text, '拷好了，去粘到个人优势那一栏'));
   const cr = $('copyRw');
   if (cr) cr.onclick = () => copyText(latest.review.rewrite, '拷好了');
 }
