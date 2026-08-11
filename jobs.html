@@ -375,7 +375,7 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
     <button class="r" style="visibility:hidden">－</button>
   </div>
   <div class="big">
-    <h1>要会的</h1>
+    <h1>技能</h1>
     <p id="skSub"></p>
   </div>
   <div id="skBody"></div>
@@ -446,7 +446,7 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
   <button data-tab="skills">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-    </svg><span>要会的</span>
+    </svg><span>技能</span>
   </button>
   <button data-tab="resume">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -907,41 +907,85 @@ async function delJob() {
 }
 
 /* ---------------- 技能 ---------------- */
+const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+
 function renderSkills() {
   const d = state.skills;
   if (!d) return;
-  const todo = d.skills.filter(s => s.status === 'todo' || s.status === 'half');
-  const days = todo.reduce((a, s) => a + (s.days || 0), 0);
-  $('skSub').textContent = `还差 ${todo.length} 样，加起来大约 ${days} 天`;
+  const have = d.have || [];
+  const learn = (d.learn || []).slice().sort((a, b) => (a.order || 99) - (b.order || 99));
+  const days = learn.reduce((a, s) => a + (s.days || 0), 0);
+  $('skSub').textContent = `已经有 ${have.length} 样　·　要补 ${learn.length} 样，合计约 ${days} 天`;
 
   let h = '';
-  const order = ['done', 'half', 'todo', 'later'];
-  const label = { done: '已经会了 · 这是你的资产', half: '半会 · 补个格式就行', todo: '要学 · 按这个顺序', later: '往后排 · 不着急' };
-  for (const k of order) {
-    const g = d.skills.filter(s => s.status === k);
-    if (!g.length) continue;
-    h += `<div class="grp"><h2>${label[k]}</h2><ul class="bul">`;
-    h += g.map(s => {
-      const m = SKMARK[s.status];
-      return `<li><span class="dot ${m.c}">${m.m}</span><span class="tx">
-        ${esc(s.name)}${s.days ? `<span class="tag">${s.days}天</span>` : ''}
-        <em>${esc(s.why)}</em><em style="color:var(--blue)">${esc(s.how)}</em>
-        <em>要它的岗位：${esc((s.jobs || []).join('、'))}</em></span></li>`;
-    }).join('');
-    h += '</ul></div>';
+
+  // ── 学习路线概览 ──
+  const p = d.plan;
+  if (p) {
+    h += `<div class="grp"><h2>路线　·　按价值、难度、出成果的速度排的</h2>`;
+    if (p.note) h += `<div class="card"><p style="font-size:14px;color:var(--text2)">${nl(p.note)}</p></div>`;
+    h += `<ul class="bul" style="margin-top:8px">` + (p.stages || []).map((s, i) =>
+      `<li><span class="dot">${i + 1}</span><span class="tx"><b>${esc(s.name)}</b><span class="tag">${esc(s.days)}</span>
+        <em>${esc((s.items || []).join('　→　'))}</em>
+        <em style="color:var(--green)">做完手里有：${esc(s.out)}</em></span></li>`).join('') + '</ul>';
+    if (p.rule) h += `<div class="card" style="margin-top:8px"><p>${nl(p.rule.replace(/\*\*/g, ''))}</p></div>`;
+    h += '</div>';
   }
 
-  h += `<div class="grp"><h2>要做出来的东西 · 这是补经验的唯一办法</h2><ul class="bul">`;
-  h += d.works.map(w => {
-    const m = SKMARK[w.status] || SKMARK.todo;
-    return `<li><span class="dot ${m.c}">${m.m}</span><span class="tx">
-      ${esc(w.name)}<span class="tag">${esc(w.tool)}</span>
-      <em>${esc(w.spec)}</em>
-      <em style="color:var(--blue)">为什么：${esc(w.why)}</em>
-      <em>打中：${esc((w.coversJobs || []).join('、'))}</em></span></li>`;
-  }).join('');
-  h += '</ul></div>';
+  // ── 已经有的 ──
+  h += `<div class="grp"><h2>已经有的　·　重点不是「会」，是怎么说清楚</h2>`;
+  h += have.map((s, i) => `<div class="card" style="margin-top:8px">
+      <p><b>${esc(s.name)}</b></p>
+      <p style="font-size:14px;color:var(--text2)">${esc(s.what)}</p>
+      <p style="font-size:13.5px;color:var(--text2)">你的证据：${esc(s.evidence)}</p>
+      <div style="background:var(--fill);border-radius:8px;padding:11px 12px;margin-top:11px">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:6px">怎么跟 HR 说</p>
+        <p style="font-size:14.5px">${nl(s.pitch)}</p>
+      </div>
+      <button data-hp="${i}" style="margin-top:9px;width:100%;border:none;background:var(--blue);color:#fff;
+        font-size:14px;font-weight:600;font-family:inherit;padding:9px;border-radius:9px;cursor:pointer">拷这段话</button>
+      ${(s.followup || []).length ? `<p style="font-size:12px;color:var(--text2);margin-top:12px">HR 追问的时候</p>`
+        + s.followup.map(f => `<p style="font-size:13.5px;color:var(--text2);margin-top:5px">· ${nl(f.replace(/\*\*/g, ''))}</p>`).join('') : ''}
+      <p style="font-size:12.5px;color:var(--text3);margin-top:11px">要它的岗位：${esc((s.askedBy || []).join('、'))}</p>
+    </div>`).join('');
+  h += '</div>';
+
+  // ── 要学的，按阶段分组 ──
+  let curStage = null;
+  for (const s of learn) {
+    if (s.stage !== curStage) {
+      if (curStage !== null) h += '</div>';
+      curStage = s.stage;
+      h += `<div class="grp"><h2>${esc(curStage)}</h2>`;
+    }
+    h += `<div class="card" style="margin-top:8px">
+      <p><b>${s.order}. ${esc(s.name)}</b></p>
+      <p style="font-size:13px;color:var(--text2);margin-top:3px">
+        ${esc(s.level)}　难度 <span style="color:var(--orange)">${stars(s.difficulty)}</span>　约 ${s.days} 天</p>
+      <p style="font-size:14px;margin-top:10px">${esc(s.what)}</p>
+      <p style="font-size:13.5px;color:var(--text2);margin-top:8px">为什么排这里：${esc(s.why)}</p>
+      <p style="font-size:12px;color:var(--text2);margin-top:12px">步骤</p>
+      ${(s.steps || []).map(st => `<div style="display:flex;gap:9px;margin-top:7px">
+          <span style="color:var(--blue);font-weight:600;font-size:13px;flex:none;width:15px">${st.n}</span>
+          <span style="flex:1;font-size:14px">${esc(st.do)}
+            ${st.done ? `<em style="font-style:normal;display:block;font-size:12.5px;color:var(--green);margin-top:2px">做到这样算完成：${esc(st.done)}</em>` : ''}
+          </span></div>`).join('')}
+      <div style="background:var(--fill);border-radius:8px;padding:11px 12px;margin-top:13px">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:5px">学完手里多出什么</p>
+        <p style="font-size:14.5px">${nl((s.result || '').replace(/\*\*/g, ''))}</p>
+      </div>
+      <div style="background:var(--fill);border-radius:8px;padding:11px 12px;margin-top:8px">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:5px">学完怎么跟 HR 说</p>
+        <p style="font-size:14.5px">${nl(s.howToSay)}</p>
+      </div>
+      <p style="font-size:12.5px;color:var(--text3);margin-top:11px">要它的岗位：${esc((s.askedBy || []).join('、'))}</p>
+    </div>`;
+  }
+  if (curStage !== null) h += '</div>';
+
   $('skBody').innerHTML = h;
+  $('skBody').querySelectorAll('[data-hp]').forEach(b => b.onclick = () =>
+    copyText(have[+b.dataset.hp].pitch, '拷好了'));
 }
 
 /* ---------------- 简历 ---------------- */
