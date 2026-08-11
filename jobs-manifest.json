@@ -1,0 +1,16 @@
+{
+  "name": "而而的求职台",
+  "short_name": "求职台",
+  "description": "岗位、要求、缺口、步骤和几率，都在这里",
+  "start_url": "./jobs.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icon-jobs.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-jobs.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
