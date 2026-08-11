@@ -225,6 +225,42 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
 .two > div { flex: 1; }
 .two input { border-radius: 10px; }
 
+/* ---------- 今天 ---------- */
+.addbar { display: flex; gap: 8px; margin: 0 16px 4px; }
+.addbar input { flex: 1; border-radius: 10px; font-size: 16px; padding: 12px 14px; }
+.addbar button {
+  flex: none; width: 46px; border: none; border-radius: 10px; background: var(--blue);
+  color: #fff; font-size: 24px; font-family: inherit; cursor: pointer; line-height: 1;
+}
+.addbar button:active { opacity: .7; }
+
+.td {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 16px; border-bottom: .5px solid var(--sep);
+}
+.td:last-child { border-bottom: none; }
+.td .ck {
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
+  border: 1.7px solid var(--text3); cursor: pointer; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: transparent; transition: background .15s, border-color .15s;
+}
+.td.on .ck { background: var(--blue); border-color: var(--blue); color: #fff; }
+.td .tt { flex: 1; font-size: 16px; line-height: 1.45; letter-spacing: -.3px; }
+.td.on .tt { color: var(--text2); text-decoration: line-through; }
+.td .tt em { font-style: normal; display: block; font-size: 12px; color: var(--text3); margin-top: 3px; }
+.td .del {
+  flex: none; border: none; background: none; color: var(--text3);
+  font-size: 17px; cursor: pointer; padding: 0 2px; line-height: 1;
+}
+.td .del:active { color: var(--red); }
+
+.daybar {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 0 32px 7px; font-size: 13px; color: var(--text2);
+}
+.daybar b { font-size: 15px; color: var(--text); font-weight: 600; }
+
 /* ---------- tab bar ---------- */
 .tabs {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
@@ -382,6 +418,25 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
   <div class="spacer"></div>
 </div>
 
+<!-- ════════ 今天 ════════ -->
+<div class="view" id="today">
+  <div class="nav">
+    <button class="l" id="tdRefresh">刷新</button>
+    <div class="mid"></div>
+    <button class="r" style="visibility:hidden">－</button>
+  </div>
+  <div class="big">
+    <h1>今天</h1>
+    <p id="tdSub"></p>
+  </div>
+  <div class="addbar">
+    <input type="text" id="tdIn" placeholder="想做什么？" autocomplete="off" enterkeyhint="done">
+    <button id="tdAdd">＋</button>
+  </div>
+  <div id="tdBody"></div>
+  <div class="spacer"></div>
+</div>
+
 <!-- ════════ 简历 ════════ -->
 <div class="view" id="resume">
   <div class="nav">
@@ -448,6 +503,11 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
       <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
     </svg><span>技能</span>
   </button>
+  <button data-tab="today">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/>
+    </svg><span>今天</span>
+  </button>
   <button data-tab="resume">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -508,6 +568,7 @@ const state = {
   jobs: null, jobsSha: null,
   skills: null, profile: null,
   resume: null, resumeSha: null,
+  todo: null, todoSha: null,
   cur: null, editing: null, tab: 'list',
 };
 
@@ -577,21 +638,45 @@ const pJobs = () => `${ROOT}/jobs.json`;
 const pSkills = () => `${ROOT}/skills.json`;
 const pProfile = () => `${ROOT}/profile.json`;
 const pResume = () => `${ROOT}/resume.json`;
+const pTodo = () => `${ROOT}/todo.json`;
 
 async function loadAll(quiet) {
   if (!quiet) loading(true, '在拿最新的');
   try {
-    const [a, b, c, e] = await Promise.all(
-      [ghRead(pJobs()), ghRead(pSkills()), ghRead(pProfile()), ghRead(pResume())]);
+    const [a, b, c, e, f] = await Promise.all(
+      [ghRead(pJobs()), ghRead(pSkills()), ghRead(pProfile()), ghRead(pResume()), ghRead(pTodo())]);
     state.jobs = a ? JSON.parse(a.text) : { jobs: [] };
     state.jobsSha = a ? a.sha : null;
     state.skills = b ? JSON.parse(b.text) : { skills: [], works: [] };
     state.profile = c ? JSON.parse(c.text) : null;
     state.resume = e ? JSON.parse(e.text) : { versions: [] };
     state.resumeSha = e ? e.sha : null;
+    state.todo = f ? JSON.parse(f.text) : { days: [] };
+    state.todoSha = f ? f.sha : null;
     if (!state.jobs.jobs) state.jobs.jobs = [];
     if (!state.resume.versions) state.resume.versions = [];
+    if (!state.todo.days) state.todo.days = [];
   } finally { if (!quiet) loading(false); }
+}
+
+// 待办改得频繁，攒 900ms 一起存，避免连点几下就撞 sha
+let todoTimer = null, todoSaving = false;
+function saveTodoSoon() {
+  clearTimeout(todoTimer);
+  todoTimer = setTimeout(async () => {
+    if (todoSaving) return saveTodoSoon();
+    todoSaving = true;
+    try {
+      state.todo.updatedAt = today();
+      state.todoSha = await ghWrite(pTodo(), JSON.stringify(state.todo, null, 2) + '\n',
+        state.todoSha, 'todo: 而而这边动了一下');
+    } catch (e) {
+      if (e.status === 409) {
+        toast('钶钶那边刚写过，重新拿一次');
+        try { await loadAll(true); renderToday(); } catch (_) {}
+      } else toast(e.message);
+    } finally { todoSaving = false; }
+  }, 900);
 }
 
 async function saveResume(msg) {
@@ -988,6 +1073,107 @@ function renderSkills() {
     copyText(have[+b.dataset.hp].pitch, '拷好了'));
 }
 
+/* ---------------- 今天 ---------------- */
+const WD = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+function dayLabel(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const diff = Math.round((t - d) / 86400000);
+  const base = `${d.getMonth() + 1}月${d.getDate()}日 ${WD[d.getDay()]}`;
+  return diff === 0 ? `${base}　今天` : diff === 1 ? `${base}　昨天` : base;
+}
+function todayRow() {
+  const t = today();
+  let d = state.todo.days.find(x => x.date === t);
+  if (!d) { d = { date: t, items: [], notes: [] }; state.todo.days.push(d); }
+  if (!d.items) d.items = [];
+  if (!d.notes) d.notes = [];
+  return d;
+}
+
+function renderToday() {
+  if (!state.todo) return;
+  const d = todayRow();
+  const done = d.items.filter(x => x.done).length;
+  $('tdSub').textContent = d.items.length
+    ? `${dayLabel(d.date)}　·　做完 ${done} / ${d.items.length}`
+    : `${dayLabel(d.date)}　·　还没写`;
+
+  let h = '';
+  h += `<div class="grp" style="margin-top:14px"><div class="list">`;
+  h += d.items.length
+    ? d.items.map(it => `<div class="td ${it.done ? 'on' : ''}" data-id="${it.id}">
+        <div class="ck" data-ck="${it.id}">✓</div>
+        <div class="tt">${nl(it.text)}${it.by === '钶钶' ? '<em>钶钶给你写的</em>' : ''}</div>
+        <button class="del" data-del="${it.id}">×</button></div>`).join('')
+    : `<div class="td"><div class="tt" style="color:var(--text2)">今天还没有事。上面那栏打字，回车就加进来。</div></div>`;
+  h += '</div></div>';
+
+  if (d.notes.length) {
+    h += `<div class="grp"><h2>钶钶写的</h2><div class="list">`
+      + d.notes.map(n => `<div class="note"><div class="who ${n.who === '而而' ? 'e' : 'k'}">${esc(n.who)}</div>
+          <div class="c">${nl(n.text)}<em>${esc(n.at)}</em></div></div>`).join('')
+      + `</div><button class="btn ghost" id="tdSay" style="margin-top:8px">回他一句</button></div>`;
+  } else {
+    h += `<div class="grp"><button class="btn ghost" id="tdSay" style="margin:0 16px;width:calc(100% - 32px)">写一句给钶钶</button></div>`;
+  }
+
+  // 以前的日子
+  const past = state.todo.days.filter(x => x.date !== d.date).sort((a, b) => b.date.localeCompare(a.date));
+  if (past.length) {
+    h += `<div class="grp"><h2>以前</h2>`;
+    h += past.slice(0, 14).map(p => {
+      const dn = (p.items || []).filter(x => x.done).length;
+      return `<div class="daybar" style="margin-top:14px"><b>${dayLabel(p.date)}</b>做完 ${dn}/${(p.items || []).length}</div>
+        <div class="list">` +
+        ((p.items || []).map(it => `<div class="td ${it.done ? 'on' : ''}">
+          <div class="ck">✓</div><div class="tt">${nl(it.text)}</div></div>`).join('') || '') +
+        ((p.notes || []).map(n => `<div class="note"><div class="who ${n.who === '而而' ? 'e' : 'k'}">${esc(n.who)}</div>
+          <div class="c">${nl(n.text)}<em>${esc(n.at)}</em></div></div>`).join('')) +
+        `</div>`;
+    }).join('');
+    h += '</div>';
+  }
+
+  $('tdBody').innerHTML = h;
+  $('tdBody').querySelectorAll('[data-ck]').forEach(e => e.onclick = () => toggleTodo(e.dataset.ck));
+  $('tdBody').querySelectorAll('[data-del]').forEach(e => e.onclick = () => delTodo(e.dataset.del));
+  const say = $('tdSay'); if (say) say.onclick = sayToKeke;
+}
+
+function addTodo() {
+  const v = $('tdIn').value.trim();
+  if (!v) return;
+  todayRow().items.push({
+    id: 'i' + Date.now().toString(36), text: v, done: false, by: '而而',
+    at: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+  });
+  $('tdIn').value = '';
+  renderToday(); saveTodoSoon();
+}
+function toggleTodo(id) {
+  const it = todayRow().items.find(x => x.id === id);
+  if (!it) return;
+  it.done = !it.done;
+  if (it.done) it.doneAt = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  renderToday(); saveTodoSoon();
+}
+function delTodo(id) {
+  const d = todayRow();
+  d.items = d.items.filter(x => x.id !== id);
+  renderToday(); saveTodoSoon();
+}
+function sayToKeke() {
+  const t = prompt('想跟钶钶说什么？');
+  if (!t || !t.trim()) return;
+  todayRow().notes.push({
+    who: '而而', text: t.trim(),
+    at: new Date().toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+  });
+  renderToday(); saveTodoSoon();
+  toast('他会看到的');
+}
+
 /* ---------------- 简历 ---------------- */
 function renderResume() {
   const d = state.resume;
@@ -1143,6 +1329,7 @@ function switchTab(t) {
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   if (t === 'list') renderList();
   if (t === 'skills') renderSkills();
+  if (t === 'today') renderToday();
   if (t === 'resume') renderResume();
   if (t === 'me') renderMe();
   show(t);
@@ -1173,6 +1360,11 @@ $('listRefresh').onclick = async () => {
 $('skRefresh').onclick = async () => {
   try { await loadAll(); renderSkills(); toast('是最新的了'); } catch (e) { toast(e.message); }
 };
+$('tdRefresh').onclick = async () => {
+  try { await loadAll(); renderToday(); toast('是最新的了'); } catch (e) { toast(e.message); }
+};
+$('tdAdd').onclick = addTodo;
+$('tdIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTodo(); } });
 $('reRefresh').onclick = async () => {
   try { await loadAll(); renderResume(); toast('是最新的了'); } catch (e) { toast(e.message); }
 };
