@@ -182,6 +182,7 @@ body {
   font-size: 15px; font-weight: 600; font-family: inherit; padding: 11px; border-radius: 10px; cursor: pointer;
 }
 .pitch button:active { opacity: .7; }
+.pitch button.later { background: var(--fill); color: var(--text2); }
 
 .raw { margin: 0 16px; background: var(--card); border-radius: 10px; overflow: hidden; }
 .raw summary { padding: 13px 16px; font-size: 15px; color: var(--blue); cursor: pointer; list-style: none; }
@@ -381,6 +382,44 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
   <div class="spacer"></div>
 </div>
 
+<!-- ════════ 简历 ════════ -->
+<div class="view" id="resume">
+  <div class="nav">
+    <button class="l" id="reRefresh">刷新</button>
+    <div class="mid"></div>
+    <button class="r strong" id="reAdd">＋</button>
+  </div>
+  <div class="big">
+    <h1>简历</h1>
+    <p id="reSub"></p>
+  </div>
+  <div id="reBody"></div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ════════ 传一版简历 ════════ -->
+<div class="view" id="reNew">
+  <div class="nav">
+    <button class="l" id="rnCancel">取消</button>
+    <div class="mid">传一版上来</div>
+    <button class="r strong" id="rnSave">存</button>
+  </div>
+  <div class="field" style="margin-top:16px">
+    <label>这一版叫什么</label>
+    <input type="text" id="rnName" placeholder="第一版">
+  </div>
+  <div class="field">
+    <label>把简历全文粘在这里</label>
+    <textarea id="rnText" style="min-height:280px" placeholder="从 Word、PDF 或者招聘 app 里复制出来，整段粘进来就行。&#10;排版乱掉没关系，我看的是内容。"></textarea>
+  </div>
+  <div class="field">
+    <label>想让钶钶特别看哪里（可以不填）</label>
+    <input type="text" id="rnAsk" placeholder="比如：工作经历那段我不知道怎么写">
+  </div>
+  <div class="hint">存进去之后，钶钶 pull 一下就能看见，会逐段写意见还给你。</div>
+  <div class="spacer"></div>
+</div>
+
 <!-- ════════ 我 ════════ -->
 <div class="view" id="me">
   <div class="nav">
@@ -408,6 +447,12 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
     </svg><span>要会的</span>
+  </button>
+  <button data-tab="resume">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <path d="M14 2v6h6"/><path d="M8 13h6M8 17h8"/>
+    </svg><span>简历</span>
   </button>
   <button data-tab="me">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -462,6 +507,7 @@ const SKMARK = {
 const state = {
   jobs: null, jobsSha: null,
   skills: null, profile: null,
+  resume: null, resumeSha: null,
   cur: null, editing: null, tab: 'list',
 };
 
@@ -479,7 +525,7 @@ function toast(msg, ms = 2000) {
 function loading(on, txt = '载入中') { $('loadTxt').textContent = txt; $('load').classList.toggle('on', on); }
 function show(v) {
   document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === v));
-  $('tabs').classList.toggle('hide', v === 'setup' || v === 'add');
+  $('tabs').classList.toggle('hide', v === 'setup' || v === 'add' || v === 'reNew');
   window.scrollTo(0, 0);
 }
 function lv(n) { return n >= 60 ? 'hi' : n >= 40 ? 'mid2' : 'lo'; }
@@ -530,17 +576,33 @@ async function ghWrite(path, text, sha, msg) {
 const pJobs = () => `${ROOT}/jobs.json`;
 const pSkills = () => `${ROOT}/skills.json`;
 const pProfile = () => `${ROOT}/profile.json`;
+const pResume = () => `${ROOT}/resume.json`;
 
 async function loadAll(quiet) {
   if (!quiet) loading(true, '在拿最新的');
   try {
-    const [a, b, c] = await Promise.all([ghRead(pJobs()), ghRead(pSkills()), ghRead(pProfile())]);
+    const [a, b, c, e] = await Promise.all(
+      [ghRead(pJobs()), ghRead(pSkills()), ghRead(pProfile()), ghRead(pResume())]);
     state.jobs = a ? JSON.parse(a.text) : { jobs: [] };
     state.jobsSha = a ? a.sha : null;
     state.skills = b ? JSON.parse(b.text) : { skills: [], works: [] };
     state.profile = c ? JSON.parse(c.text) : null;
+    state.resume = e ? JSON.parse(e.text) : { versions: [] };
+    state.resumeSha = e ? e.sha : null;
     if (!state.jobs.jobs) state.jobs.jobs = [];
+    if (!state.resume.versions) state.resume.versions = [];
   } finally { if (!quiet) loading(false); }
+}
+
+async function saveResume(msg) {
+  loading(true, '存进去');
+  try {
+    state.resume.updatedAt = today();
+    state.resumeSha = await ghWrite(pResume(), JSON.stringify(state.resume, null, 2) + '\n', state.resumeSha, msg);
+  } catch (e) {
+    if (e.status === 409) { toast('钶钶那边刚改过，帮你重新拿一次，再存一遍'); await loadAll(true); }
+    else throw e;
+  } finally { loading(false); }
 }
 
 async function saveJobs(msg) {
@@ -676,10 +738,15 @@ function openDetail(id) {
   if (a.askThem && a.askThem.length) {
     h += sec('面试要问对方', a.askThem.map(x => li('?', '', x)).join(''));
   }
-  if (a.pitch) {
-    h += `<div class="sec"><h3>打招呼可以这么说</h3><div class="pitch">
-      <p id="pitchTx">${nl(a.pitch)}</p>
-      <button id="copyPitch">拷贝这段话</button></div></div>`;
+  if (a.pitchNow) {
+    h += `<div class="sec"><h3>现在就能发的　·　里面每句都是真的</h3><div class="pitch">
+      <p>${nl(a.pitchNow)}</p>
+      <button data-copy="now">拷贝这段话</button></div></div>`;
+  }
+  if (a.pitchAfter) {
+    h += `<div class="sec"><h3>作品做完之后，换成这版</h3><div class="pitch">
+      <p style="color:var(--text2)">${nl(a.pitchAfter)}</p>
+      <button class="later" data-copy="after">先拷着，做完再用</button></div></div>`;
   }
 
   // 留言
@@ -699,7 +766,8 @@ function openDetail(id) {
   show('detail');
 
   $('stRow').onclick = changeStatus;
-  const cp = $('copyPitch'); if (cp) cp.onclick = copyPitch;
+  $('dBody').querySelectorAll('[data-copy]').forEach(b => b.onclick = () =>
+    copyText(b.dataset.copy === 'now' ? a.pitchNow : a.pitchAfter, '拷好了，去 BOSS 粘上'));
   $('addNote').onclick = addNote;
 }
 
@@ -741,9 +809,9 @@ async function addNote() {
   } catch (e) { toast(e.message); }
 }
 
-function copyPitch() {
-  const t = state.cur.analysis.pitch;
-  const done = () => toast('拷好了，去 BOSS 粘上');
+function copyText(t, msg) {
+  if (!t) return;
+  const done = () => toast(msg || '拷好了');
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(t).then(done).catch(() => fallbackCopy(t, done));
   } else fallbackCopy(t, done);
@@ -876,6 +944,106 @@ function renderSkills() {
   $('skBody').innerHTML = h;
 }
 
+/* ---------------- 简历 ---------------- */
+function renderResume() {
+  const d = state.resume;
+  if (!d) return;
+  const vs = d.versions || [];
+  const latest = vs[vs.length - 1];
+  const reviewed = vs.filter(v => (v.review || {}).summary).length;
+
+  $('reSub').textContent = vs.length
+    ? `${vs.length} 版　·　钶钶看过 ${reviewed} 版`
+    : '还没传过，点右上角的 ＋';
+
+  let h = '';
+
+  if (latest) {
+    const r = latest.review || {};
+    h += `<div class="grp"><h2>最新一版　·　${esc(latest.name)}　${esc(latest.at)}</h2>`;
+
+    if (!r.summary) {
+      h += `<div class="card"><p style="color:var(--text2)">钶钶还没看这一版。他 pull 一下就会看到，逐段写完意见会写回来。</p></div>`;
+    } else {
+      h += `<div class="card"><p>${nl(r.summary)}</p></div>`;
+    }
+    h += '</div>';
+
+    if (r.strong && r.strong.length) {
+      h += `<div class="grp"><h2>写得好的，别动</h2><ul class="bul">`
+        + r.strong.map(x => li('✓', 'g', x)).join('') + '</ul></div>';
+    }
+    if (r.fix && r.fix.length) {
+      h += `<div class="grp"><h2>要改的</h2><ul class="bul">`
+        + r.fix.map(x => li('○', 'o',
+            `${esc(x.where)}<em>${esc(x.problem)}</em><em style="color:var(--blue)">改成：${esc(x.how)}</em>`, true)).join('')
+        + '</ul></div>';
+    }
+    if (r.missing && r.missing.length) {
+      h += `<div class="grp"><h2>缺的</h2><ul class="bul">`
+        + r.missing.map(x => li('!', 'r', x)).join('') + '</ul></div>';
+    }
+    if (r.rewrite) {
+      h += `<div class="grp"><h2>钶钶改写的版本</h2><div class="pitch">
+        <p style="white-space:pre-wrap">${esc(r.rewrite)}</p>
+        <button id="copyRw">拷贝这一版</button></div></div>`;
+    }
+
+    h += `<div class="grp"><h2>你传上来的原文</h2><details class="raw">
+      <summary>展开看全文</summary><pre>${esc(latest.text || '')}</pre></details></div>`;
+
+    if (vs.length > 1) {
+      h += `<div class="grp"><h2>以前的版本</h2><div class="list">`
+        + vs.slice(0, -1).reverse().map(v => `<div class="row plain">
+            <div class="body"><div class="t">${esc(v.name)}</div>
+            <div class="s">${esc(v.at)}　${(v.review || {}).summary ? '钶钶看过' : '没看'}</div></div></div>`).join('')
+        + '</div></div>';
+    }
+  }
+
+  // 写简历的指南，一直放在最下面
+  const g = d.guide;
+  if (g) {
+    h += `<div class="grp"><h2>${esc(g.title)}</h2><div class="card"><p>${nl(g.intro)}</p></div>`;
+    h += `<ul class="bul" style="margin-top:8px">` + (g.blocks || []).map(b =>
+      `<li><span class="dot">${b.n}</span><span class="tx"><b>${esc(b.name)}</b>
+        <em>${esc(b.what)}</em>
+        <em style="color:var(--blue)">为什么：${esc(b.why)}</em>
+        <em style="color:var(--orange)">别踩：${esc(b.trap)}</em></span></li>`).join('') + '</ul>';
+    if (g.rules && g.rules.length) {
+      h += `<ul class="bul" style="margin-top:8px">`
+        + g.rules.map(x => li('·', '', x)).join('') + '</ul>';
+    }
+    h += '</div>';
+  }
+
+  $('reBody').innerHTML = h;
+  const cr = $('copyRw');
+  if (cr) cr.onclick = () => copyText(latest.review.rewrite, '拷好了');
+}
+
+async function saveResumeVersion() {
+  const text = $('rnText').value.trim();
+  if (!text) return toast('把简历粘进来');
+  const vs = state.resume.versions;
+  const ask = $('rnAsk').value.trim();
+  vs.push({
+    id: 'v' + (vs.length + 1),
+    name: $('rnName').value.trim() || `第${vs.length + 1}版`,
+    by: '而而',
+    at: new Date().toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    text,
+    ask,
+    review: null,
+    notes: [],
+  });
+  try {
+    await saveResume('resume: 而而传了一版简历');
+    renderResume(); switchTab('resume');
+    toast('传好了，钶钶会看');
+  } catch (e) { toast(e.message); }
+}
+
 /* ---------------- 我 ---------------- */
 function renderMe() {
   const p = state.profile;
@@ -916,6 +1084,7 @@ function switchTab(t) {
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   if (t === 'list') renderList();
   if (t === 'skills') renderSkills();
+  if (t === 'resume') renderResume();
   if (t === 'me') renderMe();
   show(t);
 }
@@ -945,6 +1114,16 @@ $('listRefresh').onclick = async () => {
 $('skRefresh').onclick = async () => {
   try { await loadAll(); renderSkills(); toast('是最新的了'); } catch (e) { toast(e.message); }
 };
+$('reRefresh').onclick = async () => {
+  try { await loadAll(); renderResume(); toast('是最新的了'); } catch (e) { toast(e.message); }
+};
+$('reAdd').onclick = () => {
+  const n = (state.resume.versions || []).length + 1;
+  $('rnName').value = `第${n}版`; $('rnText').value = ''; $('rnAsk').value = '';
+  show('reNew');
+};
+$('rnCancel').onclick = () => switchTab('resume');
+$('rnSave').onclick = saveResumeVersion;
 $('listAdd').onclick = () => openAdd(null);
 $('dBack').onclick = () => { switchTab('list'); };
 $('dEdit').onclick = () => openAdd(state.cur);
