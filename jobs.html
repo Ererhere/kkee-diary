@@ -607,7 +607,12 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const nl = s => esc(s).replace(/\n/g, '<br>');
 const uid = () => 'j' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-const today = () => new Date().toISOString().slice(0, 10);
+// 用本地日期，不能用 toISOString——那是 UTC，北京时间早上 8 点前会算成昨天
+const today = () => {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
 
 function toast(msg, ms = 2000) {
   const t = $('toast'); t.textContent = msg; t.classList.add('on');
