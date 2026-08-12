@@ -143,40 +143,40 @@ input:focus, textarea:focus { border-color: var(--primary); }
 .home-foot { text-align: center; margin-top: 26px; }
 
 /* ---------- 书架 ---------- */
-.shelf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 11px; }
+.shelf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 12px; }
 .bookcard { cursor: pointer; position: relative; }
-.bookcard:active .cover { transform: scale(.97); }
+.bookcard:active .cover { transform: scale(.975); }
 
-/* 没有封面图，就按书名生成一张 */
+/* 没有封面图，就按书名配一组颜色。莫兰迪色底 + 顶部一道深色条 + 一圈细边 */
 .cover {
-  aspect-ratio: 3 / 4.2; min-height: 148px; border-radius: 7px;
-  background: hsl(var(--h), 30%, 87%);
-  color: hsl(var(--h), 48%, 25%);
-  box-shadow: 0 2px 9px rgba(100,60,40,.16);
-  padding: 14px 11px 13px 11px; overflow: hidden;
+  aspect-ratio: 3 / 4.2; min-height: 152px; border-radius: 3px;
+  background: var(--cv-bg);
+  color: var(--cv-fg);
+  border: 1px solid var(--cv-bd);
+  border-top: 3px solid var(--cv-bd);
+  box-shadow: 0 1px 3px rgba(90,70,50,.07);
+  padding: 15px 12px 14px; overflow: hidden;
   display: flex; flex-direction: column; justify-content: space-between;
   position: relative; transition: transform .15s;
-  border-left: 3px solid hsl(var(--h), 40%, 72%);
 }
-body.night .cover {
-  background: hsl(var(--h), 15%, 22%);
-  color: hsl(var(--h), 28%, 76%);
-  border-left-color: hsl(var(--h), 22%, 33%);
-  box-shadow: 0 2px 9px rgba(0,0,0,.34);
-}
+body.night .cover { box-shadow: 0 1px 4px rgba(0,0,0,.3); }
 .cv-main {
-  font-size: 13px; font-weight: 600; line-height: 1.5; letter-spacing: .3px;
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+  font-family: 'Songti SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'STSong', serif;
+  font-size: 15px; font-weight: 600; line-height: 1.42; letter-spacing: .2px;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
 }
 .cv-sub {
-  font-size: 9.5px; opacity: .62; line-height: 1.45; letter-spacing: .2px;
+  font-family: 'Songti SC', 'Source Han Serif SC', 'STSong', serif;
+  font-style: italic; font-size: 10.5px; opacity: .5;
+  line-height: 1.4; letter-spacing: .2px; margin-top: 5px;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
+.cv-top { min-height: 0; }
 .cv-bar {
-  position: absolute; left: 3px; right: 0; bottom: 0; height: 3px;
-  background: rgba(0,0,0,.07); border-radius: 0 0 8px 0; overflow: hidden;
+  position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: color-mix(in srgb, var(--cv-bd) 30%, transparent); overflow: hidden;
 }
-.cv-bar i { display: block; height: 100%; background: hsl(var(--h), 40%, 52%); }
+.cv-bar i { display: block; height: 100%; background: color-mix(in srgb, var(--cv-fg) 55%, transparent); }
 .bookfoot { margin-top: 7px; font-size: 10.5px; color: var(--text-light); line-height: 1.5; }
 .bookfoot .n { display: inline-block; margin-right: 7px; }
 .dot-e { color: var(--erere); }
@@ -571,9 +571,37 @@ const state = {
 const $ = id => document.getElementById(id);
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-// 没有封面图，就用书名定一个色相——同一本书永远同一个颜色
-const HUES = [16, 30, 44, 88, 150, 188, 208, 252, 288, 330];
-const hueOf = s => HUES[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % HUES.length];
+// 没有封面图，就用书名挑一组颜色——同一本书永远同一组
+// bg 底色 / bd 边框与顶条 / fg 字色，夜里换另一套
+const PALETTE = [
+  { bg: '#E5E8DE', bd: '#B9C1A8', fg: '#454D3D' },  // 灰绿
+  { bg: '#DFE3EA', bd: '#AEB8C8', fg: '#3B4454' },  // 灰蓝
+  { bg: '#EFE9DA', bd: '#CFC4A6', fg: '#524933' },  // 米黄
+  { bg: '#F1E5E3', bd: '#D5B6B0', fg: '#573F3C' },  // 藕粉
+  { bg: '#E6E4EE', bd: '#BCB6CD', fg: '#443E5B' },  // 淡紫
+  { bg: '#F3E8DB', bd: '#D9C2A4', fg: '#584530' },  // 浅杏
+  { bg: '#DEE7E6', bd: '#AEC1BF', fg: '#334C4A' },  // 雾青
+  { bg: '#F2E2DE', bd: '#D4ABA2', fg: '#5B382F' },  // 砖红
+  { bg: '#E3E9E3', bd: '#B4C5B4', fg: '#3A4A3A' },  // 鼠尾草
+  { bg: '#EAE4DE', bd: '#C7BAAE', fg: '#4C433A' },  // 灰褐
+];
+const PALETTE_NIGHT = [
+  { bg: '#242821', bd: '#4A5442', fg: '#BCC6B2' },
+  { bg: '#1F242C', bd: '#3F4A5A', fg: '#B0BDCE' },
+  { bg: '#282318', bd: '#524734', fg: '#CBBE9E' },
+  { bg: '#2A2020', bd: '#54403C', fg: '#CFB4AE' },
+  { bg: '#232130', bd: '#443E5C', fg: '#B9B2CC' },
+  { bg: '#2A2218', bd: '#534333', fg: '#CFBB9F' },
+  { bg: '#1D2626', bd: '#3A4E4C', fg: '#A8BFBC' },
+  { bg: '#2B1E1A', bd: '#563B33', fg: '#CFA79C' },
+  { bg: '#212721', bd: '#41533F', fg: '#B2C2B0', },
+  { bg: '#28231F', bd: '#4E443B', fg: '#C6B8AB' },
+];
+const palIdx = s => [...s].reduce((a, c) => a + c.charCodeAt(0), 0) % PALETTE.length;
+const coverVars = title => {
+  const p = (document.body.classList.contains('night') ? PALETTE_NIGHT : PALETTE)[palIdx(title)];
+  return `--cv-bg:${p.bg};--cv-bd:${p.bd};--cv-fg:${p.fg}`;
+};
 const now = () => new Date().toISOString();
 
 function toast(msg, ms = 2000) {
@@ -708,11 +736,13 @@ function renderShelf() {
     const i = b.title.indexOf('：');
     const main = i > 0 ? b.title.slice(0, i) : b.title;
     const sub  = i > 0 ? b.title.slice(i + 1) : '';
-    return `<div class="bookcard" data-id="${b.id}" style="--h:${hueOf(b.title)}">
+    return `<div class="bookcard" data-id="${b.id}" style="${coverVars(b.title)}">
       ${fresh ? '<i class="newdot"></i>' : ''}
       <div class="cover">
-        <div class="cv-main">${esc(main.slice(0, 22))}</div>
-        ${sub ? `<div class="cv-sub">${esc(sub.slice(0, 18))}</div>` : ''}
+        <div class="cv-top">
+          <div class="cv-main">${esc(main.slice(0, 22))}</div>
+          ${sub ? `<div class="cv-sub">${esc(sub.slice(0, 18))}</div>` : ''}
+        </div>
         <div class="cv-bar"><i style="width:${pct}%"></i></div>
       </div>
       <div class="bookfoot">
@@ -1532,6 +1562,8 @@ function openPrefs() {
     localStorage.setItem(LS.night, on ? '1' : '0');
     $('swNight').classList.toggle('on', on);
     document.querySelector('meta[name=theme-color]').content = on ? '#1a1715' : '#fdf8f5';
+    // 封面颜色是内联写死的，换了昼夜要重画一遍
+    if (document.getElementById('shelf').classList.contains('on')) renderShelf();
   };
   $('bmBtn').onclick = () => {
     if (state.anno.bookmark === state.page) { state.anno.bookmark = null; toast('书签取下了'); }
@@ -1596,6 +1628,8 @@ function openSettings() {
     localStorage.setItem(LS.night, on ? '1' : '0');
     $('swN2').classList.toggle('on', on);
     document.querySelector('meta[name=theme-color]').content = on ? '#1a1715' : '#fdf8f5';
+    // 封面颜色是内联写死的，换了昼夜要重画一遍
+    if (document.getElementById('shelf').classList.contains('on')) renderShelf();
   };
   $('rfBtn').onclick = async () => {
     try { loading(true, '刷新中'); await loadShelf(); renderShelf(); renderHome(); closeSheet(); toast('是最新的了'); }
