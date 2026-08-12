@@ -124,12 +124,12 @@ input:focus, textarea:focus { border-color: var(--primary); }
 .wrap.home { padding: 0 18px 40px 18px; padding-top: calc(58px + env(safe-area-inset-top)); }
 .home .hi { font-size: 14px; color: var(--text-light); margin-bottom: 6px; }
 .home-name {
-  font-family: 'Songti SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'STSong', serif;
-  font-size: 26px; font-weight: 600; letter-spacing: 1px; margin-bottom: 6px;
+  font-family: 'Times New Roman', Georgia, 'Songti SC', serif;
+  font-size: 34px; font-weight: 600; letter-spacing: .5px; margin-bottom: 4px;
 }
 .home-en {
   font-family: 'Times New Roman', Georgia, serif; font-style: italic;
-  font-size: 12px; color: var(--text-light); letter-spacing: .6px; margin-bottom: 30px;
+  font-size: 13px; color: var(--text-light); letter-spacing: .8px; margin-bottom: 30px;
 }
 
 .cont {
@@ -243,10 +243,12 @@ body.night .cover { box-shadow: 0 1px 4px rgba(0,0,0,.3); }
 .bookhead hr { border: none; border-top: 1px solid var(--border); margin: 13px 0 4px; }
 
 /* 书头滚出屏幕后，顶上滑下这根细条 */
+/* 别用 left:50% + translateX(-50%)——那样元素右边缘会先探出视口，
+   iOS 上会把整页撑出一条横向滚动。left/right:0 加 margin auto 更稳。 */
 .minibar {
-  position: fixed; top: 0; left: 50%; z-index: 45;
-  transform: translateX(-50%) translateY(-105%);
-  width: 100%; max-width: 480px;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 45;
+  transform: translateY(-105%);
+  width: 100%; max-width: 480px; margin: 0 auto;
   display: flex; align-items: center; gap: 2px;
   padding: 7px 12px; padding-top: calc(7px + env(safe-area-inset-top));
   background: color-mix(in srgb, var(--bg) 93%, transparent);
@@ -255,7 +257,7 @@ body.night .cover { box-shadow: 0 1px 4px rgba(0,0,0,.3); }
   border-bottom: 1px solid var(--border);
   transition: transform .22s ease;
 }
-.minibar.on { transform: translateX(-50%) translateY(0); }
+.minibar.on { transform: translateY(0); }
 .minibar .mtitle {
   flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -267,6 +269,11 @@ body.picking .minibar { opacity: 0; pointer-events: none; }
 #reader .page {
   padding: 4px 20px 120px 20px;
   font-size: var(--read-size); line-height: var(--read-lh);
+  /* 正文里一长串连着的英文或符号不会自己断行，会把整页撑宽 */
+  overflow-wrap: break-word; word-break: break-word;
+}
+.bookhead h2, .para, .inote-line, .tocitem, .minibar .mtitle {
+  overflow-wrap: break-word;
 }
 /* Safari 浏览器里，底部那条地址栏会压住 fixed 元素，
    整体往上让一截；加到主屏幕之后没有它，就不让。 */
@@ -498,8 +505,8 @@ body.chrome-bar #selbar { bottom: calc(14px + env(safe-area-inset-bottom) + 52px
 <div class="view" id="home">
   <div class="wrap home">
     <div class="hi" id="homeHi"></div>
-    <div class="home-name">而而与钶钶的书房</div>
-    <div class="home-en">kebooks</div>
+    <div class="home-name">kebooks</div>
+    <div class="home-en">Our Reading Room</div>
     <div id="homeCont"></div>
     <div id="homeVoice"></div>
     <div class="entry" id="toShelf">
