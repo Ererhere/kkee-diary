@@ -140,6 +140,7 @@ body {
 .hero { padding: 12px 20px 4px; }
 .hero h1 { font-size: 28px; font-weight: 700; letter-spacing: .34px; line-height: 1.25; }
 .hero .co { font-size: 17px; color: var(--text2); margin-top: 4px; }
+.hero .cobits { font-size: 13px; color: var(--text2); margin-top: 4px; line-height: 1.5; }
 .hero .meta { font-size: 15px; color: var(--text2); margin-top: 8px; }
 .hero .sal { color: var(--text); font-weight: 600; }
 
@@ -403,6 +404,24 @@ textarea { line-height: 1.55; font-size: 15px; resize: vertical; min-height: 150
   <div class="field">
     <label>公司</label>
     <input type="text" id="aCompany" placeholder="地上铁">
+  </div>
+  <div class="two">
+    <div>
+      <label style="display:block;font-size:13px;color:var(--text2);padding:0 16px 6px">公司规模</label>
+      <input type="text" id="aSize" placeholder="1000-9999人">
+    </div>
+    <div>
+      <label style="display:block;font-size:13px;color:var(--text2);padding:0 16px 6px">公司性质</label>
+      <input type="text" id="aNature" placeholder="民营 · 已上市">
+    </div>
+  </div>
+  <div class="field">
+    <label>行业</label>
+    <input type="text" id="aIndustry" placeholder="AI · 对话机器人">
+  </div>
+  <div class="field">
+    <label>这是一家什么公司（不填的话钶钶会补）</label>
+    <textarea id="aIntro" style="min-height:80px" placeholder="做什么的、在行业里什么位置。留空我来写。"></textarea>
   </div>
   <div class="two">
     <div>
@@ -823,11 +842,18 @@ function openDetail(id) {
   const a = j.analysis || {};
   const st = STATUS[j.status] || STATUS.new;
 
+  const coBits = [j.size, j.nature, j.industry].filter(x => x && x !== '待补');
   let h = `<div class="hero">
     <h1>${esc(j.title)}</h1>
     <div class="co">${esc(j.company)}</div>
+    ${coBits.length ? `<div class="cobits">${coBits.map(esc).join('　·　')}</div>` : ''}
     <div class="meta"><span class="sal">${esc(j.salary || '薪资待补')}</span>　${esc(j.city || '')}　${esc(j.exp || '')}　${esc(j.edu || '')}</div>
   </div>`;
+
+  if (j.intro) {
+    h += `<div class="sec"><h3>这是一家什么公司${j.introBy && j.introBy !== '钶钶' ? `　·　${esc(j.introBy)}` : ''}</h3>
+      <div class="card"><p>${nl(j.intro)}</p></div></div>`;
+  }
 
   if (typeof a.chance === 'number') {
     h += `<div class="gauge">${ring(a.chance)}
@@ -1034,6 +1060,10 @@ function openAdd(job) {
   $('aTitle').value = job ? (job.title || '') : '';
   $('aCompany').value = job ? (job.company || '') : '';
   $('aSalary').value = job ? (job.salary || '') : '';
+  $('aSize').value = job ? (job.size === '待补' ? '' : job.size || '') : '';
+  $('aNature').value = job ? (job.nature === '待补' ? '' : job.nature || '') : '';
+  $('aIndustry').value = job ? (job.industry === '待补' ? '' : job.industry || '') : '';
+  $('aIntro').value = job ? (job.intro || '') : '';
   $('aCity').value = job ? (job.city || '') : '深圳';
   $('aExp').value = job ? (job.exp || '') : '';
   $('aEdu').value = job ? (job.edu || '') : '';
@@ -1056,6 +1086,10 @@ function sniff() {
   put('aExp', exp && exp[0].replace(/\s/g, ''));
   const edu = t.match(/(本科及以上|统招本科|学历不限|大专及以上|硕士|本科|大专)/);
   put('aEdu', edu && edu[1]);
+  const size = t.match(/(\d+\s*[-–]\s*\d+\s*人|\d+\s*人以[上内]|少于\s*\d+\s*人)/);
+  put('aSize', size && size[0].replace(/\s/g, ''));
+  const nat = t.match(/(上市公司|已上市|外资[（(][^）)]*[）)]|外资|合资|国企|民营|事业单位|创业公司)/);
+  put('aNature', nat && nat[0]);
 }
 
 async function saveAdd() {
@@ -1075,6 +1109,10 @@ async function saveAdd() {
       title: title || j.title, company, rawJD: raw,
       salary: $('aSalary').value.trim(), city: $('aCity').value.trim(),
       exp: $('aExp').value.trim(), edu: $('aEdu').value.trim(),
+      size: $('aSize').value.trim() || j.size || '',
+      nature: $('aNature').value.trim() || j.nature || '',
+      industry: $('aIndustry').value.trim() || j.industry || '',
+      intro: $('aIntro').value.trim() || j.intro || '',
     });
     if (noteTx) (j.notes = j.notes || []).push({ who: '而而', text: noteTx, at: stamp });
     try {
@@ -1095,6 +1133,8 @@ async function saveAdd() {
     id: uid(), title: title || '（待钶钶读图）', company: company || '（待补）',
     salary: $('aSalary').value.trim(), city: $('aCity').value.trim(),
     exp: $('aExp').value.trim(), edu: $('aEdu').value.trim(),
+    size: $('aSize').value.trim(), nature: $('aNature').value.trim(),
+    industry: $('aIndustry').value.trim(), intro: $('aIntro').value.trim(),
     source: 'BOSS直聘', addedBy: '而而', addedAt: today(),
     status: 'new', tier: 9, rawJD: raw, analysis: null, shots: [], needOCR: false,
     notes: noteTx ? [{ who: '而而', text: noteTx, at: stamp }] : [],
