@@ -1,0 +1,1108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F6F8F7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="interview-manifest.json">
+<title>而而的面试台</title>
+<style>
+*{margin:0;padding:0}
+
+:root{
+  --ground:#F6F8F7; --surface:#FFFFFF; --surface-2:#EFF2F1; --surface-3:#E7ECEA;
+  --line:#E0E5E3; --line-2:#C7D0CD;
+  --ink:#151918; --ink-2:#434D4A; --ink-3:#6F7A77; --ink-4:#95A09C;
+  --accent:#1E6F63; --accent-2:#155249; --accent-soft:#E2EEEB;
+  --must:#A33A21; --must-soft:#F9E9E3;
+  --high:#856015; --high-soft:#F7EFDB;
+  --star:#B8861B;
+  --ok:#1E6F63;
+  --f-serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+  --f-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  --f-code:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --r:10px;
+  --shadow:0 1px 2px rgba(20,30,28,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1211; --surface:#161A19; --surface-2:#1D2221; --surface-3:#242A29;
+    --line:#282F2D; --line-2:#3A4341;
+    --ink:#E9EDEB; --ink-2:#B2BBB8; --ink-3:#828D8A; --ink-4:#6A7573;
+    --accent:#54B7A5; --accent-2:#7FD0C1; --accent-soft:#15302B;
+    --must:#E08D72; --must-soft:#32211B;
+    --high:#D6B265; --high-soft:#2C2617;
+    --star:#D6B265;
+    --ok:#54B7A5;
+    --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1211; --surface:#161A19; --surface-2:#1D2221; --surface-3:#242A29;
+  --line:#282F2D; --line-2:#3A4341;
+  --ink:#E9EDEB; --ink-2:#B2BBB8; --ink-3:#828D8A; --ink-4:#6A7573;
+  --accent:#54B7A5; --accent-2:#7FD0C1; --accent-soft:#15302B;
+  --must:#E08D72; --must-soft:#32211B;
+  --high:#D6B265; --high-soft:#2C2617;
+  --star:#D6B265;
+  --ok:#54B7A5;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--f-sans); font-size:16px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 96px}
+
+/* ── 顶部进度线 ── */
+#topline{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0%;z-index:60;transition:width .25s ease}
+
+/* ── Hero ── */
+.hero{padding:38px 0 22px}
+.eyebrow{font-family:var(--f-code);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px}
+h1{font-family:var(--f-serif);font-weight:600;font-size:clamp(28px,6.5vw,40px);line-height:1.15;letter-spacing:-.01em;margin:0 0 12px;text-wrap:balance}
+.lede{margin:0;color:var(--ink-2);font-size:15px;max-width:62ch}
+.lede b{color:var(--ink);font-weight:600}
+.herorow{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+
+/* ── 按钮 ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-2);
+  border-radius:8px;padding:9px 13px;font-size:14px;cursor:pointer;
+  min-height:40px;transition:background .15s,border-color .15s,color .15s;
+}
+.btn:hover{background:var(--surface-2);color:var(--ink)}
+.btn:active{background:var(--surface-3)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .btn.pri,:root:not([data-theme="light"]) .btn.pri{color:#0F1211}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .btn.pri{color:#fff}}
+.btn.pri:hover{background:var(--accent-2);border-color:var(--accent-2)}
+.btn.danger{color:var(--must)}
+.btn.danger:hover{background:var(--must-soft)}
+
+/* ── 工具条 ── */
+.toolbar{
+  position:sticky;top:0;z-index:50;background:var(--ground);
+  border-bottom:1px solid var(--line);
+  margin:0 -16px;padding:10px 16px 0;
+}
+.tb-row{display:flex;gap:8px;align-items:center}
+.search{
+  flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);
+  border-radius:8px;padding:9px 12px;font-size:16px;min-height:42px;
+}
+.search::placeholder{color:var(--ink-4)}
+.count{font-family:var(--f-code);font-size:12px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:9px 0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--ink-3);
+  border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;white-space:nowrap;min-height:32px;
+}
+.chip:hover{border-color:var(--line-2);color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--ground)}
+.chip .n{font-family:var(--f-code);font-size:11px;opacity:.65;margin-left:5px;font-variant-numeric:tabular-nums}
+.navrail{display:flex;gap:6px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}
+.navrail::-webkit-scrollbar{display:none}
+.navbtn{
+  flex:0 0 auto;background:var(--surface);border:1px solid var(--line);color:var(--ink-2);
+  border-radius:7px;padding:5px 10px;font-size:13px;cursor:pointer;white-space:nowrap;min-height:32px;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.navbtn:hover{background:var(--surface-2)}
+.navbtn .k{font-family:var(--f-code);font-size:11px;color:var(--accent);font-weight:600}
+.navbtn .p{font-family:var(--f-code);font-size:11px;color:var(--ink-4);font-variant-numeric:tabular-nums}
+
+/* ── 进度 ── */
+.progwrap{display:flex;align-items:center;gap:10px;margin:18px 0 6px}
+.progbar{flex:1;height:6px;background:var(--surface-3);border-radius:999px;overflow:hidden}
+.progfill{height:100%;background:var(--accent);width:0%;transition:width .3s ease;border-radius:999px}
+.progtxt{font-family:var(--f-code);font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.saved{font-family:var(--f-code);font-size:11px;color:var(--ink-4);height:16px}
+
+/* ── 工具面板 ── */
+details.tools{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);margin-top:16px}
+details.tools>summary{cursor:pointer;padding:12px 14px;font-size:14px;color:var(--ink-2);list-style:none;display:flex;align-items:center;gap:8px}
+details.tools>summary::-webkit-details-marker{display:none}
+details.tools>summary::before{content:"＋";font-family:var(--f-code);color:var(--ink-4)}
+details.tools[open]>summary::before{content:"−"}
+.toolbody{padding:0 14px 14px;border-top:1px solid var(--line);margin-top:2px;padding-top:14px}
+.toolgrp{margin-bottom:16px}
+.toolgrp:last-child{margin-bottom:0}
+.toolgrp h4{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--ink)}
+.toolgrp p{margin:0 0 10px;font-size:13px;color:var(--ink-3);line-height:1.6}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.pastebox{width:100%;min-height:88px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px;font-family:var(--f-code);font-size:12px;resize:vertical;margin-bottom:8px}
+.checkline{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);margin-bottom:10px;cursor:pointer}
+.checkline input{width:17px;height:17px;accent-color:var(--accent)}
+
+/* ── 分区 ── */
+section.cat{scroll-margin-top:132px;margin-top:44px}
+.cathead{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+.catmeta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.catletter{font-family:var(--f-code);font-size:12px;font-weight:600;color:#fff;background:var(--accent);border-radius:5px;padding:2px 7px;letter-spacing:.04em}
+:root[data-theme="dark"] .catletter,:root:not([data-theme="light"]) .catletter{color:#0F1211}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .catletter{color:#fff}}
+.cathead h2{font-family:var(--f-sans);font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em}
+.catcount{font-family:var(--f-code);font-size:12px;color:var(--ink-4);font-variant-numeric:tabular-nums}
+.catdesc{margin:7px 0 0;font-size:13.5px;color:var(--ink-3);line-height:1.6}
+
+/* ── 卡片 ── */
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  margin-bottom:10px;box-shadow:var(--shadow);overflow:hidden;
+  border-left:3px solid transparent;
+}
+.card.done{border-left-color:var(--ok)}
+.qhead{
+  width:100%;background:none;border:0;text-align:left;cursor:pointer;
+  padding:14px 46px 14px 13px;display:block;
+}
+.qtop:hover{background:var(--surface-2)}
+.tagrow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+.code{font-family:var(--f-code);font-size:11px;font-weight:600;color:var(--ink-4);letter-spacing:.05em}
+.tag{font-size:11px;border-radius:4px;padding:2px 6px;line-height:1.5;white-space:nowrap}
+.tag.must{background:var(--must-soft);color:var(--must);font-weight:600}
+.tag.high{background:var(--high-soft);color:var(--high)}
+.tag.en{background:var(--accent-soft);color:var(--accent)}
+.tag.star{background:var(--surface-3);color:var(--ink-3)}
+.tag.donetag{display:none;background:var(--accent-soft);color:var(--ok);font-weight:600}
+.card.done .tag.donetag{display:inline}
+.qtop{position:relative}
+.starbtn{
+  position:absolute;top:9px;right:8px;z-index:2;
+  background:none;border:0;cursor:pointer;font-size:17px;line-height:1;
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  color:var(--ink-4);border-radius:6px;
+}
+.starbtn:hover{background:var(--surface-3);color:var(--star)}
+.starbtn[aria-pressed="true"]{color:var(--star)}
+.qen{font-family:var(--f-serif);font-size:17px;line-height:1.42;color:var(--ink);margin:0;letter-spacing:-.003em;text-wrap:pretty}
+.qzh{margin:5px 0 0;font-size:13.5px;color:var(--ink-3);line-height:1.55}
+.qbody{display:none;padding:0 14px 16px 13px;border-top:1px solid var(--line)}
+.card.open .qbody{display:block}
+.card.open .qtop{background:var(--surface-2)}
+
+.blk{margin-top:15px}
+.blk>h5{
+  margin:0 0 7px;font-family:var(--f-code);font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;font-weight:600;color:var(--ink-4);
+}
+.blk p{margin:0;font-size:14px;color:var(--ink-2);line-height:1.68}
+.blk ul{margin:0;padding-left:0;list-style:none}
+.blk li{position:relative;padding-left:16px;font-size:14px;color:var(--ink-2);line-height:1.68;margin-bottom:7px}
+.blk li:last-child{margin-bottom:0}
+.blk li::before{content:"";position:absolute;left:3px;top:.72em;width:4px;height:4px;border-radius:50%;background:var(--accent)}
+.blk.avoid li::before{background:var(--must);border-radius:1px;transform:rotate(45deg);top:.68em}
+.blk.avoid li{color:var(--ink-2)}
+.blk.why{background:var(--surface-2);border-radius:8px;padding:11px 12px}
+.blk.why p{font-size:13.5px}
+
+.stargrid{display:grid;gap:8px;margin-top:8px}
+.starcell label{display:block;font-family:var(--f-code);font-size:10.5px;letter-spacing:.08em;color:var(--ink-3);margin-bottom:4px}
+.starcell label b{color:var(--accent);font-weight:700}
+textarea.ta{
+  width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  padding:11px 12px;font-size:16px;line-height:1.65;resize:vertical;display:block;
+  font-family:var(--f-sans);color:var(--ink);
+}
+textarea.ta::placeholder{color:var(--ink-4)}
+textarea.ta:focus{background:var(--surface);border-color:var(--accent)}
+textarea.star{min-height:52px;font-size:15px}
+textarea.big{min-height:110px}
+.ansblk{margin-top:15px}
+.anslabel{display:flex;align-items:baseline;gap:7px;margin-bottom:6px}
+.anslabel .t{font-size:13px;font-weight:600;color:var(--ink)}
+.anslabel .h{font-size:12px;color:var(--ink-4)}
+
+.empty{text-align:center;padding:60px 20px;color:var(--ink-3);font-size:14px}
+.warn{background:var(--must-soft);color:var(--must);border-radius:8px;padding:11px 13px;font-size:13px;margin-top:14px;line-height:1.6}
+.foot{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-4);line-height:1.7}
+#totop{
+  position:fixed;right:14px;bottom:14px;z-index:55;width:42px;height:42px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--line-2);color:var(--ink-2);cursor:pointer;
+  box-shadow:0 2px 10px rgba(0,0,0,.12);display:none;align-items:center;justify-content:center;font-size:16px;
+}
+#totop.show{display:flex}
+@media (min-width:640px){
+  .stargrid{grid-template-columns:1fr 1fr}
+  .wrap{padding:0 24px 96px}
+  .toolbar{margin:0 -24px;padding:10px 24px 0}
+}
+
+/* ── 视图切换 ── */
+.view{display:none}
+.view.on{display:block}
+
+/* ── 钥匙页 ── */
+#setup{min-height:100vh;display:none;place-items:center;padding:24px}
+#setup.on{display:grid}
+.setupbox{width:100%;max-width:420px}
+.setupbox h1{font-family:var(--f-serif);font-size:30px;margin:0 0 10px}
+.setupbox .sub{color:var(--ink-3);font-size:14px;line-height:1.7;margin:0 0 24px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--ink-2);margin-bottom:6px;font-weight:600}
+.field input{
+  width:100%;background:var(--surface);border:1px solid var(--line);border-radius:9px;
+  padding:12px 13px;font-size:16px;min-height:46px;
+}
+.field input:focus{border-color:var(--accent);outline:none}
+.btn.wide{width:100%;justify-content:center;min-height:46px;font-size:15px}
+.setupbox .hint{margin-top:20px;font-size:12.5px;color:var(--ink-4);line-height:1.75}
+.setupbox .hint b{color:var(--ink-3)}
+
+/* ── 同步条 ── */
+.syncbar{
+  display:flex;align-items:center;gap:8px;margin:14px 0 0;
+  font-family:var(--f-code);font-size:11.5px;color:var(--ink-4);min-height:22px;
+}
+.syncdot{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:0 0 auto}
+.syncbar.busy .syncdot{background:var(--high);animation:pulse 1s ease-in-out infinite}
+.syncbar.bad .syncdot{background:var(--must)}
+.syncbar.bad{color:var(--must)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.syncbar button{
+  background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;
+  font:inherit;padding:2px 4px;
+}
+.newsflag{
+  background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent);
+  border-radius:8px;padding:10px 12px;font-size:13px;margin-top:12px;line-height:1.6;
+  display:none;
+}
+.newsflag.on{display:block}
+.newsflag button{
+  background:var(--accent);border:0;color:#fff;border-radius:6px;padding:5px 11px;
+  font-size:12.5px;cursor:pointer;margin-left:6px;
+}
+:root[data-theme="dark"] .newsflag button,:root:not([data-theme="light"]) .newsflag button{color:#0F1211}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .newsflag button{color:#fff}}
+
+/* ── 钶钶说 ── */
+.blk.keke{background:var(--accent-soft);border-radius:8px;padding:11px 12px;border-left:3px solid var(--accent)}
+.blk.keke h5{color:var(--accent)}
+.blk.keke p{font-size:13.5px;white-space:pre-wrap;color:var(--ink-2)}
+.blk.keke .at{font-family:var(--f-code);font-size:10.5px;color:var(--ink-4);margin-top:6px;display:block}
+.tag.kekeflag{background:var(--accent);color:#fff;font-weight:600}
+:root[data-theme="dark"] .tag.kekeflag,:root:not([data-theme="light"]) .tag.kekeflag{color:#0F1211}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .tag.kekeflag{color:#fff}}
+
+/* ── 提示条 ── */
+#toast{
+  position:fixed;left:50%;bottom:24px;transform:translate(-50%,14px);
+  background:var(--ink);color:var(--ground);padding:10px 18px;border-radius:999px;
+  font-size:13.5px;opacity:0;pointer-events:none;transition:.2s;z-index:80;max-width:86vw;text-align:center;
+}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<div id="topline"></div>
+
+<!-- ══════════ 钥匙页 ══════════ -->
+<div class="view" id="setup">
+  <div class="setupbox">
+    <p class="eyebrow">HR &amp; ADMIN ASSISTANT · SHENZHEN</p>
+    <h1>Just Play 面试台</h1>
+    <p class="sub">答案存在 <b>lab</b> 私有仓库里，换手机、换电脑都能接着写，钶钶也看得见。<br>第一次进来填一次钥匙就好——它只住在这台设备里，不会上传，不会进代码。</p>
+    <div class="field">
+      <label>GitHub Token</label>
+      <input type="password" id="tokIn" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <button class="btn pri wide" id="tokSave">进面试台</button>
+    <div class="hint">
+      和<b>书房</b>、<b>求职台</b>是同一把钥匙。如果那两个你已经填过，这里会自动认出来，不用再填。<br>
+      需要 <b>Contents: Read and write</b> 权限，仓库范围勾上 <b>lab</b>。
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 主视图 ══════════ -->
+<div class="view" id="main">
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">HR &amp; Admin Assistant · Shenzhen</p>
+    <h1>Just Play 面试台</h1>
+    <p class="lede">46 道针对性面试题 + 3 组反问清单。每题给你<b>考察点、回答思路、雷区</b>，答案三栏：中文、英文、最终版。写完自动存进仓库，换设备接着写。</p>
+
+    <div class="syncbar" id="syncBar"><span class="syncdot"></span><span id="syncTxt">连接中…</span></div>
+    <div class="newsflag" id="newsFlag"></div>
+
+    <div class="herorow">
+      <button class="btn" id="pullBtn">拉一下</button>
+      <button class="btn" id="expandAll">全部展开</button>
+      <button class="btn" id="collapseAll">全部收起</button>
+      <button class="btn" id="themeBtn">主题：跟随系统</button>
+    </div>
+
+    <details class="tools" id="toolsPanel">
+      <summary>导出 · 导入 · 钥匙</summary>
+      <div class="toolbody">
+        <div class="toolgrp">
+          <h4>导出</h4>
+          <p>手机上「下载」偶尔会被拦掉，那就用「复制」，粘到备忘录或文件传输助手里。</p>
+          <label class="checkline"><input type="checkbox" id="onlyFilled"><span>只导出已经写了内容的题</span></label>
+          <div class="btnrow">
+            <button class="btn pri" data-export="md" data-mode="dl">下载 Markdown</button>
+            <button class="btn" data-export="md" data-mode="cp">复制 Markdown</button>
+            <button class="btn" data-export="txt" data-mode="dl">下载 TXT</button>
+            <button class="btn" data-export="txt" data-mode="cp">复制 TXT</button>
+            <button class="btn" data-export="json" data-mode="dl">下载 JSON</button>
+            <button class="btn" data-export="json" data-mode="cp">复制 JSON</button>
+          </div>
+        </div>
+        <div class="toolgrp">
+          <h4>把旧答案搬进来</h4>
+          <p>在旧版页面点「复制 JSON」，粘到下面，导入后会直接存进仓库。空白字段不会覆盖你已有的内容。</p>
+          <textarea class="pastebox" id="pasteBox" placeholder="粘贴 JSON…"></textarea>
+          <div class="btnrow">
+            <button class="btn" id="pasteImport">导入并同步</button>
+            <button class="btn" id="pickFile">选 JSON 文件</button>
+            <input type="file" id="fileInput" accept=".json,application/json" hidden>
+          </div>
+        </div>
+        <div class="toolgrp">
+          <h4>钥匙</h4>
+          <p id="repoLine"></p>
+          <div class="btnrow"><button class="btn danger" id="forgetBtn">忘掉这把钥匙</button></div>
+        </div>
+      </div>
+    </details>
+
+    <div class="progwrap">
+      <div class="progbar"><div class="progfill" id="progFill"></div></div>
+      <span class="progtxt" id="progTxt">0 / 0</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="tb-row">
+      <input class="search" id="search" type="search" placeholder="搜索题目、关键词、思路…" autocomplete="off">
+      <span class="count" id="hitCount"></span>
+    </div>
+    <div class="chips" id="filterChips">
+      <button class="chip" data-filter="all" aria-pressed="true">全部</button>
+      <button class="chip" data-filter="must" aria-pressed="false">必准备<span class="n" id="cMust"></span></button>
+      <button class="chip" data-filter="high" aria-pressed="false">高概率<span class="n" id="cHigh"></span></button>
+      <button class="chip" data-filter="star" aria-pressed="false">★ 我的重点<span class="n" id="cStar"></span></button>
+      <button class="chip" data-filter="keke" aria-pressed="false">钶钶改过<span class="n" id="cKeke"></span></button>
+      <button class="chip" data-filter="en" aria-pressed="false">英文作答<span class="n" id="cEn"></span></button>
+      <button class="chip" data-filter="todo" aria-pressed="false">未完成<span class="n" id="cTodo"></span></button>
+    </div>
+    <nav class="navrail" id="navRail" aria-label="分类导航"></nav>
+  </div>
+
+  <main id="list"></main>
+  <p class="empty" id="emptyMsg" style="display:none">没有匹配的题目，换个词试试。</p>
+
+  <footer class="foot">
+    答案存在 <b>lab</b> 私有仓库，只有我们俩看得见。这个页面本身在公开仓库里，但它只有题目和思路，没有你的答案。<br>
+    A5「公司了解」里的公司背景需要你自己在官网和领英上核实后再说出口。
+  </footer>
+</div>
+</div>
+
+<button id="totop" aria-label="回到顶部">↑</button>
+<div id="toast"></div>
+
+<script>
+
+(function(){
+"use strict";
+
+/* ══════════════════════════════════════════════════
+   而而与钶钶 · 面试台
+   页面住在 kkee-diary（public，没有秘密）
+   答案住在 lab/kkee-jobs（private）
+   钥匙只住在这台设备的 localStorage 里
+   ══════════════════════════════════════════════════ */
+var BUILD  = "20260824-2";
+var OWNER  = "Ererhere";
+var REPO   = "lab";
+var BRANCH = "claude/gege-sjarsl";
+var DPATH  = "kkee-jobs/interview.json";
+var API    = "https://api.github.com";
+
+var DATA = {"cats":[{"key":"basics","letter":"A","name":"基础必问","desc":"开场 6 题，面试的前 10 分钟基本就在这里定调"},{"key":"experience","letter":"B","name":"经历深挖","desc":"对着 JD 逐块拆你这两年做过的事，问得最细的一段"},{"key":"english","letter":"C","name":"英语能力","desc":"HR 已经专门问过你这条，这是他们最大的顾虑，也是你最该练的一块"},{"key":"excel","letter":"D","name":"Excel / 数据","desc":"可能现场上机或口头考语法，答不出细节比不会更扣分"},{"key":"behavioral","letter":"E","name":"情景题 / STAR","desc":"全部建议用 STAR 组织，每题先想好一个真实案例"},{"key":"culture","letter":"F","name":"外企文化","desc":"考的不是英语，是工作方式：主动同步、书面留痕、own 到结果"},{"key":"motivation","letter":"G","name":"求职动机","desc":"和 A 组不重复，这里是优劣势与自我定位"},{"key":"salary","letter":"H","name":"薪资与现实","desc":"6K–8K·13薪 的区间里怎么谈，提前把数字和底线想清楚"},{"key":"ask","letter":"I","name":"反问面试官","desc":"三组清单，按面试阶段挑着问，别一上来就问加班和薪水"}],"items":[{"id":"A1","cat":"basics","q":"Tell me about yourself.","zh":"请做一下自我介绍。（中文、英文两个版本都要准备）","why":"开场定调。面试官在 90 秒内同时判断三件事：你的表达逻辑、你和 JD 的匹配度，以及——如果这一场是英文的——你的口语底子。这题答得散，后面所有题都要费力找补。","tips":["用「现在—过去—未来」三段式：我是谁、现在做什么 → 过去两年最相关的三块经验 → 为什么现在想来这个岗位。","三块经验直接对着 JD 摆：HR（入离职、合同、档案、考勤、薪酬数据、社保公积金个税）／Admin（采购、文件、日常保障）／财务支持（报销审核、费用台账）。","带一个数字：服务多少人、每月核多少人的考勤、处理多少张报销单。数字比形容词有力十倍。","中文版和英文版都控制在 60–90 秒。英文版句子写短，别把中文长句直译过去。","最后一句收回岗位上，把「我是谁」和「我为什么坐在这里」缝起来。"],"avoid":["从大学讲到现在的流水账。","把简历上已有的信息原样复述一遍，不加任何解读。","「我性格开朗、爱学习、有责任心」——没有证据的形容词等于没说。","英文版磕巴到听不出结构。宁可短，不要长。"],"pri":"must","en":true,"star":false,"ask":false},{"id":"A2","cat":"basics","q":"Why are you leaving your current job?","zh":"你为什么从上一家公司离职？","why":"这题是排查风险：是不是和人处不好、是不是抗压差、是不是被辞退。面试官要听到一个「向前」的理由，而不是一个「逃离」的理由。","tips":["一句话交代客观事实（公司业务调整／岗位职责变窄／发展空间到顶），然后立刻转向「我想要什么」。","把想要的东西和 Just Play 能给的对齐：更规范的流程、国际化环境、HR + Admin + 基础财务一体的岗位宽度。","如果是被动离职（裁员、合同到期、业务收缩），直接说清楚，语气平静，不要遮掩——遮掩比事实本身更可疑。","答案控制在 30 秒以内，说完就停，不要越描越黑。"],"avoid":["说前公司、前上司、前同事任何一句坏话，哪怕是事实。","「太累了」「加班太多」——这个 JD 里明确写了 accept reasonable overtime。","把「钱太少」当成唯一理由。","含糊其辞或前后矛盾，面试官一定会追问细节。"],"pri":"must","en":false,"star":false,"ask":false},{"id":"A3","cat":"basics","q":"Why HR & Admin? Why do you want to stay in this field?","zh":"你为什么选择人事行政这个方向，并且想继续做下去？","why":"看你是「专业选择」还是「随便找个能干的活」。人事行政助理岗流动率高，他们怕招进来半年就走。","tips":["从本科专业出发，但不能停在「专业对口」——要说这两年做下来验证了什么。","讲你真的喜欢这份工作的哪一面：把混乱的信息变成有序的系统／让每个新人第一天就顺利／数据准确带来的确定性。","点出你想加深的方向：HR Operations（数据、流程、合规）+ Administration，正好是这个岗位的形状。"],"avoid":["「因为我学的这个专业」说完就没了。","说这个岗位「轻松」「稳定」。","流露出把 Admin 当成低价值杂活的意思——这个岗位一半是 Admin。"],"pri":"must","en":false,"star":false,"ask":false},{"id":"A4","cat":"basics","q":"Why do you want to join Just Play?","zh":"你为什么想加入 Just Play？","why":"看你有没有做功课，以及你的动机能不能持续。海投的人在这题上一听就露馅。","tips":["三层递进：公司层（做什么的、深圳办公室在整条链路上的角色）→ 岗位层（HR + Admin + 基础财务一体，正好是我这两年的组合）→ 个人层（我想在规范的外企环境里把 HR Ops 做扎实）。","面试前一定上官网、领英、招聘平台各看一遍，把「我看到你们…」说出来，具体到产品线或合作品牌。","准备一个 40–60 秒的英文版本，这题被要求用英文答的概率很高。"],"avoid":["「因为是外企／大公司／有名」。","编造你没核实过的公司信息，被追问一句就崩。","只说自己想要什么，不说自己能带来什么。"],"pri":"must","en":true,"star":false,"ask":false},{"id":"A5","cat":"basics","q":"What do you know about our company?","zh":"你对我们公司了解多少？","why":"直接检验准备程度，也是判断你是「海投」还是「真想来」。","tips":["准备四个事实点：主营业务、总部所在地、深圳办公室大概承担什么职能、你最近看到的一条动态（新产品线 / 新合作 IP / 招聘节奏）。","说完事实点接一句「所以我理解深圳这边的 HR & Admin 需要…」，把认知落回岗位，别停在背资料。","⚠️ 需要你自己核实：公开信息里 Just Play 是美国玩具公司，以授权 IP 玩具（迪士尼、尼克等）见长，总部在佛罗里达州 Boca Raton；海外办公室常见职能是采购、QC、供应链支持。这几条请你在官网和领英上再确认一遍再说出口，我不能替你担保。"],"avoid":["只会说「我知道你们是做玩具的」。","把听来的、没核实的数字（营收、人数、排名）当成事实讲。"],"pri":"must","en":false,"star":false,"ask":false},{"id":"A6","cat":"basics","q":"What are your career plans for the next three years?","zh":"你未来三年的职业规划是什么？","why":"看稳定性，也看你的规划能不能和这个岗位长在一起。","tips":["第 1 年：把这个岗位的 HR + Admin + 基础财务全流程独立跑通，英文工作沟通不用别人帮。","第 2–3 年：往 HR Operations 深走——薪酬社保合规、数据与流程优化；行政这块能独立管供应商和预算。","结尾把话收回公司：这些都是在这个岗位上就能积累的，所以我希望是长期做下去。"],"avoid":["「三年后想转 HRBP / 想做培训 / 想考公」——等于告诉他们你会走。","「还没想好」。","规划大到脱离助理岗（「想做 HR 经理」）却说不出中间路径。"],"pri":"high","en":false,"star":false,"ask":false},{"id":"B1","cat":"experience","q":"Walk me through your main responsibilities in your last job.","zh":"讲一讲你上一份工作的主要职责。","why":"核对简历真实性，并判断你的经验和 JD 的重合度有多少。这题的答法决定了后面他会往哪里挖。","tips":["按 JD 的四块顺序讲，不要按时间顺序：HR → Admin → 财务支持 → 内外部协调。这样他一听就知道你研究过 JD。","每块给规模数字：服务多少人、每月多少条考勤、多少张报销单、维护多少家供应商。","说清楚哪些是你「独立负责」、哪些是「协助」，别含糊——后面一定会被追问。","留 1–2 个钩子（比如「我自己做了一份 onboarding checklist」），引导他往你准备充分的地方问。"],"avoid":["流水账式地按时间讲。","把团队的成果说成自己的。","只说做了什么，不说做到什么程度。"],"pri":"must","en":false,"star":false,"ask":false},{"id":"B2","cat":"experience","q":"Take me through your onboarding process, step by step.","zh":"请一步步讲讲你负责的员工入职流程。","why":"助理岗最核心的动作，考流程完整度和细节意识。答得零碎说明你只是在打杂，答得成体系说明你能独立扛。","tips":["分三段：入职前（offer 发放、材料清单、工位/电脑/账号申请、入职通知）→ 入职当天（合同签署、信息表、身份学历材料核验、制度讲解、工牌门禁、介绍团队）→ 入职后（社保公积金增员、花名册与档案归档、试用期跟进与转正提醒）。","提一两个你踩过的坑和后来补上的动作，比如把流程做成了 checklist。","英文关键词先背熟：onboarding checklist / employment contract / social insurance registration / probation review。"],"avoid":["只说「办入职手续」。","漏掉社保增员和档案归档这两个最容易出事的环节。","说不出时间节点（比如合同应当在用工之日起多久内签订）。"],"pri":"high","en":false,"star":false,"ask":false},{"id":"B3","cat":"experience","q":"How do you handle offboarding? What do you pay the most attention to?","zh":"离职流程你怎么走？最需要注意什么？","why":"离职比入职风险高得多——法律、交接、数据三头都可能出事。这题在看你有没有合规意识。","tips":["流程：离职申请与审批 → 工作交接清单与签字 → 资产/账号/门禁回收 → 最后工作日确认 → 考勤与工资结算口径 → 社保公积金减员 → 出具离职证明 → 档案归档 →（可做）离职面谈。","强调时间点意识：减员和结算的月度截点错过一次，影响的是钱和参保。","可以提离职面谈收集到的信息怎么整理反馈给上级。"],"avoid":["忽略资产和账号回收。","说不清最后一个月的工资和社保怎么处理。","对「协商解除」这类敏感场景发表法律断言——不确定就说会先确认。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"B4","cat":"experience","q":"How did you manage employment contracts and employee files?","zh":"劳动合同和员工档案你是怎么管的？","why":"JD 里明确写了 employment contract administration 和 staff file maintenance，几乎必问。","tips":["合同：签订时点、期限、续签提醒机制（提前多久）、变更与补充协议、用工形式区分（正式／实习／劳务）。","档案：纸质 + 电子双轨、目录结构、必备材料清单、更新触发点（转正、调岗、调薪、离职）、借阅与权限控制。","讲清楚你用什么管到期提醒（Excel 公式 + 条件格式，或系统）——这里可以自然接到 D 组的 Excel 能力。"],"avoid":["说「都存在文件夹里」。","对个人信息保护只字不提。","说不出续签提醒的具体做法（提前多少天、谁来确认）。"],"pri":"high","en":false,"star":false,"ask":false},{"id":"B5","cat":"experience","q":"How do you handle attendance data and support payroll?","zh":"考勤数据和薪酬数据这块你具体怎么做？","why":"直接对应 JD 的 attendance & leave management 和 payroll data collection，也是这个岗位最容易出事故的环节。","tips":["讲完整链路：打卡数据导出 → 与请假/加班/出差单据核对 → 异常清单发给部门确认 → 修正 → 出月度考勤汇总 → 交薪酬或财务 → 复核。","说清核对手段：VLOOKUP 对人、SUMIFS 汇总工时、透视表按部门看分布、条件格式标异常。","给截点意识：每月几号锁数据、几号出表、留多久的核对窗口。"],"avoid":["说「系统自动算的」就结束。","说不出发现异常之后的处理动作。","把前公司具体的工资数字讲出来——这本身就是保密意识不合格。"],"pri":"must","en":false,"star":false,"ask":false},{"id":"B6","cat":"experience","q":"Tell me about your experience with social insurance, housing fund and individual income tax filing.","zh":"社保、公积金和个税申报，你做过哪些？","why":"中国本地合规是这个岗位不可替代的价值，外企尤其怕在这上面出问题。这也是你相对海归/纯英文背景候选人的优势区。","tips":["分开讲：社保公积金（增减员时点、基数年度调整、异地参保处理）／个税（每月申报、专项附加扣除信息收集、年度汇算的员工答疑）。","说清你在哪些平台操作，以及你怎么保证不漏人不漏月（对花名册、留台账、设提醒）。","老实划边界：哪些你独立做、哪些是配合财务或第三方代理做。边界清楚反而显得可信。"],"avoid":["夸大成「全部我一个人负责」却答不上细节。","把政策讲错。不确定就说「具体以当地最新政策为准，我会先确认再操作」。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"B7","cat":"experience","q":"What recruiting work did you do? How did you support the hiring process?","zh":"招聘这块你做了哪些具体工作？","why":"助理岗的招聘多半是支持角色，他们想知道你能接住哪一段、能不能自己跑起来。","tips":["讲实际动作：JD 发布与渠道维护、简历初筛、电话初筛、面试安排与候选人接待、面试反馈收集、offer 沟通与入职衔接、招聘进度表维护。","给数字：一个月安排多少场面试、维护几个渠道、平均多久填一个岗。","说一句你的初筛标准是怎么定的——这能体现你不是机械转发简历。"],"avoid":["把 HRBP 或招聘经理的活揽到自己身上。","说不出初筛标准。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"B8","cat":"experience","q":"Describe your administrative work — office supplies, documents, expenses and vendors.","zh":"行政这块讲一讲：办公用品采购、文件管理、费用报销、供应商对接。","why":"这个岗位有一半是 Admin 加财务支持，而大多数候选人只准备 HR。这题是你拉开差距的地方。","tips":["采购：需求收集 → 比价 → 审批 → 下单 → 验收入库 → 领用登记 → 盘点与安全库存。","文件：收发登记、编号与归档规则、用印流程、保密分级。","报销：单据合规性审核（抬头、税号、事由、审批链）→ 提交 → 付款跟进 → 台账登记 → 月度费用汇总。","供应商：名单维护、合同与账期、交付跟进、结算对账。","一定要提你做过的费用分析（按月／按部门看办公费用趋势）——这直接命中 JD 里的 office expense data recording and analysis。"],"avoid":["说「就是买买东西、发发文件」。","报销只说「我收单子」，不说你审的是什么。","完全不提台账和对账。"],"pri":"must","en":false,"star":false,"ask":false},{"id":"C1","cat":"english","q":"Are you comfortable working in an English-speaking environment?","zh":"你能接受全英文的工作环境吗？","why":"HR 已经专门问过你这一条，说明这是他们最核心的顾虑。他们要的不是母语水平，是确认你不会因为语言把事情做错、做停。","tips":["结构：先给一个干脆的 Yes（不要犹豫）→ 说现有能力和证据（CET-6、读写基础、读过什么英文材料）→ 坦白短板是口语实战场景少 → 说你已经在做什么补 → 给一个承诺：听不懂会当场确认，绝不猜着做。","可以自己改写的句式：I'm confident with reading and writing… / My spoken English needs more real-work practice, and I'm working on it… / If I'm not sure I understood, I'll always confirm instead of guessing.","这题真正卖的是「可靠」，不是「流利」。把落点放在这里。"],"avoid":["说「我英语很好」然后恰好在这题上磕巴。","「我不太行」——自我否定一句就够毁掉整场。","夸大成「全英文无障碍」，下一题就被现场测出来。"],"pri":"must","en":true,"star":false,"ask":false},{"id":"C2","cat":"english","q":"How have you used English in your previous work? Give me a specific example.","zh":"你过去工作中怎么用到英语的？举一个具体例子。","why":"验证上一题说的是不是真的。他要的是场景，不是形容词。","tips":["场景小也要具体：读过英文的系统界面／制度／供应商合同条款、写过英文邮件或内部通知、给外籍同事办过入职、维护过英文版花名册或表格模板。","用一个真实例子讲完整：什么事、你读了写了什么、结果怎样。","如果确实频率很低，就说「频率不高，但我做过 X，平时也在用英文做 Y」。诚实但有内容。"],"avoid":["编一个经不起追问的例子。","只说「看过一些英文文件」然后没有下文。"],"pri":"high","en":true,"star":false,"ask":false},{"id":"C3","cat":"english","q":"You haven't worked in a fully English environment before. Why should we believe you can handle it?","zh":"你之前没有全英文工作经历，我们凭什么相信你能胜任？","why":"压力型追问。考的不是英语，是你面对自己弱点时的稳定度和解决问题的思路。","tips":["不辩解，先承认事实。承认得干脆，气场反而稳。","给三类证据：能力底子（CET-6、读写）／可迁移经验（你已经在做跨部门、跨地区沟通，方法是一样的）／正在做的准备（每天听读什么、整理了哪些岗位高频英文词表）。","给一个具体承诺：入职前我会把 HR 和 Admin 的高频英文——onboarding、payroll、reimbursement、PO、invoice、headcount——练到能直接用。"],"avoid":["反复道歉。","把责任推给「以前公司没这个机会」。","空口保证「我学得很快」，没有任何行动证据。"],"pri":"high","en":true,"star":false,"ask":false},{"id":"C4","cat":"english","q":"If you don't fully understand an instruction from your foreign manager, what will you do?","zh":"如果听不懂外籍上级的指令，你会怎么处理？","why":"外企最怕的从来不是英语不好，是不懂装懂造成返工。这题答对了，能直接抵消一部分口语劣势。","tips":["标准动作四步：当场确认 → 用自己的话复述一遍（Let me make sure I understand: you'd like me to…）→ 会后用邮件或 IM 书面确认要点和时间点 → 执行中先给一个小进度让他确认方向对不对。","强调你既不会靠猜，也不会拖到最后一刻才说做不了。"],"avoid":["「我会自己先查一下然后先做起来」——这正是他们担心的。","把「找同事帮我翻译」当成唯一方案。"],"pri":"normal","en":true,"star":false,"ask":false},{"id":"C5","cat":"english","q":"How would you write an English email to a vendor chasing a delayed delivery?","zh":"给交期延误的供应商写一封英文催货邮件，你会怎么写?（可能要求现场写或口述）","why":"JD 要求 independent English business communication，而邮件是这个岗位最高频的英文形式。","tips":["四段结构：Subject 写清楚（PO 号 + 事由）→ 一句话说明背景和原定交期 → 明确请求（新交期／延误原因）→ 给一个回复 deadline 和后续动作，礼貌收尾。","常用句先备好：I'm following up on… / Could you please confirm the revised delivery date by…? / Please let me know if there's anything we can do on our side.","现场写就写短。语法保险第一，别炫复杂句。"],"avoid":["中式直译，尤其反复用 Please reply me as soon as possible。","语气过硬（像在指责）或过软（像在求人）。","漏掉具体单号和日期，这封邮件就白写了。"],"pri":"normal","en":true,"star":false,"ask":false},{"id":"C6","cat":"english","q":"How do you plan to improve your business English?","zh":"你打算怎么提升商务英语？","why":"看你是嘴上说说，还是真有一个能执行、能验证的计划。","tips":["给具体动作：每天固定时长做什么（跟读／影子练习／读 HR 英文材料）、准备了什么（岗位高频词表、常用邮件模板）、怎么检验（每周写一封英文邮件、每周口述一次自我介绍）。","加一句：入职后我会主动用英文写周报和会议纪要来练——把练习嵌进工作里，而不是额外的事。"],"avoid":["「我会多看美剧」这种没有针对性的答案。","问「公司有没有英语培训」，把提升责任推给公司。"],"pri":"normal","en":true,"star":false,"ask":false},{"id":"D1","cat":"excel","q":"How would you rate your Excel skills? Which functions do you use most?","zh":"你的 Excel 水平怎么样？平时最常用哪些函数？","why":"这个岗位天天和数据打交道，这题基本是必问，而且很可能接着让你上机。","tips":["别给形容词，给「场景 + 函数」：VLOOKUP 核对花名册与考勤名单、SUMIFS 按部门加状态汇总、COUNTIFS 统计人数、IF 做全勤和到期判断、TODAY 算合同剩余天数、数据透视表出部门维度报表、条件格式标异常。","诚实说边界：会什么、没用过什么（比如 Power Query、VBA）但愿意学。吹过头会当场被拆。","提前准备被追问语法：VLOOKUP 第四个参数、SUMIF 和 SUMIFS 参数顺序的区别。"],"avoid":["说「精通」，然后写不出 SUMIFS。","只报函数名，说不出用在什么场景。"],"pri":"must","en":false,"star":false,"ask":false},{"id":"D2","cat":"excel","q":"Explain VLOOKUP to me. When would you use XLOOKUP instead?","zh":"讲一下 VLOOKUP 怎么用。什么情况下你会改用 XLOOKUP？","why":"最高频的实操考点。能把参数说清楚，基本就过了 Excel 这关。","tips":["口述四段：找谁 → 去哪里找 → 返回第几列 → 精确匹配写 0。补一句：查找区域第一列必须是查找值所在列，往右拖拽时区域要加 $ 锁定。","XLOOKUP 的优势：不受「只能向右查」限制、不用数列号、可以直接设定找不到时返回什么。但只有 Excel 2019/365 支持，老版本会 #NAME?，所以在不确定对方电脑版本时我会用 VLOOKUP 或 INDEX+MATCH。","主动补一句 INDEX+MATCH 是向左查的通用解法——这句很加分。"],"avoid":["把第四个参数说反（0 是精确、1 是模糊）。","说不出为什么必须精确匹配。"],"pri":"high","en":false,"star":false,"ask":false},{"id":"D3","cat":"excel","q":"How do you make sure attendance and payroll data are accurate?","zh":"你怎么保证考勤和薪酬数据的准确性？","why":"这是这个岗位最能出事故的地方。他要听的是你的「防错机制」，不是你的态度。","tips":["分三层讲：源头（单据齐全、口径统一、锁定截止时间）→ 过程（公式交叉核对：人数对得上吗、合计对得上吗、有没有重复工号、有没有空值；条件格式标异常）→ 出口（自己复核一遍 + 关键数据请第二人复核 + 留版本备份和修改记录）。","给得出具体检查动作：工号重复用 COUNTIF>1 找、两张表人数用 COUNTA 对、金额合计用 SUM 对总账、异常值用排序看两端。","点一句：发现问题的时间点比发现问题本身更重要，所以我会在发薪前留出固定的核对窗口。"],"avoid":["只说「我会仔细一点」。","把责任推成「财务会再核一遍」。","一个具体的核对手段都说不出来。"],"pri":"high","en":false,"star":false,"ask":false},{"id":"D4","cat":"excel","q":"You receive a 500-row employee file with duplicates, blanks and inconsistent formats. How do you clean it?","zh":"给你一份 500 行、有重复、有空值、格式混乱的员工数据表，你怎么清洗？","why":"真实工作里最常见的活，考方法论和职业习惯。","tips":["第一句一定要说：先备份原始文件。这一句本身就是分数。","步骤：统一表头字段 → 按工号删除重复项 → 筛选找空值并标记待补 → 分列／统一日期和文本格式 → TRIM 去多余空格 → 条件格式标异常 → 出一份「问题清单」给对应部门确认。","结尾加一句：清洗完我会把规则固化成模板，让下次数据在源头就规范。"],"avoid":["直接在原始文件上改。","自己臆断把空值补上。","只说「用删除重复项」就结束了。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"E1","cat":"behavioral","q":"You have several urgent things at once — a new hire starting tomorrow, a payroll deadline, and your manager needs something right now. How do you handle it?","zh":"同时有几件急事：明天有新人入职、薪酬数据到截止日、上级又临时派了任务。你怎么办？","why":"JD 明确写了 multitasking，这题几乎必出。考的是优先级判断，更是沟通习惯。","tips":["先说判断标准：有法定或发薪截点的优先（社保、工资、个税）；影响别人无法开工的优先（新人第一天、门禁账号）；可延后且能提前打招呼的往后排。","关键动作是沟通：花两分钟同步给上级「我手上有 A/B/C，我打算按这个顺序，C 我在今天几点前给你，你看要不要调」——把选择权交回去。","用 STAR 讲一个真实例子，Result 要有具体结果：全部按时完成，或者只延后了哪一项且提前打了招呼。"],"avoid":["「我加班全都做完」——听起来像不会排优先级。","「谁催得急我做谁」。","不沟通，自己默默扛，最后爆掉。"],"pri":"high","en":true,"star":true,"ask":false},{"id":"E2","cat":"behavioral","q":"You discover an error in the payroll data after it has already been submitted. What do you do?","zh":"薪酬数据提交之后你发现算错了，你会怎么做？","why":"考诚信和应急处理。外企在这题上的容忍度极低——隐瞒一次，信任就没了。","tips":["顺序不能错：立刻上报 → 同时评估影响范围（影响几个人、多少钱、是否已发放）→ 给出修正方案和时间 → 执行修正 → 与员工沟通的口径由上级确认 → 复盘并加一道防错机制。","强调「第一时间说」，哪怕是自己的错。这一句是这题的核心分。","Result 里要有：后来我加了什么检查，这类错误再没发生过。"],"avoid":["想先自己偷偷改掉。","「等下个月一起调整」。","把责任推给系统或别人。"],"pri":"high","en":false,"star":true,"ask":false},{"id":"E3","cat":"behavioral","q":"An employee's attendance record looks abnormal — several days of missing punches. Walk me through what you'd do.","zh":"发现某个员工的考勤异常，连续几天缺卡，你怎么处理？","why":"日常最高频的场景，考流程感，也考分寸感。","tips":["先查数据源：是打卡机没读到、出差外勤没提单、还是请假流程没走完。","再联系本人和直属主管确认 → 补齐单据并留痕 → 按制度处理 → 汇总进月度异常清单。","态度上先假设是流程问题，不是先假设员工有问题——这句说出来会加分。","如果反复出现，做成异常台账反馈给上级，推动制度优化。"],"avoid":["直接扣钱或直接下结论。","只在系统里改数，不留任何记录。","越过主管直接质问员工。"],"pri":"high","en":false,"star":true,"ask":false},{"id":"E4","cat":"behavioral","q":"An employee comes to you upset, complaining about their manager. What do you do?","zh":"员工情绪激动地来找你投诉他的直属经理，你怎么处理？","why":"考边界感、保密意识和情绪处理。这是助理岗最容易踩雷的场景。","tips":["三步：先接住情绪（换个不被打扰的地方、听完、不打断）→ 记录客观事实（时间、事件、涉及人）→ 明确你的边界：「我会按流程反馈给我的上级，由他们来处理」。","强调保密：不在办公区讨论、不向无关同事透露、不当场评价那位经理的对错。","补一句：如果涉及骚扰、安全或违规，这类必须立即上报，不能压。"],"avoid":["当场站队或评价管理者。","承诺「我帮你解决」——这超出你的权限。","转头把这件事当八卦讲出去。"],"pri":"normal","en":false,"star":true,"ask":false},{"id":"E5","cat":"behavioral","q":"Another department keeps ignoring your requests and it's blocking your work. What do you do?","zh":"其他部门一直不配合、不回复，事情卡住了，你怎么推动？","why":"JD 里 coordination 是四大块之一。考推动力，也考情商。","tips":["先反省一步：是不是我没说清 deadline 和影响。这句先说，显得成熟。","升级路径要清晰：换沟通方式（IM → 电话 → 当面）→ 说明「为什么这件事对他们也重要」和明确截止时间 →（还不动）书面同步并抄送双方上级，只陈述事实和影响，语气中性 → 请上级出面。","Result 可以加：后来我把这类需求做成固定表单和固定时间点，减少了来回拉扯。"],"avoid":["一上来就抄送老板。","在背后抱怨。","干脆自己硬扛把活做了——外企会视为不 own 结果。"],"pri":"high","en":false,"star":true,"ask":false},{"id":"E6","cat":"behavioral","q":"A vendor is late on delivery and it affects an office event next week. How do you handle it?","zh":"供应商交期延误，影响到下周的办公室活动，你怎么处理？","why":"对应 JD 的 external vendor communication，考应急预案能力。","tips":["三件事并行：找供应商确认真实新交期和原因 → 评估对内影响并同步给需求方和上级 → 准备 Plan B（备选供应商、部分先到、方案调整）。","强调坏消息要早说，不要赌供应商能赶上。","事后记录进供应商台账，影响后续合作与比价。"],"avoid":["一直催供应商，但不告诉内部。","把风险瞒到最后一刻。","情绪化施压却没有任何书面记录。"],"pri":"normal","en":false,"star":true,"ask":false},{"id":"E7","cat":"behavioral","q":"Tell me about a mistake you made at work. What happened and what did you learn?","zh":"讲一次你在工作中犯的错，发生了什么，学到了什么。","why":"考自省能力和诚实度。这题答不出来，比答错更糟。","tips":["选一个真实的、后果可控的、你自己修好了的错：漏发一份通知、报销单据审核疏漏、日期填错导致提醒晚了。","结构：发生了什么（不找借口）→ 我第一时间做了什么 → 结果被控制住 → 我加了什么机制防止再犯（checklist、双人复核、提醒公式）。","结尾落到「这件事之后我养成了什么习惯」，把错误变成你的方法论来源。"],"avoid":["「我没犯过错」。","选一个致命的错（泄露薪酬数据、违规操作）。","把错误归因给别人。"],"pri":"high","en":false,"star":true,"ask":false},{"id":"E8","cat":"behavioral","q":"How do you handle confidential HR data — salaries, ID numbers, contracts?","zh":"薪酬、身份证号、合同这类保密的人事数据，你怎么处理？","why":"外企对数据合规极其敏感。这题答不好会直接出局，答得好是加分项。","tips":["说原则 + 说动作。原则：最小必要、按授权、不外传、不带出。动作：文件设权限、纸质档案上锁、发送前确认收件人、不在公共区域打开薪酬表、离开工位锁屏、废弃材料碎纸、离职时账号回收和交接清单。","加一个具体场景证明你的边界：即使是关系好的同事私下问，我也只会说「这个我不方便说」。","可以带一句个人信息保护意识：员工信息的收集要有必要性、用途明确。"],"avoid":["只说「我会注意保密」。","讲一个你曾经把薪酬信息说出去的故事——哪怕结局是好的。","流露出「关系好就可以说」的意思。"],"pri":"high","en":false,"star":true,"ask":false},{"id":"F1","cat":"culture","q":"How would you adapt to working in an international company?","zh":"你会怎么适应国际化的工作环境？","why":"考的不是英语，是工作方式。他想知道你懂不懂外企的游戏规则。","tips":["讲三点具体差异，每点都配动作：① 主动同步进度，不等人来问 ② 重要结论书面留痕，会后邮件确认 ③ 尊重流程和时区，跨时区的事提前留缓冲。","点一句 ownership：交给我的事我负责到结果；遇到障碍我会带着方案来汇报，而不是只报告问题。"],"avoid":["「我适应能力强」然后没有下文。","把外企理解成「更轻松、更自由」。"],"pri":"high","en":true,"star":false,"ask":false},{"id":"F2","cat":"culture","q":"How do you handle direct feedback or criticism?","zh":"如果上级用很直接的方式指出你的问题，你怎么反应？","why":"美式沟通更直接。他要确认你不会因为被直说而崩溃或记仇。","tips":["态度四步：先谢谢对方指出来 → 复述确认我理解对了 → 说明我会怎么改、什么时候能看到变化 → 事后主动回来汇报改的结果。最后这一步最容易被忽略，也最加分。","点明「对事不对人」：直接不等于否定我这个人。","举一个你被指出问题后真的改了的小例子。"],"avoid":["「我从来没被批评过」。","表现出委屈或防御。","只说「我会虚心接受」，没有任何行动。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"F3","cat":"culture","q":"How do you report progress to your manager, especially if they are not based in Shenzhen?","zh":"如果你的上级不在深圳，你怎么汇报工作进度？","why":"远程和跨时区汇报是这个岗位的日常，考主动性。这题答得好，能直接补上「英文口语弱」的印象分。","tips":["给一个具体节奏：日常用 IM 同步关键节点；每周一封结构化周报（本周完成／进行中及卡点／下周计划／需要你决策的事）；紧急事项电话加邮件。","强调两件事：卡点要早说，汇报要带方案。","提时区意识：知道对方的上班时间，把需要决策的事放进他能回复的窗口里。"],"avoid":["「有事我会问领导」这种被动答案。","只报好消息。"],"pri":"high","en":true,"star":false,"ask":false},{"id":"F4","cat":"culture","q":"What do 'ownership' and 'follow-up' mean to you?","zh":"你怎么理解 ownership 和 follow-up？","why":"这两个词是外企的口头禅。能讲清楚，说明你已经在用他们的语言思考。","tips":["Ownership：这件事的最终结果算我的。即使需要别人配合，推动他们也是我的责任——我不会说「我发过邮件了，他们没回」。","Follow-up：给出去的事要有跟进节奏和闭环——记录、设提醒、到点追、结果回传给相关人。","各配一个你工作里的真实小例子：催报销、催供应商、催合同签回。"],"avoid":["只翻译词面意思。","说不出任何具体行为。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"F5","cat":"culture","q":"How do you handle work pressure and overtime?","zh":"你怎么应对工作压力和加班？","why":"JD 写了 work under pressure 和 accept reasonable overtime，他要确认你不会一忙就崩，也不会一提加班就抗拒。","tips":["先说方法（把压力变成可管理的清单：拆任务、排优先级、提前预警），再说态度（月结、旺季、大活动前的加班我理解并接受）。","给一个真实的高峰期例子：那段时间你怎么安排的、结果如何。","可以简短提一句你怎么恢复（作息、运动），显得可持续——但别展开讲。"],"avoid":["「我从来不觉得有压力」。","在这题里反问「是不是经常加班」——这个问题留到反问环节，问法也要换。","任何抗拒加班的表情或语气。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"G1","cat":"motivation","q":"Why do you want to work for a foreign company rather than a local one?","zh":"你为什么想进外企，而不是继续在本土公司？","why":"看你的动机是不是想清楚了，也看你会不会说本土公司的坏话。","tips":["讲你要什么：规范的流程、清晰的制度边界、国际化视野、英文环境带来的成长。","更要讲你能给什么：本地合规经验——社保、公积金、个税、劳动合同——这正是外企在深圳最需要本地人扛的部分。这句话会让你从「想学英语的候选人」变成「能解决问题的候选人」。"],"avoid":["贬低本土企业。","只说「外企福利好、氛围好」。"],"pri":"high","en":false,"star":false,"ask":false},{"id":"G2","cat":"motivation","q":"Why should we hire you? What makes you the right fit for this role?","zh":"我们为什么要录用你？你哪里最适合这个岗位？","why":"这是让你自己总结匹配度的机会，也是整场面试的收口题。","tips":["用 JD 三块对照法：HR 全流程我独立做过／Admin 加采购加文件我独立管过／财务支持我审过报销、做过费用台账。三块都有的候选人不多，这是你的结构性优势。","补一句态度层面的：可靠、会确认、不猜着做——正好回应他们对英语的顾虑。","最后给一个上手速度的承诺，让他能想象你入职后的样子。"],"avoid":["罗列性格优点。","和别的候选人比较——你根本不知道他们是谁。"],"pri":"high","en":true,"star":false,"ask":false},{"id":"G3","cat":"motivation","q":"What are your strengths?","zh":"你的优势是什么？","why":"看你的自我认知准不准，以及你说的优势和这个岗位有没有关系。","tips":["只挑两个，而且必须和岗位强相关。推荐：细致（给证据——你做过的核对机制、零差错记录）+ 推得动事（跨部门和供应商跟进的例子）。","每个优点后面必须跟一个 30 秒的真实事例，否则就是形容词。"],"avoid":["一口气说三个以上，一个都不深。","「我很努力」「我学习能力强」。","说完没有例子。"],"pri":"must","en":false,"star":false,"ask":false},{"id":"G4","cat":"motivation","q":"What are your weaknesses?","zh":"你的不足是什么？","why":"考自我认知和真诚度。假答案在这题上特别刺耳。","tips":["选一个真实的、和核心职责不冲突的、并且你正在改的。最聪明的选择是「英文口语实战场景少」——正好正面回应他们的顾虑，还能顺势展示行动。","备选：以前太想自己扛，求助不够早；现在我给自己设一个时间点，超过就上报。","结构：弱点 → 造成过什么小影响 → 我现在的具体做法 → 现在改到什么程度。四段缺一不可。"],"avoid":["假弱点：「我太追求完美」「我太拼」。面试官一天能听八遍。","致命弱点：粗心、记性差、不喜欢和人打交道。","说完不给改进动作。"],"pri":"must","en":false,"star":false,"ask":false},{"id":"H1","cat":"salary","q":"What are your salary expectations?","zh":"你的期望薪资是多少？","why":"试探你的自我定位，也确认双方在不在同一个区间。这题的语气比数字更重要。","tips":["岗位区间约 6K–8K、13 薪。可以先礼貌反问结构和区间；如果对方要你先说，就给区间加依据。","依据这样组织：结合我两年 HR + Admin + 基础财务的经验、本地合规能力和岗位的英文要求，我的期望是 7.5K–8K，13 薪。","说清你看的是总包：月薪 × 13 + 社保公积金基数 + 其他福利。这句能显出你的专业度。","留一句弹性：如果整体包和发展空间合适，具体数字可以谈。"],"avoid":["「都可以，听公司安排」——显得没有自我评估能力。","报一个远超区间的数字。","只盯月薪，不问 13 薪和公积金基数。"],"pri":"must","en":true,"star":false,"ask":false},{"id":"H2","cat":"salary","q":"Why do you think you're worth 8K?","zh":"你凭什么值 8K？","why":"压力型追问，看你能不能把要价换算成价值。","tips":["用「能力密度」回答：一个人覆盖 HR 全流程 + 行政 + 基础财务 + 本地合规 + 可用英文书面沟通，等于替公司省下拆成两个岗位的成本。","再补一句上手速度：前三个月就能独立跑，减少交接和培训成本。"],"avoid":["「我上一家就是这个数」当成唯一理由。","「深圳生活成本高」——这是你的问题，不是公司的问题。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"H3","cat":"salary","q":"What's the minimum you would accept?","zh":"你最低能接受多少？","why":"压价试探，同时看你的底线清不清楚、会不会一压就垮。","tips":["不要直接报底价。可以说：我的期望是 X；如果贵司的区间不同，我更想先了解整体薪酬结构和调薪机制，再一起看怎么匹配。","面试前给自己定一个真实底线数字——心里有，嘴上不说。"],"avoid":["立刻降价。降一次就会被一路压。","情绪化或表现出被冒犯。","「最低 6K 也行」。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"H4","cat":"salary","q":"When can you start? Are you OK with overtime and a full-English working environment?","zh":"你什么时候能入职？能接受加班和全英文环境吗？","why":"三个现实条件一起问，看你有没有含糊的地方。含糊就是风险。","tips":["入职时间给一个确定、可执行的日期。在职就说交接需要多久（通常两周到一个月），并说明你会正规交接——这反而是加分。","加班：明确接受合理加班，并说明你理解月结和旺季会有高峰。","全英文：正面接住，把 C 组第一题的核心再说一遍——读写没问题、口语在补、听不懂会当场确认。"],"avoid":["「随时都可以」但你还在职——显得对现雇主不负责。","对加班含糊其辞。","在英文这条上表现出犹豫。"],"pri":"high","en":true,"star":false,"ask":false},{"id":"H5","cat":"salary","q":"If our offer is lower than your expectation, what would you do?","zh":"如果我们给的 offer 低于你的期望，你会怎么办？","why":"看你的灵活度，也看你会不会被一句话就套出底价。","tips":["表达开放但不卑微：我会看整体——13 薪、社保公积金基数、调薪周期、成长空间；如果整体合理我愿意谈。","顺势提一个信息需求：我也想了解贵司的调薪机制和大概时间点。把被动变主动。"],"avoid":["立刻答应任何数字。","表现出被冒犯。","拿别的 offer 施压——除非是真的，并且你准备好承担后果。"],"pri":"normal","en":false,"star":false,"ask":false},{"id":"I1","cat":"ask","q":"Questions about the role and the team","zh":"第一组：岗位与团队（面试中段问，最安全也最有价值）","why":"反问不是走过场。这一组决定你入职后会过什么日子，同时让面试官看到你在认真评估这份工作——认真评估的人，看起来更像会长期待下去的人。","tips":["Could you tell me how the workload splits between HR and Admin in this role?（HR 和 Admin 大概各占多少？）","How big is the Shenzhen team right now, and who would I report to?（深圳团队多大？我向谁汇报？）","Is this a new position or a replacement?（新增岗还是补位？）—— 听答案：如果是 replacement，可以追问前任的交接情况；如果是新增岗，问问岗位边界由谁来定。","What would a successful first three months look like in this role?（前三个月做到什么算合格？）这题几乎必加分，因为它默认了你已经在想怎么把事做好。"],"avoid":["问「这个岗位平时都做什么」——JD 上写着，问了等于没看。","一次连珠炮问八个问题。挑两三个，问完认真听。"],"pri":"must","en":true,"star":false,"ask":true},{"id":"I2","cat":"ask","q":"Questions about English and cross-region collaboration","zh":"第二组：英语与跨区协作（你最该问的一组）","why":"这组直接决定你入职后的准备重点，而且主动问语言问题，反而显得你在正视它、不是回避它。","tips":["How often is English actually used day to day? Is it mostly written or spoken?（日常英语使用频率？以书面为主还是口语为主？）","Are there regular meetings in English? How often?（有没有固定的英文会议？多久一次？）","How does the Shenzhen office work with the US and HK teams? What's the time-zone overlap like?（深圳和美国、香港团队怎么协作？时差重叠有多少？）","Who would I mainly communicate with overseas?（我主要和海外的哪些角色对接？）"],"avoid":["把这组问成「是不是一定要说英语」——语气一变就成了退缩。","问完不接话。听到答案后回一句「那我入职前会重点准备 XX」，闭环。"],"pri":"high","en":true,"star":false,"ask":true},{"id":"I3","cat":"ask","q":"Questions about growth, pay review and the office's stage","zh":"第三组：发展、调薪与公司阶段（放在面试后段或 HR 环节问）","why":"这些是你必须知道的现实信息，但问的时机很重要——一面开场就问，关注点会显得偏。","tips":["What's the salary review cycle here?（调薪机制和周期是怎样的？）","Is the 13th-month salary fixed or performance-based?（13 薪是固定发放还是和绩效挂钩？）","What does the career path look like for someone in this role?（这个岗位往后的发展方向？）","How busy does it usually get — are there peak seasons?（通常什么时候是旺季？）用「旺季」来问加班，比直接问「经常加班吗」专业得多。","What stage is the Shenzhen office at right now, and what's the plan for the next year or two?（深圳办公室目前处在什么阶段？未来一两年的计划？）"],"avoid":["一面就问加班和调薪。","问「转正后有没有可能涨薪」这种把自己放低的问法。","问完就走。最后留一句：这些我都清楚了，我很希望有机会加入。"],"pri":"normal","en":false,"star":false,"ask":true}]};
+var LS = { tok:"jp_interview_token", draft:"jp_interview_draft",
+           theme:"jp_interview_theme", open:"jp_interview_open",
+           seen:"jp_interview_seen" };
+/* 书房和求职台用的是同一把钥匙，同一个 origin，直接借 */
+var BORROW = ["kkee_books_token", "kkee_jobs_token"];
+
+var TOKEN = "";
+try{ TOKEN = localStorage.getItem(LS.tok) || ""; }catch(e){}
+if(!TOKEN){
+  for(var bi=0; bi<BORROW.length; bi++){
+    try{ var t = localStorage.getItem(BORROW[bi]); if(t){ TOKEN = t; break; } }catch(e){}
+  }
+}
+
+var state = {
+  data: null,          // {v, updatedAt, updatedBy, ans, star, notes}
+  sha: null,
+  touched: {},         // 本次会话改过的字段 "A1.cn" -> true
+  syncing: false,
+  pending: false,
+  lastErr: null,
+};
+
+/* ── 小工具 ── */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function now(){ return new Date().toISOString(); }
+function humanErr(e){
+  var m = (e && e.message) || "";
+  if(!m || /Failed to fetch|NetworkError|Load failed|network/i.test(m)) return "连不上网络";
+  return m;
+}
+function hhmm(d){ var p=function(n){return ("0"+n).slice(-2);}; return p(d.getHours())+":"+p(d.getMinutes()); }
+function toast(msg, ms){
+  var t = $("toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove("on"); }, ms||2200);
+}
+function show(v){
+  ["setup","main"].forEach(function(x){ $(x).classList.toggle("on", x===v); });
+}
+function fit(t){ t.style.height="auto"; t.style.height=(t.scrollHeight+2)+"px"; }
+
+/* ── base64（UTF-8 安全） ── */
+function b64enc(str){
+  var u = new TextEncoder().encode(str), bin = "", CH = 0x8000;
+  for(var i=0;i<u.length;i+=CH) bin += String.fromCharCode.apply(null, u.subarray(i,i+CH));
+  return btoa(bin);
+}
+function b64dec(b64){
+  var bin = atob(String(b64).replace(/\s/g,"")), u = new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(u);
+}
+
+/* ── GitHub ── */
+function ghHeaders(){
+  return { Authorization:"Bearer "+TOKEN, Accept:"application/vnd.github+json",
+           "X-GitHub-Api-Version":"2022-11-28" };
+}
+var encPath = function(p){ return p.split("/").map(encodeURIComponent).join("/"); };
+
+function ghRead(path){
+  var url = API+"/repos/"+OWNER+"/"+REPO+"/contents/"+encPath(path)+
+            "?ref="+encodeURIComponent(BRANCH)+"&t="+Date.now();
+  return fetch(url, {headers:ghHeaders(), cache:"no-store"}).then(function(r){
+    if(r.status === 404) return null;
+    if(r.status === 401) throw new Error("钥匙不对，或者已经过期了");
+    if(r.status === 403) throw new Error("这把钥匙没有 lab 仓库的权限");
+    if(!r.ok) throw new Error("读取失败（"+r.status+"）");
+    return r.json().then(function(j){ return { text:b64dec(j.content), sha:j.sha }; });
+  });
+}
+function ghWrite(path, text, sha, msg){
+  var body = { message:msg, content:b64enc(text), branch:BRANCH };
+  if(sha) body.sha = sha;
+  return fetch(API+"/repos/"+OWNER+"/"+REPO+"/contents/"+encPath(path), {
+    method:"PUT",
+    headers:Object.assign({}, ghHeaders(), {"Content-Type":"application/json"}),
+    body:JSON.stringify(body)
+  }).then(function(r){
+    if(!r.ok){ var e = new Error("写入失败（"+r.status+"）"); e.status = r.status; throw e; }
+    return r.json().then(function(j){ return j.content.sha; });
+  });
+}
+
+/* ── 数据结构 ── */
+var FIELDS = ["cn","en","fin","S","T","Ac","R"];
+function blankData(){
+  return { app:"jp-interview", v:1, updatedAt:now(), updatedBy:"而而",
+           ans:{}, star:{}, notes:{} };
+}
+function normalize(d){
+  if(!d || typeof d!=="object") d = blankData();
+  d.ans   = (d.ans && typeof d.ans==="object") ? d.ans : {};
+  d.star  = (d.star && typeof d.star==="object") ? d.star : {};
+  d.notes = (d.notes && typeof d.notes==="object") ? d.notes : {};
+  return d;
+}
+function A(id){
+  var a = state.data.ans[id];
+  if(!a){ a = state.data.ans[id] = {}; }
+  FIELDS.forEach(function(f){ if(typeof a[f] !== "string") a[f] = ""; });
+  return a;
+}
+function filled(id){ var a = state.data.ans[id]; return !!(a && a.cn && a.cn.trim()); }
+function anyContent(id){
+  var a = state.data.ans[id]; if(!a) return false;
+  return FIELDS.some(function(f){ return a[f] && a[f].trim(); });
+}
+
+/* 逐字段合并：本次会话动过的用本地，其余用远端 */
+function mergeRemote(remote){
+  remote = normalize(remote);
+  var out = { app:"jp-interview", v:1, updatedAt:remote.updatedAt, updatedBy:remote.updatedBy,
+              ans:{}, star:{}, notes: remote.notes || {} };
+  var ids = {};
+  Object.keys(remote.ans||{}).forEach(function(k){ ids[k]=1; });
+  Object.keys(state.data.ans||{}).forEach(function(k){ ids[k]=1; });
+  Object.keys(ids).forEach(function(id){
+    var mine = (state.data.ans||{})[id] || {}, theirs = (remote.ans||{})[id] || {};
+    var o = {};
+    FIELDS.forEach(function(f){
+      o[f] = state.touched[id+"."+f] ? (mine[f]||"") : (typeof theirs[f]==="string" ? theirs[f] : (mine[f]||""));
+    });
+    out.ans[id] = o;
+  });
+  var sids = {};
+  Object.keys(remote.star||{}).forEach(function(k){ sids[k]=1; });
+  Object.keys(state.data.star||{}).forEach(function(k){ sids[k]=1; });
+  Object.keys(sids).forEach(function(id){
+    out.star[id] = state.touched["star."+id] ? !!state.data.star[id] : !!remote.star[id];
+  });
+  return out;
+}
+
+/* ── 草稿（网络断了也不丢字） ── */
+function saveDraft(){
+  lsSet(LS.draft, JSON.stringify({ at:Date.now(), ans:state.data.ans, star:state.data.star }));
+}
+function clearDraft(){ lsDel(LS.draft); }
+
+/* ── 同步 ── */
+function setSync(cls, txt, retry){
+  var bar = $("syncBar");
+  bar.className = "syncbar" + (cls ? " "+cls : "");
+  $("syncTxt").innerHTML = esc(txt) + (retry ? ' <button id="reBtn">重试</button>' : "");
+  if(retry && $("reBtn")) $("reBtn").onclick = function(){ push(true); };
+}
+
+var syncTimer = null;
+function scheduleSync(){
+  saveDraft();
+  setSync("busy", "写作中…");
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(function(){ push(false); }, 2200);
+}
+
+function push(manual, depth){
+  depth = depth || 0;
+  if(state.syncing){ state.pending = true; return Promise.resolve(); }
+  state.syncing = true;
+  setSync("busy", "保存中…");
+  state.data.updatedAt = now();
+  state.data.updatedBy = "而而";
+  var text = JSON.stringify(state.data, null, 2) + "\n";
+  return ghWrite(DPATH, text, state.sha, "面试台：而而写了答案")
+    .then(function(sha){
+      state.sha = sha; state.syncing = false; clearDraft();
+      setSync("", "已同步 · " + hhmm(new Date()));
+      if(state.pending){ state.pending = false; scheduleSync(); }
+    })
+    .catch(function(e){
+      state.syncing = false;
+      if((e.status === 409 || e.status === 422) && depth < 2){
+        // 撞车了：拉下来合并再写
+        return ghRead(DPATH).then(function(r){
+          if(r){ state.data = mergeRemote(JSON.parse(r.text)); state.sha = r.sha; renderNotes(); }
+          return push(manual, depth+1);
+        }).catch(function(e2){ setSync("bad", humanErr(e2)+"，内容先留在这台设备里了", true); });
+      }
+      state.lastErr = e;
+      setSync("bad", humanErr(e) + "，内容先留在这台设备里了", true);
+      if(manual) toast(humanErr(e));
+    });
+}
+
+function pull(silent){
+  return ghRead(DPATH).then(function(r){
+    var before = JSON.stringify(state.data ? state.data.ans : null);
+    if(!r){
+      if(!state.data) state.data = blankData();
+      state.sha = null;
+    }else{
+      var remote = JSON.parse(r.text);
+      state.data = state.data ? mergeRemote(remote) : normalize(remote);
+      state.sha = r.sha;
+      flagKekeNews(remote);
+    }
+    if(!silent && before !== JSON.stringify(state.data.ans)) renderAll();
+    setSync("", "已同步 · " + hhmm(new Date()));
+    return true;
+  });
+}
+
+/* 钶钶改过什么 */
+function flagKekeNews(remote){
+  if(!remote || remote.updatedBy !== "钶钶") return;
+  var seen = lsGet(LS.seen) || "";
+  if(seen === remote.updatedAt) return;
+  var n = Object.keys(remote.notes || {}).length;
+  var box = $("newsFlag");
+  box.innerHTML = "钶钶动过这份答案了" + (n ? ("，留了 " + n + " 条话") : "") +
+                  '。<button id="seenBtn">知道了</button>';
+  box.classList.add("on");
+  $("seenBtn").onclick = function(){
+    lsSet(LS.seen, remote.updatedAt); box.classList.remove("on");
+  };
+}
+
+/* ══════════ 渲染 ══════════ */
+var PRI = {must:{c:"must",t:"必准备"}, high:{c:"high",t:"高概率"}};
+var byCat = {};
+DATA.items.forEach(function(it){ (byCat[it.cat] = byCat[it.cat] || []).push(it); });
+var openMap = {};
+try{ openMap = JSON.parse(lsGet(LS.open) || "{}") || {}; }catch(e){ openMap = {}; }
+
+function taField(id, field, label, hint, ph){
+  return '<div class="ansblk"><div class="anslabel"><span class="t">'+label+'</span><span class="h">'+hint+'</span></div>'+
+         '<textarea class="ta big" data-id="'+id+'" data-f="'+field+'" placeholder="'+ph+'"></textarea></div>';
+}
+function cardHTML(it){
+  var note = (state.data.notes || {})[it.id];
+  var tags = '<span class="code">'+it.id+'</span>';
+  if(PRI[it.pri]) tags += '<span class="tag '+PRI[it.pri].c+'">'+PRI[it.pri].t+'</span>';
+  if(note)    tags += '<span class="tag kekeflag">钶钶说</span>';
+  if(it.en)   tags += '<span class="tag en">可能要求英文作答</span>';
+  if(it.star) tags += '<span class="tag star">建议 STAR</span>';
+  tags += '<span class="tag donetag">已写</span>';
+
+  var body = '<div class="blk why"><h5>'+(it.ask?"为什么值得问":"面试官在考什么")+'</h5><p>'+esc(it.why)+'</p></div>';
+  body += '<div class="blk"><h5>'+(it.ask?"可以这样问":"回答思路")+'</h5><ul>'+
+          it.tips.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("")+'</ul></div>';
+  body += '<div class="blk avoid"><h5>'+(it.ask?"别这样问":"雷区")+'</h5><ul>'+
+          it.avoid.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("")+'</ul></div>';
+  body += '<div data-note="'+it.id+'">'+noteHTML(it.id)+'</div>';
+
+  if(it.star){
+    var cells = [["S","Situation","当时是什么情况"],["T","Task","我要解决什么"],
+                 ["Ac","Action","我具体做了什么"],["R","Result","结果 / 学到什么"]];
+    body += '<div class="blk"><h5>STAR 案例拆解</h5><div class="stargrid">'+
+      cells.map(function(c){
+        var letter = c[0]==="Ac" ? "A" : c[0];
+        return '<div class="starcell"><label><b>'+letter+'</b> — '+c[1]+'　'+c[2]+'</label>'+
+               '<textarea class="ta star" data-id="'+it.id+'" data-f="'+c[0]+'" placeholder="…"></textarea></div>';
+      }).join("")+'</div></div>';
+  }
+  if(it.ask){
+    body += taField(it.id,"cn","我要问的问题","挑 2–3 个，写成自己的话","把你真正想知道的写下来…");
+    body += taField(it.id,"en","英文说法","现场怎么开口","…");
+    body += taField(it.id,"fin","最终版","面试当天照着这个问","…");
+  }else{
+    body += taField(it.id,"cn","我的中文答案","写满这一栏就算完成","先用中文把逻辑理顺，别急着翻译…");
+    body += taField(it.id,"en","我的英文答案","句子写短，先能说出口","…");
+    body += taField(it.id,"fin","修改后的最终答案","练熟的版本放这里","…");
+  }
+  return '<article class="card'+(filled(it.id)?" done":"")+(openMap[it.id]?" open":"")+'" data-id="'+it.id+'">'+
+    '<div class="qtop">'+
+      '<button class="qhead" type="button" aria-expanded="'+(openMap[it.id]?"true":"false")+'">'+
+        '<div class="tagrow">'+tags+'</div>'+
+        '<p class="qen">'+esc(it.q)+'</p>'+
+        '<p class="qzh">'+esc(it.zh)+'</p>'+
+      '</button>'+
+      '<button class="starbtn" type="button" data-star="'+it.id+'" aria-pressed="'+(state.data.star[it.id]?"true":"false")+
+      '" aria-label="标记为我的重点" title="标记为我的重点">'+(state.data.star[it.id]?"★":"☆")+'</button>'+
+    '</div>'+
+    '<div class="qbody">'+body+'</div></article>';
+}
+function noteHTML(id){
+  var n = (state.data.notes || {})[id];
+  if(!n) return "";
+  var txt = typeof n === "string" ? n : (n.text || "");
+  var at  = (typeof n === "object" && n.at) ? n.at : "";
+  if(!txt) return "";
+  return '<div class="blk keke"><h5>钶钶说</h5><p>'+esc(txt)+'</p>'+
+         (at ? '<span class="at">'+esc(at)+'</span>' : "")+'</div>';
+}
+
+var list = $("list");
+function renderAll(){
+  var html = "", rail = "";
+  DATA.cats.forEach(function(c){
+    var its = byCat[c.key] || [];
+    html += '<section class="cat" id="cat-'+c.key+'">'+
+      '<div class="cathead"><div class="catmeta"><span class="catletter">'+c.letter+'</span>'+
+      '<h2>'+esc(c.name)+'</h2><span class="catcount" data-catcount="'+c.key+'"></span></div>'+
+      '<p class="catdesc">'+esc(c.desc)+'</p></div>'+
+      its.map(cardHTML).join("")+'</section>';
+    rail += '<button class="navbtn" data-jump="cat-'+c.key+'"><span class="k">'+c.letter+'</span>'+
+            esc(c.name)+'<span class="p" data-navp="'+c.key+'"></span></button>';
+  });
+  list.innerHTML = html;
+  $("navRail").innerHTML = rail;
+  // 填值
+  DATA.items.forEach(function(it){
+    var a = A(it.id);
+    FIELDS.forEach(function(f){
+      var el = list.querySelector('textarea[data-id="'+it.id+'"][data-f="'+f+'"]');
+      if(el) el.value = a[f] || "";
+    });
+  });
+  refreshStats();
+  applyFilter();
+  list.querySelectorAll(".card.open textarea.ta").forEach(fit);
+}
+function renderNotes(){
+  DATA.items.forEach(function(it){
+    var box = list.querySelector('[data-note="'+it.id+'"]');
+    if(box) box.innerHTML = noteHTML(it.id);
+    var card = list.querySelector('.card[data-id="'+it.id+'"]');
+    if(!card) return;
+    var has = !!(state.data.notes||{})[it.id];
+    var flag = card.querySelector(".tag.kekeflag");
+    if(has && !flag){
+      var code = card.querySelector(".code");
+      if(code) code.insertAdjacentHTML("afterend", '<span class="tag kekeflag">钶钶说</span>');
+    }else if(!has && flag){ flag.remove(); }
+  });
+}
+
+function refreshStats(){
+  var total = DATA.items.length, done = 0;
+  DATA.items.forEach(function(it){ if(filled(it.id)) done++; });
+  var pct = total ? Math.round(done/total*100) : 0;
+  $("progFill").style.width = pct+"%";
+  $("progTxt").textContent = "已完成 "+done+" / "+total;
+  $("topline").style.width = pct+"%";
+  DATA.cats.forEach(function(c){
+    var its = byCat[c.key]||[], d = its.filter(function(i){ return filled(i.id); }).length;
+    var e1 = list.querySelector('[data-catcount="'+c.key+'"]'); if(e1) e1.textContent = d+"/"+its.length;
+    var e2 = document.querySelector('[data-navp="'+c.key+'"]'); if(e2) e2.textContent = d+"/"+its.length;
+  });
+  var n = function(f){ return DATA.items.filter(f).length; };
+  $("cMust").textContent = n(function(i){ return i.pri==="must"; });
+  $("cHigh").textContent = n(function(i){ return i.pri==="high"; });
+  $("cEn").textContent   = n(function(i){ return i.en; });
+  $("cStar").textContent = Object.keys(state.data.star).filter(function(k){ return state.data.star[k]; }).length;
+  $("cKeke").textContent = Object.keys(state.data.notes||{}).length;
+  $("cTodo").textContent = total - done;
+}
+
+/* ── 搜索 / 筛选 ── */
+var curFilter = "all", curQuery = "", HAY = {};
+DATA.items.forEach(function(it){
+  HAY[it.id] = (it.id+" "+it.q+" "+it.zh+" "+it.why+" "+it.tips.join(" ")+" "+it.avoid.join(" ")).toLowerCase();
+});
+function applyFilter(){
+  var q = curQuery.trim().toLowerCase(), hits = 0;
+  DATA.items.forEach(function(it){
+    var el = list.querySelector('.card[data-id="'+it.id+'"]'); if(!el) return;
+    var ok = true;
+    if(curFilter==="must") ok = it.pri==="must";
+    else if(curFilter==="high") ok = it.pri==="high";
+    else if(curFilter==="star") ok = !!state.data.star[it.id];
+    else if(curFilter==="keke") ok = !!(state.data.notes||{})[it.id];
+    else if(curFilter==="en") ok = it.en;
+    else if(curFilter==="todo") ok = !filled(it.id);
+    if(ok && q) ok = HAY[it.id].indexOf(q) !== -1;
+    el.style.display = ok ? "" : "none";
+    if(ok) hits++;
+  });
+  DATA.cats.forEach(function(c){
+    var sec = $("cat-"+c.key); if(!sec) return;
+    sec.style.display = (byCat[c.key]||[]).some(function(i){
+      var el = list.querySelector('.card[data-id="'+i.id+'"]');
+      return el && el.style.display !== "none";
+    }) ? "" : "none";
+  });
+  $("emptyMsg").style.display = hits ? "none" : "";
+  $("hitCount").textContent = (curFilter==="all" && !q) ? "" : (hits+" 题");
+}
+
+/* ── 事件 ── */
+list.addEventListener("input", function(e){
+  var t = e.target;
+  if(t.tagName !== "TEXTAREA" || !t.dataset.f) return;
+  A(t.dataset.id)[t.dataset.f] = t.value;
+  state.touched[t.dataset.id+"."+t.dataset.f] = true;
+  fit(t);
+  if(t.dataset.f === "cn"){
+    t.closest(".card").classList.toggle("done", !!t.value.trim());
+    refreshStats();
+  }
+  scheduleSync();
+});
+list.addEventListener("click", function(e){
+  var sb = e.target.closest("[data-star]");
+  if(sb){
+    e.preventDefault(); e.stopPropagation();
+    var id = sb.dataset.star;
+    state.data.star[id] = !state.data.star[id];
+    state.touched["star."+id] = true;
+    sb.setAttribute("aria-pressed", state.data.star[id] ? "true":"false");
+    sb.textContent = state.data.star[id] ? "★" : "☆";
+    refreshStats(); if(curFilter==="star") applyFilter();
+    scheduleSync();
+    return;
+  }
+  var head = e.target.closest(".qhead");
+  if(head){
+    var card = head.closest(".card"), cid = card.dataset.id;
+    var open = !card.classList.contains("open");
+    card.classList.toggle("open", open);
+    head.setAttribute("aria-expanded", open ? "true":"false");
+    openMap[cid] = open;
+    lsSet(LS.open, JSON.stringify(openMap));
+    if(open) card.querySelectorAll("textarea.ta").forEach(fit);
+  }
+});
+$("search").addEventListener("input", function(e){ curQuery = e.target.value; applyFilter(); });
+$("filterChips").addEventListener("click", function(e){
+  var c = e.target.closest(".chip"); if(!c) return;
+  curFilter = c.dataset.filter;
+  this.querySelectorAll(".chip").forEach(function(x){
+    x.setAttribute("aria-pressed", x===c ? "true":"false");
+  });
+  applyFilter();
+});
+$("navRail").addEventListener("click", function(e){
+  var b = e.target.closest("[data-jump]"); if(!b) return;
+  var el = $(b.dataset.jump); if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+});
+function setAllOpen(v){
+  DATA.items.forEach(function(it){
+    var card = list.querySelector('.card[data-id="'+it.id+'"]'); if(!card) return;
+    card.classList.toggle("open", v);
+    var h = card.querySelector(".qhead"); if(h) h.setAttribute("aria-expanded", v?"true":"false");
+    openMap[it.id] = v;
+    if(v) card.querySelectorAll("textarea.ta").forEach(fit);
+  });
+  lsSet(LS.open, JSON.stringify(openMap));
+}
+$("expandAll").onclick = function(){ setAllOpen(true); };
+$("collapseAll").onclick = function(){ setAllOpen(false); };
+$("pullBtn").onclick = function(){
+  setSync("busy","拉取中…");
+  pull(false).then(function(){ renderNotes(); toast("是最新的了"); })
+             .catch(function(e){ setSync("bad", humanErr(e), true); toast(humanErr(e)); });
+};
+
+/* ── 主题 ── */
+var THEMES = [["auto","跟随系统"],["light","浅色"],["dark","深色"]];
+var theme = lsGet(LS.theme) || "auto";
+function applyTheme(){
+  if(theme === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", theme);
+  var l = THEMES.filter(function(x){ return x[0]===theme; })[0];
+  $("themeBtn").textContent = "主题：" + (l ? l[1] : "跟随系统");
+}
+$("themeBtn").onclick = function(){
+  var i = THEMES.map(function(x){ return x[0]; }).indexOf(theme);
+  theme = THEMES[(i+1)%THEMES.length][0];
+  lsSet(LS.theme, theme); applyTheme();
+};
+applyTheme();
+
+/* ── 导出 ── */
+function stamp(){
+  var d=new Date(), p=function(n){return ("0"+n).slice(-2);};
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+}
+function fname(ext){
+  var d=new Date(), p=function(n){return ("0"+n).slice(-2);};
+  return "JustPlay-面试准备-"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"."+ext;
+}
+function exportText(md){
+  var only = $("onlyFilled").checked;
+  var total = DATA.items.length, done = DATA.items.filter(function(i){ return filled(i.id); }).length;
+  var L = [];
+  if(md){ L.push("# Just Play · HR & Admin Assistant 面试准备"); L.push("");
+          L.push("导出时间："+stamp()+"　｜　进度："+done+" / "+total); }
+  else  { L.push("Just Play · HR & Admin Assistant 面试准备");
+          L.push("导出时间："+stamp()+"　进度："+done+" / "+total);
+          L.push("========================================"); }
+  DATA.cats.forEach(function(c){
+    var its = (byCat[c.key]||[]).filter(function(i){ return only ? anyContent(i.id) : true; });
+    if(!its.length) return;
+    L.push(""); L.push(md ? ("## "+c.letter+". "+c.name) : ("【"+c.letter+". "+c.name+"】"));
+    its.forEach(function(it){
+      var a = A(it.id);
+      L.push(""); L.push(md ? ("### "+it.id+" · "+it.q) : ("--- "+it.id+" · "+it.q));
+      L.push(md ? ("*"+it.zh+"*") : ("    "+it.zh));
+      var marks = [];
+      if(PRI[it.pri]) marks.push(PRI[it.pri].t);
+      if(state.data.star[it.id]) marks.push("★我的重点");
+      if(it.en) marks.push("可能要求英文作答");
+      if(marks.length) L.push(md ? ("`"+marks.join(" / ")+"`") : ("    ["+marks.join(" / ")+"]"));
+      var nt = (state.data.notes||{})[it.id];
+      if(nt){ var ntx = typeof nt==="string" ? nt : (nt.text||"");
+              if(ntx){ L.push(""); L.push(md ? "**钶钶说**" : "  钶钶说："); L.push(ntx); } }
+      if(it.star && (a.S||a.T||a.Ac||a.R)){
+        L.push(""); L.push(md ? "**STAR**" : "  STAR");
+        L.push("- S："+(a.S||"（未填写）")); L.push("- T："+(a.T||"（未填写）"));
+        L.push("- A："+(a.Ac||"（未填写）")); L.push("- R："+(a.R||"（未填写）"));
+      }
+      var rows = it.ask ? [["我要问的问题",a.cn],["英文说法",a.en],["最终版",a.fin]]
+                        : [["我的中文答案",a.cn],["我的英文答案",a.en],["修改后的最终答案",a.fin]];
+      rows.forEach(function(r){
+        L.push(""); L.push(md ? ("**"+r[0]+"**") : ("  "+r[0]+"："));
+        L.push((r[1] && r[1].trim()) ? r[1] : "（未填写）");
+      });
+    });
+  });
+  L.push(""); return L.join("\n");
+}
+function exportJSON(){
+  return JSON.stringify({ app:"jp-interview", v:1, exportedAt:now(),
+    progress: DATA.items.filter(function(i){ return filled(i.id); }).length+"/"+DATA.items.length,
+    ans: state.data.ans, star: state.data.star, notes: state.data.notes }, null, 2);
+}
+function download(text, name, mime){
+  try{
+    var b = new Blob([text], {type:mime+";charset=utf-8"});
+    var u = URL.createObjectURL(b), a = document.createElement("a");
+    a.href = u; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); }, 1500);
+  }catch(e){ toast("下载被拦了，用「复制」吧"); }
+}
+function copyText(text, btn){
+  var done = function(){ var o = btn.textContent; btn.textContent = "已复制 ✓";
+                         setTimeout(function(){ btn.textContent = o; }, 1600); };
+  function fb(){
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); done(); }catch(e){ toast("复制失败，手动选一下"); }
+    ta.remove();
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(text).then(done, fb);
+  else fb();
+}
+$("toolsPanel").addEventListener("click", function(e){
+  var b = e.target.closest("[data-export]"); if(!b) return;
+  var kind = b.dataset.export, mode = b.dataset.mode;
+  var text = kind==="json" ? exportJSON() : exportText(kind==="md");
+  var ext  = kind==="json" ? "json" : kind;
+  var mime = kind==="json" ? "application/json" : (kind==="md" ? "text/markdown" : "text/plain");
+  if(mode==="dl") download(text, fname(ext), mime); else copyText(text, b);
+});
+
+/* ── 导入（空字段不覆盖） ── */
+function doImport(text){
+  var obj;
+  try{ obj = JSON.parse(text); }catch(e){ toast("这不是有效的 JSON"); return; }
+  if(!obj || !obj.ans || typeof obj.ans !== "object"){ toast("JSON 里找不到 ans 字段"); return; }
+  var n = 0;
+  Object.keys(obj.ans).forEach(function(id){
+    var src = obj.ans[id] || {}, dst = A(id);
+    FIELDS.forEach(function(f){
+      var v = src[f];
+      if(typeof v === "string" && v.trim()){ dst[f] = v; state.touched[id+"."+f] = true; n++; }
+    });
+  });
+  if(obj.star && typeof obj.star === "object"){
+    Object.keys(obj.star).forEach(function(id){
+      if(obj.star[id]){ state.data.star[id] = true; state.touched["star."+id] = true; }
+    });
+  }
+  if(!n){ toast("这份 JSON 里没有填写过的内容"); return; }
+  renderAll();
+  push(true).then(function(){ toast("搬进来了：" + n + " 段内容"); });
+}
+$("pasteImport").onclick = function(){
+  var v = $("pasteBox").value.trim();
+  if(!v) return toast("先把 JSON 粘到框里");
+  doImport(v); $("pasteBox").value = "";
+};
+$("pickFile").onclick = function(){ $("fileInput").click(); };
+$("fileInput").onchange = function(e){
+  var f = e.target.files && e.target.files[0]; if(!f) return;
+  var r = new FileReader();
+  r.onload = function(){ doImport(String(r.result)); };
+  r.onerror = function(){ toast("读取文件失败"); };
+  r.readAsText(f, "utf-8"); e.target.value = "";
+};
+$("forgetBtn").onclick = function(){
+  if(!confirm("忘掉这台设备上的钥匙？答案在仓库里不会丢，重新填钥匙就能回来。")) return;
+  lsDel(LS.tok); TOKEN = ""; show("setup"); $("tokIn").value = "";
+};
+
+/* ── 回到顶部 ── */
+var totop = $("totop");
+window.addEventListener("scroll", function(){
+  totop.classList.toggle("show", window.scrollY > 700);
+}, {passive:true});
+totop.onclick = function(){ window.scrollTo({top:0, behavior:"smooth"}); };
+
+/* ── 离开前尽量存一次 ── */
+function flush(){
+  if(!state.data) return;
+  saveDraft();
+  clearTimeout(syncTimer);
+  if(!state.syncing) push(false);
+}
+window.addEventListener("beforeunload", flush);
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden) flush();
+  else if(TOKEN && state.data && !state.syncing){
+    pull(false).then(renderNotes).catch(function(){});
+  }
+});
+
+/* ══════════ 启动 ══════════ */
+function boot(){
+  $("repoLine").innerHTML = "答案存在 <b>"+esc(REPO)+"/"+esc(DPATH)+"</b>（私有仓库），分支 <b>"+esc(BRANCH)+"</b>。版本 "+BUILD+"。";
+  setSync("busy", "连接中…");
+  return pull(true).then(function(){
+    // 有没有没送出去的草稿
+    var d = null;
+    try{ d = JSON.parse(lsGet(LS.draft) || "null"); }catch(e){}
+    if(d && d.ans){
+      var extra = 0;
+      Object.keys(d.ans).forEach(function(id){
+        var src = d.ans[id] || {}, dst = A(id);
+        FIELDS.forEach(function(f){
+          if(typeof src[f]==="string" && src[f].trim() && src[f] !== dst[f]){
+            dst[f] = src[f]; state.touched[id+"."+f] = true; extra++;
+          }
+        });
+      });
+      if(d.star) Object.keys(d.star).forEach(function(id){ if(d.star[id]) state.data.star[id] = true; });
+      if(extra){ renderAll(); push(false); toast("补回了上次没存上的 "+extra+" 段"); return; }
+      clearDraft();
+    }
+    renderAll();
+  });
+}
+
+$("tokSave").onclick = function(){
+  var v = $("tokIn").value.trim();
+  if(!v) return toast("还没填呢");
+  TOKEN = v;
+  setSync("busy","试一下这把钥匙");
+  boot().then(function(){
+    lsSet(LS.tok, v); show("main"); toast("进来了");
+  }).catch(function(e){
+    TOKEN = ""; toast(humanErr(e) || "钥匙不对", 3200);
+  });
+};
+
+if(TOKEN){
+  show("main");
+  boot().catch(function(e){
+    if(/钥匙|401|403/.test(e.message || "")){ TOKEN = ""; show("setup"); toast(e.message, 3200); }
+    else { state.data = state.data || blankData(); renderAll(); setSync("bad", humanErr(e), true); }
+  });
+}else{
+  show("setup");
+}
+})();
+
+</script>
+</body>
+</html>
