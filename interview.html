@@ -290,6 +290,23 @@ textarea.big{min-height:110px}
 :root[data-theme="dark"] .newsflag button,:root:not([data-theme="light"]) .newsflag button{color:#0F1211}
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .newsflag button{color:#fff}}
 
+/* ── 横向轨道翻页（电脑上没有触屏，靠按钮和滚轮） ── */
+.railwrap{display:flex;align-items:center;gap:3px}
+.railwrap>.chips,.railwrap>.navrail{flex:1 1 auto;min-width:0}
+.railbtn{
+  flex:0 0 auto;width:27px;align-self:stretch;margin:6px 0;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-3);
+  border-radius:7px;cursor:pointer;font-size:15px;line-height:1;padding:0;
+  display:none;align-items:center;justify-content:center;
+}
+.railbtn.show{display:flex}
+.railbtn:hover:not(:disabled){background:var(--surface-2);color:var(--ink);border-color:var(--line-2)}
+.railbtn:disabled{opacity:.28;cursor:default}
+
+/* ── 参考版 ── */
+.tag.draft{background:var(--high-soft);color:var(--high);font-weight:600}
+.card.isdraft{border-left-color:var(--high)}
+
 /* ── 钶钶说 ── */
 .blk.keke{background:var(--accent-soft);border-radius:8px;padding:11px 12px;border-left:3px solid var(--accent)}
 .blk.keke h5{color:var(--accent)}
@@ -394,6 +411,8 @@ textarea.big{min-height:110px}
       <input class="search" id="search" type="search" placeholder="搜索题目、关键词、思路…" autocomplete="off">
       <span class="count" id="hitCount"></span>
     </div>
+    <div class="railwrap">
+    <button class="railbtn" data-scroll="filterChips" data-dir="-1" aria-label="向左翻">‹</button>
     <div class="chips" id="filterChips">
       <button class="chip" data-filter="all" aria-pressed="true">全部</button>
       <button class="chip" data-filter="must" aria-pressed="false">必准备<span class="n" id="cMust"></span></button>
@@ -401,9 +420,16 @@ textarea.big{min-height:110px}
       <button class="chip" data-filter="star" aria-pressed="false">★ 我的重点<span class="n" id="cStar"></span></button>
       <button class="chip" data-filter="keke" aria-pressed="false">钶钶改过<span class="n" id="cKeke"></span></button>
       <button class="chip" data-filter="en" aria-pressed="false">英文作答<span class="n" id="cEn"></span></button>
+      <button class="chip" data-filter="draft" aria-pressed="false">参考版<span class="n" id="cDraft"></span></button>
       <button class="chip" data-filter="todo" aria-pressed="false">未完成<span class="n" id="cTodo"></span></button>
     </div>
+    <button class="railbtn" data-scroll="filterChips" data-dir="1" aria-label="向右翻">›</button>
+    </div>
+    <div class="railwrap">
+    <button class="railbtn" data-scroll="navRail" data-dir="-1" aria-label="向左翻">‹</button>
     <nav class="navrail" id="navRail" aria-label="分类导航"></nav>
+    <button class="railbtn" data-scroll="navRail" data-dir="1" aria-label="向右翻">›</button>
+    </div>
   </div>
 
   <main id="list"></main>
@@ -430,7 +456,7 @@ textarea.big{min-height:110px}
    答案住在 lab/kkee-jobs（private）
    钥匙只住在这台设备的 localStorage 里
    ══════════════════════════════════════════════════ */
-var BUILD  = "20260824-2";
+var BUILD  = "20260824-3";
 var OWNER  = "Ererhere";
 var REPO   = "lab";
 var BRANCH = "claude/gege-sjarsl";
@@ -531,13 +557,14 @@ function ghWrite(path, text, sha, msg){
 var FIELDS = ["cn","en","fin","S","T","Ac","R"];
 function blankData(){
   return { app:"jp-interview", v:1, updatedAt:now(), updatedBy:"而而",
-           ans:{}, star:{}, notes:{} };
+           ans:{}, star:{}, notes:{}, drafts:{} };
 }
 function normalize(d){
   if(!d || typeof d!=="object") d = blankData();
   d.ans   = (d.ans && typeof d.ans==="object") ? d.ans : {};
   d.star  = (d.star && typeof d.star==="object") ? d.star : {};
   d.notes = (d.notes && typeof d.notes==="object") ? d.notes : {};
+  d.drafts = (d.drafts && typeof d.drafts==="object") ? d.drafts : {};
   return d;
 }
 function A(id){
@@ -546,7 +573,11 @@ function A(id){
   FIELDS.forEach(function(f){ if(typeof a[f] !== "string") a[f] = ""; });
   return a;
 }
-function filled(id){ var a = state.data.ans[id]; return !!(a && a.cn && a.cn.trim()); }
+function isDraft(id){ return !!(state.data.drafts || {})[id]; }
+function filled(id){
+  var a = state.data.ans[id];
+  return !!(a && a.cn && a.cn.trim()) && !isDraft(id);
+}
 function anyContent(id){
   var a = state.data.ans[id]; if(!a) return false;
   return FIELDS.some(function(f){ return a[f] && a[f].trim(); });
@@ -556,7 +587,15 @@ function anyContent(id){
 function mergeRemote(remote){
   remote = normalize(remote);
   var out = { app:"jp-interview", v:1, updatedAt:remote.updatedAt, updatedBy:remote.updatedBy,
-              ans:{}, star:{}, notes: remote.notes || {} };
+              ans:{}, star:{}, notes: remote.notes || {}, drafts:{} };
+  var dids = {};
+  Object.keys(remote.drafts||{}).forEach(function(k){ dids[k]=1; });
+  Object.keys(state.data.drafts||{}).forEach(function(k){ dids[k]=1; });
+  Object.keys(dids).forEach(function(id){
+    // 她接管过的（本地已取消草稿标记）就不再是参考版
+    if(state.touched["draft."+id]){ if(state.data.drafts[id]) out.drafts[id]=true; }
+    else if((remote.drafts||{})[id]) out.drafts[id]=true;
+  });
   var ids = {};
   Object.keys(remote.ans||{}).forEach(function(k){ ids[k]=1; });
   Object.keys(state.data.ans||{}).forEach(function(k){ ids[k]=1; });
@@ -579,7 +618,8 @@ function mergeRemote(remote){
 
 /* ── 草稿（网络断了也不丢字） ── */
 function saveDraft(){
-  lsSet(LS.draft, JSON.stringify({ at:Date.now(), ans:state.data.ans, star:state.data.star }));
+  lsSet(LS.draft, JSON.stringify({ at:Date.now(), ans:state.data.ans,
+                                   star:state.data.star, drafts:state.data.drafts }));
 }
 function clearDraft(){ lsDel(LS.draft); }
 
@@ -676,6 +716,7 @@ function cardHTML(it){
   var note = (state.data.notes || {})[it.id];
   var tags = '<span class="code">'+it.id+'</span>';
   if(PRI[it.pri]) tags += '<span class="tag '+PRI[it.pri].c+'">'+PRI[it.pri].t+'</span>';
+  if(isDraft(it.id)) tags += '<span class="tag draft">参考版</span>';
   if(note)    tags += '<span class="tag kekeflag">钶钶说</span>';
   if(it.en)   tags += '<span class="tag en">可能要求英文作答</span>';
   if(it.star) tags += '<span class="tag star">建议 STAR</span>';
@@ -707,7 +748,7 @@ function cardHTML(it){
     body += taField(it.id,"en","我的英文答案","句子写短，先能说出口","…");
     body += taField(it.id,"fin","修改后的最终答案","练熟的版本放这里","…");
   }
-  return '<article class="card'+(filled(it.id)?" done":"")+(openMap[it.id]?" open":"")+'" data-id="'+it.id+'">'+
+  return '<article class="card'+(filled(it.id)?" done":"")+(isDraft(it.id)?" isdraft":"")+(openMap[it.id]?" open":"")+'" data-id="'+it.id+'">'+
     '<div class="qtop">'+
       '<button class="qhead" type="button" aria-expanded="'+(openMap[it.id]?"true":"false")+'">'+
         '<div class="tagrow">'+tags+'</div>'+
@@ -754,6 +795,7 @@ function renderAll(){
   });
   refreshStats();
   applyFilter();
+  updRails();
   list.querySelectorAll(".card.open textarea.ta").forEach(fit);
 }
 function renderNotes(){
@@ -789,6 +831,8 @@ function refreshStats(){
   $("cEn").textContent   = n(function(i){ return i.en; });
   $("cStar").textContent = Object.keys(state.data.star).filter(function(k){ return state.data.star[k]; }).length;
   $("cKeke").textContent = Object.keys(state.data.notes||{}).length;
+  $("cDraft").textContent = Object.keys(state.data.drafts||{}).filter(function(k){
+    return state.data.drafts[k]; }).length;
   $("cTodo").textContent = total - done;
 }
 
@@ -806,6 +850,7 @@ function applyFilter(){
     else if(curFilter==="high") ok = it.pri==="high";
     else if(curFilter==="star") ok = !!state.data.star[it.id];
     else if(curFilter==="keke") ok = !!(state.data.notes||{})[it.id];
+    else if(curFilter==="draft") ok = isDraft(it.id);
     else if(curFilter==="en") ok = it.en;
     else if(curFilter==="todo") ok = !filled(it.id);
     if(ok && q) ok = HAY[it.id].indexOf(q) !== -1;
@@ -831,7 +876,15 @@ list.addEventListener("input", function(e){
   state.touched[t.dataset.id+"."+t.dataset.f] = true;
   fit(t);
   if(t.dataset.f === "cn"){
-    t.closest(".card").classList.toggle("done", !!t.value.trim());
+    var card = t.closest(".card");
+    if(isDraft(t.dataset.id)){
+      // 她动手改了参考版 —— 从这一刻起这题算她的
+      delete state.data.drafts[t.dataset.id];
+      state.touched["draft."+t.dataset.id] = true;
+      card.classList.remove("isdraft");
+      var dt = card.querySelector(".tag.draft"); if(dt) dt.remove();
+    }
+    card.classList.toggle("done", !!t.value.trim());
     refreshStats();
   }
   scheduleSync();
@@ -860,6 +913,40 @@ list.addEventListener("click", function(e){
     if(open) card.querySelectorAll("textarea.ta").forEach(fit);
   }
 });
+/* ── 横向轨道：翻页按钮 + 滚轮横滚（电脑上没有触屏） ── */
+var RAILS = ["filterChips", "navRail"];
+function updRail(id){
+  var el = $(id); if(!el) return;
+  var btns = el.parentNode.querySelectorAll("[data-scroll='" + id + "']");
+  var can = el.scrollWidth > el.clientWidth + 2;
+  var max = el.scrollWidth - el.clientWidth;
+  Array.prototype.forEach.call(btns, function(b){
+    b.classList.toggle("show", can);
+    var d = parseInt(b.dataset.dir, 10);
+    b.disabled = !can || (d < 0 ? el.scrollLeft <= 1 : el.scrollLeft >= max - 1);
+  });
+}
+function updRails(){ RAILS.forEach(updRail); }
+RAILS.forEach(function(id){
+  var el = $(id); if(!el) return;
+  Array.prototype.forEach.call(el.parentNode.querySelectorAll("[data-scroll='" + id + "']"), function(b){
+    b.addEventListener("click", function(){
+      var step = Math.max(150, el.clientWidth * 0.7);
+      el.scrollBy({left: parseInt(b.dataset.dir, 10) * step, behavior:"smooth"});
+      setTimeout(function(){ updRail(id); }, 420);
+    });
+  });
+  el.addEventListener("scroll", function(){ updRail(id); }, {passive:true});
+  el.addEventListener("wheel", function(e){
+    if(el.scrollWidth <= el.clientWidth + 2) return;      // 没得滚就别抢页面滚动
+    if(Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;  // 本来就是横向手势，交给浏览器
+    e.preventDefault();
+    el.scrollLeft += e.deltaY;
+    updRail(id);
+  }, {passive:false});
+});
+window.addEventListener("resize", updRails);
+
 $("search").addEventListener("input", function(e){ curQuery = e.target.value; applyFilter(); });
 $("filterChips").addEventListener("click", function(e){
   var c = e.target.closest(".chip"); if(!c) return;
