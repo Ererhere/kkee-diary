@@ -1,0 +1,12 @@
+{
+  "name": "而而的面试台",
+  "short_name": "面试台",
+  "description": "Just Play HR & Admin Assistant，题目、思路、雷区和我的答案",
+  "start_url": "./interview.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F8F7",
+  "theme_color": "#F6F8F7",
+  "lang": "zh-CN"
+}
