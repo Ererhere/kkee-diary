@@ -1,0 +1,12 @@
+{
+  "name": "而而的简历台",
+  "short_name": "简历台",
+  "description": "英文简历，改完直接导出 A4 PDF",
+  "start_url": "./resume.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14181c",
+  "theme_color": "#14181c",
+  "lang": "zh-CN"
+}

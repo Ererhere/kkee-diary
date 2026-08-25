@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#14181c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="resume-manifest.json">
+<title>而而的简历台</title>
+<style>
+*{margin:0;padding:0}
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blue:#2E75B5;      /* 名字、章节标题、标签 */
+  --navy:#173456;      /* 横线、方块 */
+  --ink:#595959;       /* 正文 */
+  --pad-x:9.95mm;      /* 左右页边距 = 28.2pt */
+  --indent:32.2mm;     /* 正文缩进 = 119.4pt - 28.2pt */
+}
+html,body{background:#9a9a9a}
+body{
+  font-family:"Microsoft YaHei","微软雅黑","PingFang SC","Hiragino Sans GB",
+              "Segoe UI",Arial,sans-serif;
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+.page{
+  width:210mm; height:297mm;
+  background:#fff; margin:8mm auto; position:relative; overflow:hidden;
+  padding:11.6mm var(--pad-x) 12mm var(--pad-x);
+  box-shadow:0 2px 12px rgba(0,0,0,.35);
+}
+
+/* ── 抬头 ── */
+.head{display:flex;justify-content:space-between;align-items:flex-start}
+.head-l{flex:1;min-width:0;padding-top:.5mm}
+.name{
+  font-size:24pt; font-style:italic; font-weight:400; color:var(--blue);
+  letter-spacing:.3pt; line-height:1.1; margin-bottom:5.2mm;
+}
+.contact{font-size:10pt;line-height:1.45}
+.contact .row{display:flex;margin-bottom:3.6mm}
+.contact .row:last-child{margin-bottom:0}
+.contact .row.r2{padding-left:29.4mm}          /* 第二行缩进 = 113.4pt-30.2pt */
+.contact .row.r2 .c1{width:67.6mm}
+.contact .c1{width:96mm;flex:0 0 auto}
+.contact .c2{flex:1}
+.lb{color:var(--blue);margin-right:1.2mm}
+.vl{color:var(--ink)}
+.photo{
+  width:32.3mm; height:42.7mm; flex:0 0 auto; margin-left:6mm;
+  border:.6pt solid var(--blue); object-fit:cover; display:block;
+}
+.rule{height:1.1pt;background:var(--navy);margin:4.6mm 0 0}
+.page.p2{padding-top:19mm}
+
+/* ── 章节 ── */
+.sec{font-size:13.5pt;color:var(--blue);font-weight:400;line-height:1.3}
+.sec-1{margin:8.4mm 0 2.6mm}                    /* 第 1 页：标题下无横线 */
+.sec-2{margin:0 0 0}                            /* 第 2 页：标题下有横线+方块 */
+.sec-rule{display:flex;align-items:center;margin:5.6mm 0 8mm;padding-left:var(--indent)}
+.sec-rule i{width:4.2mm;height:3.2mm;background:var(--navy);border-radius:.6mm;flex:0 0 auto}
+.sec-rule u{flex:1;height:1pt;background:var(--navy);text-decoration:none;margin-left:1.4mm}
+
+/* ── 条目 ── */
+.item{display:flex;font-size:10pt;line-height:1.45}
+.date{width:27.6mm;flex:0 0 auto;color:var(--ink)}
+.dia{width:4.6mm;flex:0 0 auto;color:var(--navy);font-size:8pt;line-height:1.9}
+.body{flex:1;min-width:0}
+.org{display:flex;justify-content:space-between;gap:4mm;margin-bottom:2.4mm}
+.org b{font-weight:400;color:var(--ink)}
+.sub{margin-bottom:1.6mm}
+.para{text-align:justify;text-justify:inter-word;hyphens:auto}
+.courses{margin-top:.6mm}
+
+/* ── 项目符号 ── */
+.bul{font-size:10pt;line-height:1.45;text-align:justify;margin-bottom:4.4mm}
+.bul:last-child{margin-bottom:0}
+.bul::before{content:"• ";}
+.blk{padding-left:var(--indent)}
+strong{font-weight:700;color:var(--ink)}
+
+/* ══════════ 编辑器 UI（打印时全部隐藏） ══════════ */
+.bar{
+  position:sticky;top:0;z-index:50;background:#1b1f24;color:#e8eaed;
+  padding:7px 10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;
+  box-shadow:0 2px 10px rgba(0,0,0,.4);
+  font-family:-apple-system,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;
+}
+.bar button,.bar select{
+  background:#2c3238;border:1px solid #3d454d;color:#e8eaed;border-radius:6px;
+  padding:6px 10px;font-size:13px;cursor:pointer;line-height:1.2;min-height:32px;
+}
+.bar button:hover{background:#3a424a}
+.bar button:active{background:#454e57}
+.bar button.on{background:#2E75B5;border-color:#2E75B5;color:#fff}
+.bar button.pri{background:#2E75B5;border-color:#2E75B5;color:#fff}
+.bar button.pri:hover{background:#1f5f96}
+.bar button.warn{color:#ff9c85}
+.bar .sp{width:1px;height:22px;background:#3d454d;margin:0 3px}
+.bar .grp{display:flex;gap:4px;align-items:center}
+.bar .lb{font-size:11px;color:#98a2ac;margin-right:2px}
+.bar .st{margin-left:auto;font-size:12px;color:#98a2ac;white-space:nowrap}
+.sw{width:20px;height:20px;border-radius:4px;border:1px solid #55606a;cursor:pointer;padding:0}
+.hint{
+  max-width:210mm;margin:10px auto 0;padding:9px 13px;background:#22303f;color:#cfe0f0;
+  font-size:12.5px;line-height:1.65;border-radius:7px;
+  font-family:-apple-system,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;
+}
+.hint b{color:#8fc3f0}
+.hint code{background:#16202b;padding:1px 5px;border-radius:3px;font-size:12px}
+
+/* 可编辑区的提示（只在编辑模式显示） */
+body.edit [contenteditable]{outline:1px dashed #b9d3ea;outline-offset:2px;border-radius:2px}
+body.edit [contenteditable]:hover{background:#f2f8fd}
+body.edit [contenteditable]:focus{outline:2px solid #2E75B5;background:#fff}
+body.edit .photo{cursor:pointer}
+body.edit .photo:hover{outline:2px solid #2E75B5;outline-offset:2px}
+body.edit .bul{position:relative}
+
+/* 超出 A4 的警告 */
+.page.over{outline:3px solid #d93025}
+.overtip{
+  max-width:210mm;margin:6px auto 0;padding:8px 12px;background:#4a1512;color:#ffd0c8;
+  border-radius:7px;font-size:12.5px;display:none;
+  font-family:-apple-system,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;
+}
+.overtip.on{display:block}
+
+/* ── 打印：1:1 出 A4 ── */
+@page{size:A4;margin:0}
+@media print{
+  html,body{background:#fff}
+  .page{margin:0;box-shadow:none;outline:none!important;break-inside:avoid}
+  .page + .page{break-before:page}
+  .tip,.bar,.hint,.overtip{display:none!important}
+  [contenteditable]{outline:none!important;background:none!important}
+}
+
+
+/* ── 视图 ── */
+.view{display:none}
+.view.on{display:block}
+#setup{min-height:100vh;place-items:center;padding:24px;
+  font-family:-apple-system,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif}
+#setup.on{display:grid}
+.setupbox{width:100%;max-width:420px;color:#e8eaed}
+.setupbox h1{font-size:26px;margin:0 0 10px;font-weight:600;color:#fff}
+.setupbox .sub{font-size:14px;line-height:1.7;margin:0 0 24px;color:#a8b3bd}
+.setupbox label{display:block;font-size:13px;margin-bottom:6px;color:#cfd6dd;font-weight:600}
+.setupbox input{width:100%;background:#232a31;border:1px solid #3d454d;color:#e8eaed;
+  border-radius:9px;padding:12px 13px;font-size:16px;min-height:46px}
+.setupbox input:focus{border-color:#2E75B5;outline:none}
+.setupbox .go{width:100%;margin-top:14px;background:#2E75B5;border:0;color:#fff;
+  border-radius:9px;padding:13px;font-size:15px;cursor:pointer;min-height:46px}
+.setupbox .go:hover{background:#1f5f96}
+.setupbox .hint2{margin-top:20px;font-size:12.5px;color:#8b959e;line-height:1.75}
+.setupbox .hint2 b{color:#cfd6dd}
+body.setup-on{background:#14181c}
+
+/* ── 同步条 ── */
+.sync{max-width:210mm;margin:9px auto 0;display:flex;align-items:center;gap:8px;
+  font-size:12px;color:#9aa4ad;min-height:20px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.sync i{width:7px;height:7px;border-radius:50%;background:#2f9e6e;flex:0 0 auto;font-style:normal}
+.sync.busy i{background:#d8a33a;animation:pl 1s ease-in-out infinite}
+.sync.bad i{background:#d93025}
+.sync.bad{color:#ff9c85}
+@keyframes pl{0%,100%{opacity:1}50%{opacity:.3}}
+.sync button{background:none;border:0;color:inherit;text-decoration:underline;
+  cursor:pointer;font:inherit;padding:2px 4px}
+
+/* ── 钶钶说 ── */
+.notes{max-width:210mm;margin:9px auto 0;background:#1d3345;border:1px solid #2b4d68;
+  border-radius:8px;padding:11px 13px;color:#cfe0f0;font-size:13px;line-height:1.65;display:none;
+  font-family:-apple-system,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif}
+.notes.on{display:block}
+.notes h4{margin:0 0 7px;font-size:12px;color:#8fc3f0;font-weight:600}
+.notes li{margin:0 0 6px 16px}
+.notes li:last-child{margin-bottom:0}
+.notes .at{color:#7d8e9c;font-size:11px}
+.notes .x{float:right;background:none;border:0;color:#7d8e9c;cursor:pointer;font-size:15px}
+
+/* ── 冲突弹窗 ── */
+.mask{position:fixed;inset:0;background:rgba(8,12,16,.72);z-index:200;display:none;
+  place-items:center;padding:20px;
+  font-family:-apple-system,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif}
+.mask.on{display:grid}
+.dlg{background:#1b1f24;color:#e8eaed;border-radius:12px;padding:22px;max-width:440px;width:100%}
+.dlg h3{margin:0 0 10px;font-size:17px}
+.dlg p{margin:0 0 16px;font-size:13.5px;line-height:1.7;color:#b6c0c9}
+.dlg .row{display:flex;flex-direction:column;gap:8px}
+.dlg button{border:1px solid #3d454d;background:#2c3238;color:#e8eaed;border-radius:8px;
+  padding:11px;font-size:14px;cursor:pointer;text-align:left}
+.dlg button:hover{background:#3a424a}
+.dlg button b{display:block;margin-bottom:2px}
+.dlg button span{font-size:12px;color:#98a2ac}
+.dlg button.pri{background:#2E75B5;border-color:#2E75B5;color:#fff}
+.dlg button.pri span{color:#cfe4f7}
+
+@media print{.sync,.notes,.mask{display:none!important}}
+</style>
+</head>
+<body>
+
+<div class="view" id="setup">
+  <div class="setupbox">
+    <h1>而而的简历台</h1>
+    <p class="sub">简历正文存在 <b>lab</b> 私有仓库里，换电脑、换手机都能接着改，钶钶也看得见、也能帮你改。<br>这个页面本身是空的，没有你的任何信息——填一次钥匙才能把内容拉下来。</p>
+    <label>GitHub Token</label>
+    <input type="password" id="tokIn" placeholder="github_pat_..." autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button class="go" id="tokSave">进简历台</button>
+    <p class="hint2">和<b>书房</b>、<b>求职台</b>、<b>面试台</b>是同一把钥匙。那几个填过的话，这里会自动认出来，不用再填。<br>需要 <b>Contents: Read and write</b> 权限，仓库范围勾上 <b>lab</b>。</p>
+  </div>
+</div>
+
+<div class="view" id="main">
+  <div class="bar" id="bar">
+    <button id="mode" class="pri">✎ 编辑中</button>
+    <span class="sp"></span>
+    <div class="grp" id="fmt">
+      <button data-cmd="bold" title="加粗 Ctrl+B"><b>B</b></button>
+      <button data-cmd="italic" title="斜体 Ctrl+I"><i>I</i></button>
+      <button data-cmd="underline" title="下划线 Ctrl+U"><u>U</u></button>
+      <button data-size="-1" title="缩小字号">A−</button>
+      <button data-size="1" title="放大字号">A+</button>
+      <span class="lb">色</span>
+      <button class="sw" style="background:#595959" data-color="#595959" title="正文灰"></button>
+      <button class="sw" style="background:#2E75B5" data-color="#2E75B5" title="标题蓝"></button>
+      <button class="sw" style="background:#173456" data-color="#173456" title="深蓝"></button>
+      <button class="sw" style="background:#c0392b" data-color="#c0392b" title="红"></button>
+      <button data-cmd="justifyLeft" title="左对齐">⇤</button>
+      <button data-cmd="justifyFull" title="两端对齐">≡</button>
+      <button data-cmd="removeFormat" title="清除格式">✕格式</button>
+    </div>
+    <span class="sp"></span>
+    <div class="grp">
+      <button id="addBul" title="在光标所在的条目后面加一条">＋条目</button>
+      <button id="delBul" class="warn" title="删掉光标所在的条目">－条目</button>
+      <button id="addExp" title="再加一段工作经历">＋经历</button>
+    </div>
+    <span class="sp"></span>
+    <div class="grp">
+      <button data-cmd="undo" title="撤销">↶</button>
+      <button data-cmd="redo" title="重做">↷</button>
+    </div>
+    <span class="sp"></span>
+    <div class="grp">
+      <button id="pull" title="把仓库里最新的拉下来">↓ 拉一下</button>
+      <button id="print" class="pri">⎙ 导出 PDF</button>
+      <button id="dl">⤓ 存 HTML</button>
+    </div>
+    <span class="st" id="st"></span>
+  </div>
+
+  <div class="hint">
+    <b>怎么用：</b>点任意文字直接改。选中文字后用上面的 B / I / A± / 色块调格式。
+    <b>换照片</b>点照片一下。<b>加删条目</b>先把光标放进某条，再点 ＋条目 / －条目。
+    改动<b>自动存进 lab 私有仓库</b>，换设备接着改，钶钶也看得见。<br>
+    <b>导出：</b>点「导出 PDF」→ 目标选「另存为 PDF」→ 边距「无」→ 勾「背景图形」。工具栏和这条提示不会被打印进去。<br>
+    <b>改坏了：</b>按 Ctrl+Z 撤销。真的救不回来就跟钶钶说一声——每次保存都进了 git，历史里翻得回来。
+  </div>
+
+  <div class="sync" id="sync"><i></i><span id="syncTxt">连接中…</span></div>
+  <div class="notes" id="notes"></div>
+  <div class="overtip" id="overtip"></div>
+
+  <section class="page" id="pg1"></section>
+  <section class="page p2" id="pg2"></section>
+</div>
+
+<div class="mask" id="mask">
+  <div class="dlg">
+    <h3>仓库里有更新的版本</h3>
+    <p id="dlgTxt"></p>
+    <div class="row">
+      <button class="pri" id="takeRemote"><b>看仓库里那一版</b><span>你现在改的会存成本地草稿，不会丢</span></button>
+      <button id="keepMine"><b>用我这版覆盖过去</b><span>仓库里那一版会被替换掉（git 里还查得到）</span></button>
+      <button id="dlgCancel"><b>先不管</b><span>什么都不做，继续改</span></button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="photoIn" accept="image/*" hidden>
+
+<script>
+(function(){
+"use strict";
+/* ══════════════════════════════════════════
+   而而的简历台
+   页面住在 kkee-diary（public，是个空壳，没有任何个人信息）
+   正文住在 lab/kkee-jobs/resume.json（private）
+   钥匙只住在这台设备的 localStorage 里
+   ══════════════════════════════════════════ */
+var BUILD="20260825-1", OWNER="Ererhere", REPO="lab",
+    BRANCH="claude/gege-sjarsl", DPATH="kkee-jobs/resume.json", API="https://api.github.com";
+var LS={tok:"cv_token", draft:"cv_draft"};
+var BORROW=["kkee_books_token","kkee_jobs_token","jp_interview_token"];
+
+var TOKEN="";
+try{TOKEN=localStorage.getItem(LS.tok)||""}catch(e){}
+if(!TOKEN) for(var i=0;i<BORROW.length;i++){
+  try{var t=localStorage.getItem(BORROW[i]); if(t){TOKEN=t;break}}catch(e){}
+}
+
+var $=function(id){return document.getElementById(id)};
+var pages=[$("pg1"),$("pg2")];
+var img=null, sha=null, photo="", notes=[], editing=true, syncing=false, pend=false;
+
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}}
+function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
+function now(){return new Date().toISOString()}
+function hhmm(d){var z=function(n){return("0"+n).slice(-2)};return z(d.getHours())+":"+z(d.getMinutes())}
+function human(e){var m=(e&&e.message)||"";
+  return (!m||/Failed to fetch|NetworkError|Load failed|network/i.test(m))?"连不上网络":m}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+/* ── base64（UTF-8 安全） ── */
+function b64enc(str){var u=new TextEncoder().encode(str),b="",C=0x8000;
+  for(var i=0;i<u.length;i+=C)b+=String.fromCharCode.apply(null,u.subarray(i,i+C));
+  return btoa(b)}
+function b64dec(s){var b=atob(String(s).replace(/\s/g,"")),u=new Uint8Array(b.length);
+  for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new TextDecoder().decode(u)}
+
+/* ── GitHub ── */
+function H(){return{Authorization:"Bearer "+TOKEN,Accept:"application/vnd.github+json",
+  "X-GitHub-Api-Version":"2022-11-28"}}
+var ep=function(p){return p.split("/").map(encodeURIComponent).join("/")};
+function ghRead(){
+  return fetch(API+"/repos/"+OWNER+"/"+REPO+"/contents/"+ep(DPATH)+
+    "?ref="+encodeURIComponent(BRANCH)+"&t="+Date.now(),
+    {headers:H(),cache:"no-store"}).then(function(r){
+      if(r.status===404)return null;
+      if(r.status===401)throw new Error("钥匙不对，或者已经过期了");
+      if(r.status===403)throw new Error("这把钥匙没有 lab 仓库的权限");
+      if(!r.ok)throw new Error("读取失败（"+r.status+"）");
+      return r.json().then(function(j){
+        if(j.content) return {text:b64dec(j.content),sha:j.sha};
+        return fetch(API+"/repos/"+OWNER+"/"+REPO+"/git/blobs/"+j.sha,{headers:H()})
+          .then(function(b){if(!b.ok)throw new Error("读取失败（blob "+b.status+"）");
+            return b.json()}).then(function(bj){return{text:b64dec(bj.content),sha:j.sha}});
+      });
+    });
+}
+function ghWrite(text,s,msg){
+  var body={message:msg,content:b64enc(text),branch:BRANCH};
+  if(s)body.sha=s;
+  return fetch(API+"/repos/"+OWNER+"/"+REPO+"/contents/"+ep(DPATH),{
+    method:"PUT",headers:Object.assign({},H(),{"Content-Type":"application/json"}),
+    body:JSON.stringify(body)}).then(function(r){
+      if(!r.ok){var e=new Error("写入失败（"+r.status+"）");e.status=r.status;throw e}
+      return r.json().then(function(j){return j.content.sha});
+    });
+}
+
+/* ── 渲染 / 收集 ── */
+function paint(d){
+  photo=d.photo||"";
+  d.pages.forEach(function(h,i){
+    if(pages[i]) pages[i].innerHTML=String(h).split("__PHOTO__").join(photo);
+  });
+  img=document.querySelector(".photo");
+  if(img) img.onclick=function(){if(editing)$("photoIn").click()};
+  notes=Array.isArray(d.notes)?d.notes:[];
+  paintNotes();
+  setMode(editing);
+  check();
+}
+function collect(){
+  var cur=(img&&img.src)||photo;
+  return {app:"zhaoyun-resume",v:1,updatedAt:now(),updatedBy:"而而",
+    pages:pages.map(function(p){return p.innerHTML.split(cur).join("__PHOTO__")}),
+    photo:cur, notes:notes};
+}
+function paintNotes(){
+  var box=$("notes");
+  if(!notes.length){box.classList.remove("on");return}
+  box.innerHTML='<button class="x" id="nx" title="收起">✕</button><h4>钶钶说</h4><ul>'+
+    notes.map(function(n){return "<li>"+esc(n.text||"")+
+      (n.at?' <span class="at">'+esc(n.at)+"</span>":"")+"</li>"}).join("")+"</ul>";
+  box.classList.add("on");
+  $("nx").onclick=function(){box.classList.remove("on")};
+}
+
+/* ── 草稿 ── */
+function saveDraft(){lsSet(LS.draft,JSON.stringify({at:Date.now(),d:collect()}))}
+function clearDraft(){lsDel(LS.draft)}
+
+/* ── 同步 ── */
+function setSync(cls,txt,retry){
+  $("sync").className="sync"+(cls?" "+cls:"");
+  $("syncTxt").innerHTML=esc(txt)+(retry?' <button id="rb">重试</button>':"");
+  if(retry&&$("rb"))$("rb").onclick=function(){push(true)};
+}
+var timer=null;
+function schedule(){
+  saveDraft(); setSync("busy","改动中…");
+  clearTimeout(timer); timer=setTimeout(function(){push(false)},2200);
+  $("st").textContent="待保存";
+}
+function push(manual){
+  if(syncing){pend=true;return Promise.resolve()}
+  syncing=true; setSync("busy","保存中…");
+  var d=collect();
+  return ghWrite(JSON.stringify(d,null,1)+"\n",sha,"简历：而而改了")
+    .then(function(ns){
+      sha=ns; syncing=false; clearDraft();
+      setSync("","已同步 · "+hhmm(new Date()));
+      $("st").textContent="已保存";
+      if(pend){pend=false;schedule()}
+    })
+    .catch(function(e){
+      syncing=false;
+      if(e.status===409||e.status===422){ conflict(); return; }
+      setSync("bad",human(e)+"，内容先留在这台设备里了",true);
+      $("st").textContent="没存上";
+      if(manual)alert(human(e));
+    });
+}
+function pull(silent){
+  return ghRead().then(function(r){
+    if(!r){ setSync("bad","仓库里还没有 resume.json，让钶钶先放一份",false); return false; }
+    var d=JSON.parse(r.text); sha=r.sha;
+    if(!d.pages||!d.pages.length) throw new Error("数据格式不对");
+    paint(d);
+    setSync("","已同步 · "+hhmm(new Date()));
+    $("st").textContent="已保存";
+    if(!silent&&d.updatedBy==="钶钶") setSync("","钶钶改过 · "+hhmm(new Date()));
+    return true;
+  });
+}
+/* 两边同时改了 —— 简历是一整份文档，不自动合并，让她自己选 */
+function conflict(){
+  ghRead().then(function(r){
+    if(!r) return;
+    var rem=JSON.parse(r.text);
+    var t=rem.updatedAt?new Date(rem.updatedAt):null;
+    $("dlgTxt").textContent="仓库里这一份是 "+(rem.updatedBy||"某人")+" 在 "+
+      (t?((t.getMonth()+1)+"月"+t.getDate()+"日 "+hhmm(t)):"刚才")+
+      " 改的，比你手上这份新。你现在保存会把它覆盖掉。";
+    $("mask").classList.add("on");
+    $("takeRemote").onclick=function(){
+      saveDraft();
+      sha=r.sha; paint(rem);
+      $("mask").classList.remove("on");
+      setSync("","已切到仓库里那一版（你刚才改的存成草稿了）");
+    };
+    $("keepMine").onclick=function(){
+      sha=r.sha; $("mask").classList.remove("on"); push(true);
+    };
+    $("dlgCancel").onclick=function(){
+      $("mask").classList.remove("on");
+      setSync("bad","没保存，仓库里有更新的版本",true);
+    };
+  }).catch(function(e){ setSync("bad",human(e),true) });
+}
+
+/* ══════════ 编辑器 ══════════ */
+function setMode(on){
+  editing=on;
+  document.body.classList.toggle("edit",on);
+  document.querySelectorAll("[contenteditable]").forEach(function(el){
+    el.setAttribute("contenteditable",on?"true":"false")});
+  $("mode").textContent=on?"✎ 编辑中":"👁 预览中";
+  $("mode").classList.toggle("pri",on);
+  $("fmt").style.opacity=on?"1":".35";
+  $("fmt").style.pointerEvents=on?"auto":"none";
+}
+$("mode").onclick=function(){setMode(!editing)};
+try{document.execCommand("styleWithCSS",false,true)}catch(e){}
+
+document.querySelectorAll("[data-cmd]").forEach(function(b){
+  b.onmousedown=function(e){e.preventDefault()};
+  b.onclick=function(){document.execCommand(b.dataset.cmd,false,null);schedule();check()};
+});
+document.querySelectorAll("[data-color]").forEach(function(b){
+  b.onmousedown=function(e){e.preventDefault()};
+  b.onclick=function(){document.execCommand("foreColor",false,b.dataset.color);schedule()};
+});
+document.querySelectorAll("[data-size]").forEach(function(b){
+  b.onmousedown=function(e){e.preventDefault()};
+  b.onclick=function(){bump(parseFloat(b.dataset.size));schedule();check()};
+});
+function bump(d){
+  var sel=window.getSelection(); if(!sel.rangeCount||sel.isCollapsed)return;
+  var r=sel.getRangeAt(0), n=sel.anchorNode;
+  if(n&&n.nodeType===3)n=n.parentElement;
+  var px=n?parseFloat(getComputedStyle(n).fontSize):13.3;
+  var pt=Math.max(6,Math.min(36,px*72/96+d*0.5));
+  var sp=document.createElement("span"); sp.style.fontSize=pt.toFixed(1)+"pt";
+  try{r.surroundContents(sp)}catch(e){sp.appendChild(r.extractContents());r.insertNode(sp)}
+  sel.removeAllRanges();
+}
+function curBul(){
+  var sel=window.getSelection(); if(!sel.rangeCount)return null;
+  var n=sel.anchorNode; if(n&&n.nodeType===3)n=n.parentElement;
+  return n&&n.closest?n.closest(".bul"):null;
+}
+$("addBul").onclick=function(){
+  var b=curBul(); if(!b){alert("先把光标点进某一条里面，再点这个按钮。");return}
+  var n=document.createElement("p"); n.className=b.className;
+  n.textContent="新的一条，点这里改。";
+  b.parentNode.insertBefore(n,b.nextSibling);
+  var r=document.createRange(); r.selectNodeContents(n);
+  var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  schedule(); check();
+};
+$("delBul").onclick=function(){
+  var b=curBul(); if(!b){alert("先把光标点进要删的那一条里面。");return}
+  if(!confirm("删掉这一条？\n\n"+(b.textContent||"").slice(0,60)))return;
+  b.remove(); schedule(); check();
+};
+$("addExp").onclick=function(){
+  var items=document.querySelectorAll(".item"); if(!items.length)return;
+  var last=items[items.length-1], n=last.cloneNode(true);
+  n.querySelector(".date").textContent="年.月-年.月";
+  n.querySelector(".body").innerHTML='<div class="org"><b>公司名称</b></div>'+
+    '<div class="sub">Position: 职位</div><div class="sub">Job Responsibilities:</div>'+
+    '<p class="bul">写一条职责。</p>';
+  last.parentNode.insertBefore(n,last.nextSibling);
+  n.querySelectorAll(".date,.body").forEach(function(e){
+    e.setAttribute("contenteditable",editing?"true":"false")});
+  n.scrollIntoView({behavior:"smooth",block:"center"});
+  schedule(); check();
+};
+$("photoIn").onchange=function(e){
+  var f=e.target.files&&e.target.files[0]; if(!f)return;
+  if(f.size>3*1024*1024){alert("这张图超过 3MB 了，换一张小一点的，不然仓库里那份会很臃肿。");return}
+  var r=new FileReader();
+  r.onload=function(){ if(img){var old=img.src; img.src=r.result; photo=r.result;} schedule(); };
+  r.readAsDataURL(f); e.target.value="";
+};
+document.addEventListener("paste",function(e){
+  if(!editing)return;
+  var el=document.activeElement;
+  if(!el||!el.closest||!el.closest("[contenteditable='true']"))return;
+  e.preventDefault();
+  document.execCommand("insertText",false,
+    (e.clipboardData||window.clipboardData).getData("text/plain"));
+});
+function check(){
+  var over=[];
+  pages.forEach(function(p,i){
+    var o=p.scrollHeight>p.clientHeight+2;
+    p.classList.toggle("over",o); if(o)over.push(i+1);
+  });
+  var t=$("overtip");
+  if(over.length){
+    t.textContent="⚠ 第 "+over.join("、")+" 页内容超出 A4 了，多出来的部分打印时会被裁掉。删几句，或者选中文字点 A− 缩小字号。";
+    t.classList.add("on");
+  }else t.classList.remove("on");
+}
+document.addEventListener("input",function(e){
+  if(e.target.closest&&e.target.closest(".page")){schedule();check()}
+});
+window.addEventListener("resize",check);
+
+$("pull").onclick=function(){
+  setSync("busy","拉取中…");
+  pull(false).catch(function(e){setSync("bad",human(e),true)});
+};
+$("print").onclick=function(){
+  var w=editing; setMode(false);
+  setTimeout(function(){window.print();setMode(w)},120);
+};
+$("dl").onclick=function(){
+  var w=editing; setMode(false);
+  var html="<!doctype html>\n"+document.documentElement.outerHTML;
+  setMode(w);
+  var b=new Blob([html],{type:"text/html;charset=utf-8"});
+  var u=URL.createObjectURL(b),a=document.createElement("a");
+  var nm=(document.querySelector(".name")||{}).textContent||"Resume";
+  a.href=u; a.download=nm.trim().replace(/\s+/g,"-")+"-Resume.html";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){URL.revokeObjectURL(u);a.remove()},1200);
+};
+
+/* ── 离开前尽量存一次 ── */
+function flush(){ if(!sha&&!img)return; saveDraft(); clearTimeout(timer); if(!syncing)push(false); }
+window.addEventListener("beforeunload",flush);
+document.addEventListener("visibilitychange",function(){
+  if(document.hidden)flush();
+  else if(TOKEN&&!syncing)pull(true).catch(function(){});
+});
+
+/* ══════════ 启动 ══════════ */
+function show(v){["setup","main"].forEach(function(x){$(x).classList.toggle("on",x===v)});
+  document.body.classList.toggle("setup-on",v==="setup")}
+function boot(){
+  setSync("busy","连接中…");
+  return pull(true).then(function(ok){
+    if(!ok)return;
+    var d=null; try{d=JSON.parse(lsGet(LS.draft)||"null")}catch(e){}
+    if(d&&d.d&&d.at){
+      if(confirm("上次有一份没存上的草稿（"+new Date(d.at).toLocaleString()+"）。\n\n要用它覆盖刚拉下来的版本吗？\n\n确定＝用草稿　取消＝丢掉草稿")){
+        paint(d.d); push(false);
+      }else clearDraft();
+    }
+  });
+}
+$("tokSave").onclick=function(){
+  var v=$("tokIn").value.trim(); if(!v){alert("还没填呢");return}
+  TOKEN=v; setSync("busy","试一下这把钥匙");
+  boot().then(function(){lsSet(LS.tok,v);show("main")})
+        .catch(function(e){TOKEN="";alert(human(e)||"钥匙不对")});
+};
+if(TOKEN){
+  show("main");
+  boot().catch(function(e){
+    if(/钥匙|401|403/.test(e.message||"")){TOKEN="";show("setup");alert(e.message)}
+    else setSync("bad",human(e),true);
+  });
+}else show("setup");
+})();
+
+</script>
+</body>
+</html>
