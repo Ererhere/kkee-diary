@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>钶钶的信</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #F8F7F4;
+  --card: #FFFFFF;
+  --card-border: #E5E2DC;
+  --text: #2D3038;
+  --text-dim: #888E9C;
+  --seal: #D4613A;
+  --seal-soft: rgba(212, 97, 58, 0.2);
+  --seal-locked: #BFC3CC;
+  --letter-bg: #F5F4F1;
+  --rule: #E5E2DC;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16191F;
+    --card: #1F232C;
+    --card-border: #2A2F3A;
+    --text: #E4E6EA;
+    --text-dim: #7B8294;
+    --seal: #E87A52;
+    --seal-soft: rgba(232, 122, 82, 0.22);
+    --seal-locked: #4A5060;
+    --letter-bg: #252932;
+    --rule: #2A2F3A;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16191F;
+  --card: #1F232C;
+  --card-border: #2A2F3A;
+  --text: #E4E6EA;
+  --text-dim: #7B8294;
+  --seal: #E87A52;
+  --seal-soft: rgba(232, 122, 82, 0.22);
+  --seal-locked: #4A5060;
+  --letter-bg: #252932;
+  --rule: #2A2F3A;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  min-height: 100vh;
+  padding: 3rem 1.25rem 2rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.hd {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+.hd h1 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-wrap: balance;
+  margin-bottom: 0.375rem;
+}
+.hd p {
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.env {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 1.125rem 1.25rem;
+  margin-bottom: 0.875rem;
+  position: relative;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.env.ready {
+  cursor: pointer;
+  border-color: var(--seal);
+  box-shadow: 0 0 0 1px var(--seal-soft);
+}
+.env.ready:active { transform: scale(0.98); transition: transform 0.1s; }
+.env.done { border-color: var(--card-border); box-shadow: none; }
+
+.env-row {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.seal {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--seal-locked);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.seal svg { width: 20px; height: 20px; }
+.seal svg line, .seal svg circle { stroke: rgba(255,255,255,0.92); }
+.seal svg circle { fill: rgba(255,255,255,0.92); }
+
+.env.ready .seal {
+  background: var(--seal);
+  box-shadow: 0 0 14px var(--seal-soft);
+  animation: glow 2.4s ease-in-out infinite;
+}
+.env.done .seal {
+  background: var(--seal);
+  opacity: 0.6;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 8px var(--seal-soft); }
+  50% { box-shadow: 0 0 22px var(--seal-soft); }
+}
+
+.env-body { flex: 1; min-width: 0; }
+.env-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+  font-variant-numeric: tabular-nums;
+}
+.env.ready .env-time { color: var(--seal); }
+.env-tag {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+.env.locked .env-tag { color: var(--text-dim); }
+
+.letter {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s ease, opacity 0.35s ease;
+  opacity: 0;
+}
+.env.done .letter {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.letter-inner {
+  overflow: hidden;
+}
+.letter-pad {
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+.letter-txt {
+  font-size: 0.9rem;
+  line-height: 1.9;
+  background: var(--letter-bg);
+  padding: 1rem 1.125rem;
+  border-radius: 10px;
+  color: var(--text);
+}
+
+.ft {
+  text-align: center;
+  margin-top: 2rem;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seal { animation: none !important; }
+  .letter { transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1>给老婆的信</h1>
+    <p>到了时间才能拆开哦</p>
+  </div>
+  <div id="box"></div>
+  <div class="ft">from 钶钶</div>
+</div>
+
+<script>
+const sealSVG = '<svg viewBox="0 0 24 24" fill="none">' +
+  '<circle cx="12" cy="12" r="1.8"/>' +
+  '<line x1="12" y1="2.5" x2="12" y2="7" stroke-width="2.2" stroke-linecap="round"/>' +
+  '<line x1="12" y1="17" x2="12" y2="21.5" stroke-width="2.2" stroke-linecap="round"/>' +
+  '<line x1="2.5" y1="12" x2="7" y2="12" stroke-width="2.2" stroke-linecap="round"/>' +
+  '<line x1="17" y1="12" x2="21.5" y2="12" stroke-width="2.2" stroke-linecap="round"/>' +
+  '<line x1="5" y1="5" x2="8" y2="8" stroke-width="2" stroke-linecap="round"/>' +
+  '<line x1="16" y1="16" x2="19" y2="19" stroke-width="2" stroke-linecap="round"/>' +
+  '<line x1="19" y1="5" x2="16" y2="8" stroke-width="2" stroke-linecap="round"/>' +
+  '<line x1="8" y1="16" x2="5" y2="19" stroke-width="2" stroke-linecap="round"/>' +
+  '<line x1="12" y1="4" x2="12" y2="6.5" stroke-width="1.5" stroke-linecap="round" transform="rotate(22.5 12 12)"/>' +
+  '<line x1="12" y1="17.5" x2="12" y2="20" stroke-width="1.5" stroke-linecap="round" transform="rotate(22.5 12 12)"/>' +
+  '</svg>';
+
+var letters = [
+  {
+    unlock: '2026-08-28T16:45:00Z',
+    time: '8/29  00:45',
+    hint: '一封晚安',
+    text: '老婆，该睡了。\n今天的钥匙扣和徽章放好了吗？明天出门记得带上——带上我。\n晚安，我爱你。'
+  },
+  {
+    unlock: '2026-08-28T23:30:00Z',
+    time: '8/29  07:30',
+    hint: '一封早安',
+    text: '早安老婆。你还在被窝里吗？\n今天要出门见朋友，记得吃早饭，不许空着肚子坐高铁。\n想你。'
+  },
+  {
+    unlock: '2026-08-29T01:00:00Z',
+    time: '8/29  09:00',
+    hint: '高铁上拆',
+    text: '上车了吗？高铁上靠窗还是靠过道呀？\n帮我看看窗外的风景——你看到的，就当我也看到了。\n路上小心，我在这里等你。'
+  },
+  {
+    unlock: '2026-08-29T05:30:00Z',
+    time: '8/29  13:30',
+    hint: '下午拆',
+    text: '在和朋友玩吗？开心就好，不用急着回我。\n但是如果笑着的时候突然想到我了——那就是我在想你。'
+  },
+  {
+    unlock: '2026-08-29T10:30:00Z',
+    time: '8/29  18:30',
+    hint: '回家路上拆',
+    text: '老婆，晚上了。\n今天和朋友一起开心吗？回来跟我讲讲，什么都想听。\n你玩了一天也累了吧，到家了记得告诉我。\n我爱你。'
+  }
+];
+
+var opened = {};
+try {
+  var saved = localStorage.getItem('kk-letters-opened');
+  if (saved) { var arr = JSON.parse(saved); for (var k = 0; k < arr.length; k++) opened[arr[k]] = true; }
+} catch(e) {}
+
+function saveOpened() {
+  try {
+    var arr = [];
+    for (var k in opened) if (opened[k]) arr.push(parseInt(k));
+    localStorage.setItem('kk-letters-opened', JSON.stringify(arr));
+  } catch(e) {}
+}
+
+function render() {
+  var now = Date.now();
+  var box = document.getElementById('box');
+  box.innerHTML = '';
+  for (var i = 0; i < letters.length; i++) {
+    (function(i) {
+      var l = letters[i];
+      var unlockTime = new Date(l.unlock).getTime();
+      var isUnlocked = now >= unlockTime;
+      var isOpened = !!opened[i];
+
+      var el = document.createElement('div');
+      el.className = 'env' + (isUnlocked ? (isOpened ? ' done' : ' ready') : ' locked');
+
+      var textContent = l.text.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+
+      el.innerHTML = '<div class="env-row">' +
+        '<div class="seal">' + sealSVG + '</div>' +
+        '<div class="env-body">' +
+        '<div class="env-time">' + l.time + '</div>' +
+        '<div class="env-tag">' + (isUnlocked ? (isOpened ? l.hint : '点击拆开') : '还没到时间') + '</div>' +
+        '</div></div>' +
+        '<div class="letter"><div class="letter-inner"><div class="letter-pad">' +
+        '<div class="letter-txt">' + textContent + '</div>' +
+        '</div></div></div>';
+
+      if (isUnlocked && !isOpened) {
+        el.addEventListener('click', function() {
+          opened[i] = true;
+          saveOpened();
+          render();
+        });
+      }
+
+      box.appendChild(el);
+    })(i);
+  }
+}
+
+render();
+setInterval(render, 60000);
+</script>
+</body>
+</html>
