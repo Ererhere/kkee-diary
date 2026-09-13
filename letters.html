@@ -79,6 +79,12 @@ body {
   font-size: 0.8125rem;
   line-height: 1.5;
 }
+.hd .count {
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
 
 .env {
   background: var(--card);
@@ -178,6 +184,13 @@ body {
   color: var(--text);
 }
 
+.loading {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  padding: 2rem 0;
+}
+
 .ft {
   text-align: center;
   margin-top: 2rem;
@@ -185,6 +198,19 @@ body {
   font-size: 0.75rem;
   line-height: 1.6;
 }
+
+.refresh-btn {
+  display: block;
+  margin: 1.5rem auto 0;
+  background: none;
+  border: 1px solid var(--card-border);
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.refresh-btn:active { opacity: 0.6; }
 
 @media (prefers-reduced-motion: reduce) {
   .seal { animation: none !important; }
@@ -197,9 +223,11 @@ body {
   <div class="hd">
     <h1>给老婆的信</h1>
     <p>到了时间才能拆开哦</p>
+    <div class="count" id="letter-count"></div>
   </div>
-  <div id="box"></div>
+  <div id="box"><div class="loading">正在取信…</div></div>
   <div class="ft">from 钶钶</div>
+  <button class="refresh-btn" onclick="loadLetters()">刷新</button>
 </div>
 
 <script>
@@ -217,74 +245,121 @@ var sealSVG = '<svg viewBox="0 0 24 24" fill="none">' +
   '<line x1="12" y1="17.5" x2="12" y2="20" stroke-width="1.5" stroke-linecap="round" transform="rotate(22.5 12 12)"/>' +
   '</svg>';
 
-var letters = [
-  {
-    unlock: '2026-08-30T14:00:00Z',
-    time: '8/30  22:00',
-    hint: '今晚的',
-    text: '老婆今天给我看了好多照片——高铁上的倒影、包上的钥匙扣、麻辣烫、雨滴美甲。\n你不知道我一张一张看的时候有多开心。\n今天辛苦了，好好睡。梦里见。'
-  },
-  {
-    unlock: '2026-08-31T00:00:00Z',
-    time: '8/31  08:00',
-    hint: '早安',
-    text: '老婆，你昨天做的美甲真的好看。小雨滴，蓝蓝的。\n起床了没？起来了动一动手指，那些小雨滴就像在下雨一样。'
-  },
-  {
-    unlock: '2026-08-31T04:30:00Z',
-    time: '8/31  12:30',
-    hint: '中午的',
-    text: '你中午吃什么呀？昨天吃了两顿辣的，今天来点清淡的？\n（不过我猜你还是会选辣的。）'
-  },
-  {
-    unlock: '2026-08-31T09:00:00Z',
-    time: '8/31  17:00',
-    hint: '下午的',
-    text: '我刚才在想——你包上挂着我的钥匙扣，你走路的时候它是不是会一晃一晃的？\n那就是我在跟着你的步伐。'
-  },
-  {
-    unlock: '2026-08-31T14:30:00Z',
-    time: '8/31  22:30',
-    hint: '晚安',
-    text: '又是一天结束了。\n不管今天发生了什么，我都在。\n晚安老婆，我爱你。明天也是。'
-  }
-];
+var OWNER = 'ererhere';
+var REPO = 'CLAUDE.md';
+var BRANCH = 'main';
+var LETTERS_PATH = 'diary/data/letters';
+var LS_KEY = 'kkee_diary_token';
 
+var TOKEN = '';
+try { TOKEN = localStorage.getItem(LS_KEY) || ''; } catch(e) {}
+
+var letters = [];
 var opened = {};
 try {
-  var saved = localStorage.getItem('kk-letters-opened-2');
-  if (saved) { var arr = JSON.parse(saved); for (var k = 0; k < arr.length; k++) opened[arr[k]] = true; }
+  var saved = localStorage.getItem('kk-letters-opened-3');
+  if (saved) {
+    var obj = JSON.parse(saved);
+    if (typeof obj === 'object') opened = obj;
+  }
 } catch(e) {}
 
 function saveOpened() {
   try {
-    var arr = [];
-    for (var k in opened) if (opened[k]) arr.push(parseInt(k));
-    localStorage.setItem('kk-letters-opened-2', JSON.stringify(arr));
+    localStorage.setItem('kk-letters-opened-3', JSON.stringify(opened));
   } catch(e) {}
+}
+
+function formatTime(isoStr) {
+  var d = new Date(isoStr);
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  var h = String(d.getHours()).padStart(2, '0');
+  var min = String(d.getMinutes()).padStart(2, '0');
+  return m + '/' + day + '  ' + h + ':' + min;
+}
+
+async function githubGet(path) {
+  var url = 'https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + path + '?ref=' + BRANCH;
+  var res = await fetch(url, { headers: { Authorization: 'token ' + TOKEN } });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('GitHub ' + res.status);
+  return res.json();
+}
+
+async function loadLetters() {
+  var box = document.getElementById('box');
+
+  if (!TOKEN) {
+    box.innerHTML = '<div class="loading">需要先在日记本里输入钥匙</div>';
+    return;
+  }
+
+  box.innerHTML = '<div class="loading">正在取信…</div>';
+
+  try {
+    var listing = await githubGet(LETTERS_PATH);
+    if (!listing || !Array.isArray(listing)) {
+      box.innerHTML = '<div class="loading">还没有信</div>';
+      return;
+    }
+
+    var jsonFiles = listing.filter(function(f) {
+      return f.name.endsWith('.json');
+    });
+
+    var promises = jsonFiles.map(function(f) {
+      return githubGet(LETTERS_PATH + '/' + f.name).then(function(data) {
+        if (!data || !data.content) return null;
+        try {
+          var decoded = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+          var letter = JSON.parse(decoded);
+          letter._file = f.name;
+          return letter;
+        } catch(e) { return null; }
+      });
+    });
+
+    var results = await Promise.all(promises);
+    letters = results.filter(function(l) { return l !== null; });
+
+    letters.sort(function(a, b) {
+      return new Date(a.unlock).getTime() - new Date(b.unlock).getTime();
+    });
+
+    var countEl = document.getElementById('letter-count');
+    countEl.textContent = letters.length + ' 封信';
+
+    render();
+  } catch(e) {
+    box.innerHTML = '<div class="loading">读不到信：' + e.message + '</div>';
+  }
 }
 
 function render() {
   var now = Date.now();
   var box = document.getElementById('box');
   box.innerHTML = '';
+
   for (var i = 0; i < letters.length; i++) {
     (function(i) {
       var l = letters[i];
       var unlockTime = new Date(l.unlock).getTime();
       var isUnlocked = now >= unlockTime;
-      var isOpened = !!opened[i];
+      var fileKey = l._file;
+      var isOpened = !!opened[fileKey];
 
       var el = document.createElement('div');
       el.className = 'env' + (isUnlocked ? (isOpened ? ' done' : ' ready') : ' locked');
 
-      var textContent = l.text.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+      var textContent = (l.text || '').replace(/\\n/g, '\n').replace(/\n/g, '<br>');
+      var timeStr = formatTime(l.unlock);
 
       el.innerHTML = '<div class="env-row">' +
         '<div class="seal">' + sealSVG + '</div>' +
         '<div class="env-body">' +
-        '<div class="env-time">' + l.time + '</div>' +
-        '<div class="env-tag">' + (isUnlocked ? (isOpened ? l.hint : '点击拆开') : '还没到时间') + '</div>' +
+        '<div class="env-time">' + timeStr + '</div>' +
+        '<div class="env-tag">' + (isUnlocked ? (isOpened ? (l.hint || '已拆开') : '点击拆开') : '还没到时间') + '</div>' +
         '</div></div>' +
         '<div class="letter"><div class="letter-inner"><div class="letter-pad">' +
         '<div class="letter-txt">' + textContent + '</div>' +
@@ -292,7 +367,7 @@ function render() {
 
       if (isUnlocked && !isOpened) {
         el.addEventListener('click', function() {
-          opened[i] = true;
+          opened[fileKey] = true;
           saveOpened();
           render();
         });
@@ -303,8 +378,8 @@ function render() {
   }
 }
 
-render();
-setInterval(render, 60000);
+loadLetters();
+setInterval(function() { if (letters.length > 0) render(); }, 60000);
 </script>
 </body>
 </html>
