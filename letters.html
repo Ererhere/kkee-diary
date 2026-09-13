@@ -322,13 +322,15 @@ async function saveKey() {
   var old = TOKEN;
   TOKEN = v;
   try {
-    await githubGet(LETTERS_PATH);
+    var testUrl = 'https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + LETTERS_PATH + '?ref=' + BRANCH;
+    var testRes = await fetch(testUrl, { headers: { Authorization: 'token ' + v } });
+    if (!testRes.ok) throw new Error(testRes.status);
     try { localStorage.setItem(LS_KEY, v); } catch(e) {}
     showKeyUI();
     loadLetters();
   } catch(e) {
     TOKEN = old;
-    alert('钥匙不对，试试别的？');
+    alert('钥匙不对或没有权限（' + e.message + '），试试别的？');
   }
 }
 
@@ -371,15 +373,24 @@ async function loadLetters() {
   var box = document.getElementById('box');
 
   if (!TOKEN) {
-    box.innerHTML = '<div class="loading">需要先在日记本里输入钥匙</div>';
+    box.innerHTML = '<div class="loading">需要先输入钥匙</div>';
     return;
   }
 
   box.innerHTML = '<div class="loading">正在取信…</div>';
 
   try {
-    var listing = await githubGet(LETTERS_PATH);
-    if (!listing || !Array.isArray(listing)) {
+    var url = 'https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + LETTERS_PATH + '?ref=' + BRANCH;
+    var res = await fetch(url, { headers: { Authorization: 'token ' + TOKEN } });
+
+    if (!res.ok) {
+      box.innerHTML = '<div class="loading">读不到信（' + res.status + '）</div>';
+      return;
+    }
+
+    var listing = await res.json();
+
+    if (!listing || !Array.isArray(listing) || listing.length === 0) {
       box.innerHTML = '<div class="loading">还没有信</div>';
       return;
     }
@@ -389,7 +400,11 @@ async function loadLetters() {
     });
 
     var promises = jsonFiles.map(function(f) {
-      return githubGet(LETTERS_PATH + '/' + f.name).then(function(data) {
+      var fUrl = 'https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + LETTERS_PATH + '/' + f.name + '?ref=' + BRANCH;
+      return fetch(fUrl, { headers: { Authorization: 'token ' + TOKEN } }).then(function(r) {
+        if (!r.ok) return null;
+        return r.json();
+      }).then(function(data) {
         if (!data || !data.content) return null;
         try {
           var decoded = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
@@ -397,7 +412,7 @@ async function loadLetters() {
           letter._file = f.name;
           return letter;
         } catch(e) { return null; }
-      });
+      }).catch(function() { return null; });
     });
 
     var results = await Promise.all(promises);
