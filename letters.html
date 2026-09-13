@@ -212,6 +212,49 @@ body {
 }
 .refresh-btn:active { opacity: 0.6; }
 
+.key-box {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.key-box p {
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+.key-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--letter-bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  margin-bottom: 0.625rem;
+}
+.key-input:focus { border-color: var(--seal); }
+.key-save {
+  background: var(--seal);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.key-save:active { opacity: 0.7; }
+.key-saved {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  cursor: pointer;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .seal { animation: none !important; }
   .letter { transition: none !important; }
@@ -225,6 +268,7 @@ body {
     <p>到了时间才能拆开哦</p>
     <div class="count" id="letter-count"></div>
   </div>
+  <div id="key-area"></div>
   <div id="box"><div class="loading">正在取信…</div></div>
   <div class="ft">from 钶钶</div>
   <button class="refresh-btn" onclick="loadLetters()">刷新</button>
@@ -253,6 +297,42 @@ var LS_KEY = 'kkee_diary_token';
 
 var TOKEN = '';
 try { TOKEN = localStorage.getItem(LS_KEY) || ''; } catch(e) {}
+
+function showKeyUI() {
+  var area = document.getElementById('key-area');
+  if (TOKEN) {
+    area.innerHTML = '<div class="key-saved" onclick="showKeyInput()">换钥匙</div>';
+    return;
+  }
+  showKeyInput();
+}
+
+function showKeyInput() {
+  var area = document.getElementById('key-area');
+  area.innerHTML = '<div class="key-box">' +
+    '<p>输入钥匙才能取信哦<br>和日记本同一把</p>' +
+    '<input class="key-input" id="key-val" type="password" placeholder="粘贴钥匙">' +
+    '<br><button class="key-save" onclick="saveKey()">确定</button>' +
+    '</div>';
+}
+
+async function saveKey() {
+  var v = document.getElementById('key-val').value.trim();
+  if (!v) return;
+  var old = TOKEN;
+  TOKEN = v;
+  try {
+    await githubGet(LETTERS_PATH);
+    try { localStorage.setItem(LS_KEY, v); } catch(e) {}
+    showKeyUI();
+    loadLetters();
+  } catch(e) {
+    TOKEN = old;
+    alert('钥匙不对，试试别的？');
+  }
+}
+
+showKeyUI();
 
 var letters = [];
 var opened = {};
