@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="单词本">
+<title>而而的单词本</title>
+<style>
+:root {
+  --bg: #faf8f5;
+  --card-bg: #fff;
+  --text: #2c2c2c;
+  --sub: #888;
+  --accent: #8faec4;
+  --accent2: #c4a08f;
+  --green: #7bc47f;
+  --red: #e07070;
+  --border: #eee;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --card-bg: #252525;
+    --text: #e0e0e0;
+    --sub: #888;
+    --border: #333;
+    --shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 16px;
+  padding-top: env(safe-area-inset-top, 20px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 80px);
+}
+.header {
+  text-align: center;
+  padding: 20px 0;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 600;
+}
+.header .stats {
+  font-size: 13px;
+  color: var(--sub);
+  margin-top: 6px;
+}
+.tabs {
+  display: flex;
+  gap: 0;
+  margin: 16px 0;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  border: none;
+  background: none;
+  color: var(--sub);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab.active {
+  color: var(--accent);
+  font-weight: 600;
+  background: rgba(143,174,196,0.1);
+}
+.page { display: none; }
+.page.active { display: block; }
+
+/* cards page */
+.day-header {
+  font-size: 14px;
+  color: var(--sub);
+  margin: 20px 0 10px;
+  padding-left: 4px;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.word-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.word-card:active { transform: scale(0.97); }
+.word-card .word {
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+}
+.word-card .phonetic {
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 4px;
+}
+.word-card .meaning {
+  font-size: 14px;
+  text-align: center;
+  margin-top: 8px;
+  display: none;
+  color: var(--accent2);
+}
+.word-card .example {
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 6px;
+  text-align: center;
+  display: none;
+  line-height: 1.5;
+}
+.word-card.flipped .meaning,
+.word-card.flipped .example { display: block; }
+.word-card.flipped { background: rgba(143,174,196,0.08); }
+
+/* quiz page */
+.quiz-box {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 24px 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.quiz-progress {
+  font-size: 13px;
+  color: var(--sub);
+  text-align: center;
+  margin-bottom: 16px;
+}
+.quiz-question {
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.quiz-type-label {
+  font-size: 12px;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.quiz-option {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+.quiz-option:active { transform: scale(0.98); }
+.quiz-option.correct {
+  border-color: var(--green);
+  background: rgba(123,196,127,0.1);
+  color: var(--green);
+}
+.quiz-option.wrong {
+  border-color: var(--red);
+  background: rgba(224,112,112,0.1);
+  color: var(--red);
+}
+.quiz-option.disabled { pointer-events: none; }
+.quiz-input-wrap {
+  display: flex;
+  gap: 10px;
+}
+.quiz-input {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  font-size: 16px;
+  color: var(--text);
+  outline: none;
+}
+.quiz-input:focus { border-color: var(--accent); }
+.quiz-submit {
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+.quiz-result {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 14px;
+  min-height: 20px;
+}
+.quiz-next {
+  display: block;
+  margin: 16px auto 0;
+  padding: 12px 32px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+.quiz-score {
+  text-align: center;
+  padding: 40px 20px;
+}
+.quiz-score h2 {
+  font-size: 48px;
+  color: var(--accent);
+}
+.quiz-score p {
+  font-size: 16px;
+  color: var(--sub);
+  margin-top: 8px;
+}
+.quiz-restart {
+  display: block;
+  margin: 24px auto 0;
+  padding: 14px 40px;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* key page */
+.key-section {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.key-section h3 {
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+.key-section input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 14px;
+  font-family: monospace;
+}
+.key-section button {
+  margin-top: 10px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.key-section p {
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>而而的单词本</h1>
+  <div class="stats" id="stats">加载中...</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-page="cards">单词卡</button>
+  <button class="tab" data-page="quiz">小测验</button>
+  <button class="tab" data-page="key">设置</button>
+</div>
+
+<div class="page active" id="page-cards"></div>
+<div class="page" id="page-quiz"></div>
+<div class="page" id="page-key">
+  <div class="key-section">
+    <h3>GitHub Token</h3>
+    <input type="password" id="token-input" placeholder="ghp_... 或 github_pat_...">
+    <button onclick="saveToken()">保存</button>
+    <p>需要一把能读 CLAUDE.md 仓库的钥匙。<br>
+    GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens<br>
+    Repository access 选 Only select repositories，只勾 <b>CLAUDE.md</b><br>
+    Permissions: Contents → Read-only</p>
+  </div>
+</div>
+
+<script>
+const LS_KEY = 'kkee_english_token';
+const OWNER = 'ererhere';
+const REPO = 'CLAUDE.md';
+const BRANCH = 'main';
+const FILE_PATH = 'english/progress.json';
+
+let TOKEN = '';
+let DATA = null;
+let allWords = [];
+
+try { TOKEN = localStorage.getItem(LS_KEY) || ''; } catch(e) {}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-' + tab.dataset.page).classList.add('active');
+  });
+});
+
+function saveToken() {
+  TOKEN = document.getElementById('token-input').value.trim();
+  try { localStorage.setItem(LS_KEY, TOKEN); } catch(e) {}
+  loadData();
+}
+
+async function loadData() {
+  if (!TOKEN) {
+    document.getElementById('stats').textContent = '请先在设置里填入 GitHub Token';
+    return;
+  }
+  try {
+    const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`;
+    const res = await fetch(url, { headers: { Authorization: `token ${TOKEN}` } });
+    if (!res.ok) throw new Error('请求失败: ' + res.status);
+    const json = await res.json();
+    const content = atob(json.content.replace(/\n/g, ''));
+    DATA = JSON.parse(new TextDecoder().decode(new Uint8Array([...content].map(c => c.charCodeAt(0)))));
+    allWords = [];
+    DATA.days.forEach(d => d.words.forEach(w => { w._date = d.date; w._day = d.day; allWords.push(w); }));
+    renderCards();
+    renderStats();
+  } catch(e) {
+    document.getElementById('stats').textContent = '加载失败: ' + e.message;
+  }
+}
+
+function renderStats() {
+  const days = DATA.days.length;
+  const total = allWords.length;
+  document.getElementById('stats').textContent = `${days} 天 · ${total} 个单词`;
+}
+
+function renderCards() {
+  const container = document.getElementById('page-cards');
+  container.innerHTML = '';
+  DATA.days.slice().reverse().forEach(day => {
+    const h = document.createElement('div');
+    h.className = 'day-header';
+    h.textContent = `Day ${day.day} · ${day.date}`;
+    container.appendChild(h);
+    const grid = document.createElement('div');
+    grid.className = 'card-grid';
+    day.words.forEach(w => {
+      const card = document.createElement('div');
+      card.className = 'word-card';
+      card.innerHTML = `
+        <div class="word">${w.word}</div>
+        <div class="phonetic">${w.phonetic}</div>
+        <div class="meaning">${w.meaning}</div>
+        <div class="example">${w.example}</div>
+      `;
+      card.addEventListener('click', () => card.classList.toggle('flipped'));
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+  });
+}
+
+// Quiz
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+
+function startQuiz() {
+  if (allWords.length < 4) return;
+  quizQuestions = generateQuiz();
+  quizIndex = 0;
+  quizScore = 0;
+  renderQuiz();
+}
+
+function generateQuiz() {
+  const shuffled = [...allWords].sort(() => Math.random() - 0.5);
+  const questions = [];
+  const count = Math.min(shuffled.length, 10);
+  for (let i = 0; i < count; i++) {
+    const w = shuffled[i];
+    const type = Math.random() < 0.5 ? 'meaning' : 'spell';
+    if (type === 'meaning') {
+      const others = allWords.filter(x => x.word !== w.word).sort(() => Math.random() - 0.5).slice(0, 3);
+      const options = [w, ...others].sort(() => Math.random() - 0.5);
+      questions.push({ type: 'meaning', word: w.word, answer: w.meaning, options: options.map(o => o.meaning) });
+    } else {
+      questions.push({ type: 'spell', meaning: w.meaning, answer: w.word });
+    }
+  }
+  return questions;
+}
+
+function renderQuiz() {
+  const container = document.getElementById('page-quiz');
+  if (allWords.length < 4) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--sub)">单词太少啦，至少需要4个才能出题～</div>';
+    return;
+  }
+  if (quizQuestions.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:40px"><button class="quiz-restart" onclick="startQuiz()">开始测验</button></div>';
+    return;
+  }
+  if (quizIndex >= quizQuestions.length) {
+    container.innerHTML = `
+      <div class="quiz-score">
+        <h2>${quizScore}/${quizQuestions.length}</h2>
+        <p>${quizScore === quizQuestions.length ? '满分！太厉害了！' : quizScore >= quizQuestions.length * 0.7 ? '很棒！继续加油～' : '再复习一下吧～'}</p>
+        <button class="quiz-restart" onclick="startQuiz()">再来一次</button>
+      </div>
+    `;
+    return;
+  }
+  const q = quizQuestions[quizIndex];
+  let html = `<div class="quiz-box">
+    <div class="quiz-progress">${quizIndex + 1} / ${quizQuestions.length}</div>`;
+  if (q.type === 'meaning') {
+    html += `
+      <div class="quiz-type-label">选出正确的释义</div>
+      <div class="quiz-question">${q.word}</div>
+      <div class="quiz-options" id="quiz-options">
+        ${q.options.map((o, i) => `<div class="quiz-option" data-idx="${i}" onclick="checkMeaning(this, '${o.replace(/'/g, "\\'")}')">${o}</div>`).join('')}
+      </div>
+      <div class="quiz-result" id="quiz-result"></div>
+    `;
+  } else {
+    html += `
+      <div class="quiz-type-label">拼写单词</div>
+      <div class="quiz-question">${q.meaning}</div>
+      <div class="quiz-input-wrap">
+        <input class="quiz-input" id="spell-input" placeholder="输入英文单词..." autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button class="quiz-submit" onclick="checkSpell()">确定</button>
+      </div>
+      <div class="quiz-result" id="quiz-result"></div>
+    `;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+  if (q.type === 'spell') {
+    const inp = document.getElementById('spell-input');
+    inp.focus();
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') checkSpell(); });
+  }
+}
+
+function checkMeaning(el, selected) {
+  const q = quizQuestions[quizIndex];
+  document.querySelectorAll('.quiz-option').forEach(o => o.classList.add('disabled'));
+  if (selected === q.answer) {
+    el.classList.add('correct');
+    quizScore++;
+    document.getElementById('quiz-result').innerHTML = '<span style="color:var(--green)">正确！</span>';
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('.quiz-option').forEach(o => {
+      if (o.textContent === q.answer) o.classList.add('correct');
+    });
+    document.getElementById('quiz-result').innerHTML = '<span style="color:var(--red)">答案是：' + q.answer + '</span>';
+  }
+  setTimeout(() => { quizIndex++; renderQuiz(); }, 1200);
+}
+
+function checkSpell() {
+  const q = quizQuestions[quizIndex];
+  const input = document.getElementById('spell-input').value.trim().toLowerCase();
+  const result = document.getElementById('quiz-result');
+  if (!input) return;
+  document.querySelector('.quiz-submit').disabled = true;
+  document.getElementById('spell-input').disabled = true;
+  if (input === q.answer.toLowerCase()) {
+    quizScore++;
+    result.innerHTML = '<span style="color:var(--green)">正确！</span>';
+  } else {
+    result.innerHTML = '<span style="color:var(--red)">答案是：' + q.answer + '</span>';
+  }
+  setTimeout(() => { quizIndex++; renderQuiz(); }, 1200);
+}
+
+// init
+document.getElementById('token-input').value = TOKEN;
+if (TOKEN) loadData();
+else document.getElementById('stats').textContent = '请先在设置里填入 GitHub Token';
+
+// tab to quiz auto start
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    if (tab.dataset.page === 'quiz' && quizQuestions.length === 0 && allWords.length >= 4) {
+      startQuiz();
+    }
+  });
+});
+</script>
+</body>
+</html>
