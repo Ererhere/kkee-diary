@@ -1,0 +1,17 @@
+{
+  "name": "而而的单词本",
+  "short_name": "单词本",
+  "description": "每天学10个单词，和哥哥一起进步",
+  "start_url": "./english.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#faf8f5",
+  "theme_color": "#8faec4",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icon-english-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "icon-english.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-english.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
